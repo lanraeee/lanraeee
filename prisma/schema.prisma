@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String?
+  role         String        @default("user")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
+  fan          Fan?
+}
+
+model Product {
+  id                 String        @id @default(cuid())
+  name               String
+  description        String
+  icon               String?
+  price              Int
+  isFree             Boolean       @default(false)
+  isNew              Boolean       @default(false)
+  requiresMembership String?
+  artifactUrl        String?
+  githubUrl          String?
+  vercelUrl          String?
+  gradient           String        @default("linear-gradient(160deg,#7c6cff,#3a1d6e)")
+  order              Int           @default(0)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  transactions       Transaction[]
+}
+
+model Membership {
+  id           String        @id @default(cuid())
+  tier         String        @unique
+  name         String
+  price        Int
+  description  String
+  features     String[]
+  order        Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  subscribers  Transaction[]
+}
+
+model Transaction {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         String
+  productId    String?
+  product      Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
+  membershipId String?
+  membership   Membership? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  amount       Int
+  stripeId     String?     @unique
+  status       String      @default("pending")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model Fan {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  totalSpent     Int      @default(0)
+  displayName    String
+  initials       String
+  avatarColor    String
+  membershipTier String?
+  rank           Int?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
