@@ -219,6 +219,15 @@ export default function AdminPage() {
             <b>Tip:</b> Changes go live instantly. Wire up Stripe keys in .env to accept real payments.
           </div>
           <Link href="/" style={{ color: '#9d90ff', textDecoration: 'none', fontSize: 13 }}>← Back to desktop</Link>
+          <button
+            onClick={async () => {
+              await fetch('/api/admin/auth', { method: 'DELETE' });
+              window.location.href = '/admin/login';
+            }}
+            style={{ background: 'rgba(255,95,87,.12)', color: '#ff7c78', border: '1px solid rgba(255,95,87,.2)',
+              borderRadius: 8, padding: '8px 12px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
+            Sign out
+          </button>
         </div>
       </div>
 
