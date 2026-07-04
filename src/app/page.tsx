@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-/* ── types ────────────────────────────────── */
+/* ── types ─────────────────────────────────────────────────── */
 type Product = {
   id: string; name: string; description: string; icon: string | null;
   price: number; isFree: boolean; isNew: boolean;
@@ -14,10 +14,21 @@ type Fan = {
   id: string; rank: number; displayName: string; initials: string;
   avatarColor: string; totalSpent: number; membershipTier: string | null;
 };
+type OSType = 'ios' | 'android' | 'windows' | 'mac';
 
-/* ── draggable window ─────────────────────── */
-function Win({ id, title, subtitle, open, onClose, onMin, style, children, zIndex, onFocus }: {
-  id: string; title: string; subtitle?: string; open: boolean;
+/* ── detect OS ──────────────────────────────────────────────── */
+function detectOS(): OSType {
+  if (typeof navigator === 'undefined') return 'mac';
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua)) return 'ios';
+  if (/Android/.test(ua)) return 'android';
+  if (/Windows/.test(ua)) return 'windows';
+  return 'mac';
+}
+
+/* ── macOS draggable window ─────────────────────────────────── */
+function MacWin({ title, subtitle, open, onClose, onMin, style, children, zIndex, onFocus }: {
+  title: string; subtitle?: string; open: boolean;
   onClose: () => void; onMin: () => void;
   style?: React.CSSProperties; children: React.ReactNode;
   zIndex: number; onFocus: () => void;
@@ -29,117 +40,189 @@ function Win({ id, title, subtitle, open, onClose, onMin, style, children, zInde
     if ((e.target as HTMLElement).closest('.lights')) return;
     const el = ref.current!;
     const rect = el.getBoundingClientRect();
-    el.style.left = rect.left + 'px';
-    el.style.top = rect.top + 'px';
-    el.style.margin = '0';
+    el.style.left = rect.left + 'px'; el.style.top = rect.top + 'px'; el.style.margin = '0';
     drag.current = { sx: e.clientX, sy: e.clientY, ox: rect.left, oy: rect.top };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    onFocus();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId); onFocus();
   };
   const moveDrag = (e: React.PointerEvent) => {
     if (!drag.current) return;
     const { sx, sy, ox, oy } = drag.current;
     ref.current!.style.left = (ox + e.clientX - sx) + 'px';
-    ref.current!.style.top = Math.max(30, oy + e.clientY - sy) + 'px';
+    ref.current!.style.top = Math.max(32, oy + e.clientY - sy) + 'px';
   };
-  const endDrag = () => { drag.current = null; };
-
   return (
-    <section
-      ref={ref}
-      onMouseDown={onFocus}
-      style={{
-        position: 'absolute', display: 'flex', flexDirection: 'column',
-        background: 'var(--glass)', backdropFilter: 'blur(30px) saturate(150%)',
-        border: '1px solid var(--stroke)', borderRadius: 14,
-        boxShadow: '0 30px 70px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06)',
-        transition: 'opacity .22s ease, transform .22s cubic-bezier(.2,.9,.3,1.2)',
-        opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
-        transform: open ? 'none' : 'scale(.94) translateY(8px)',
-        zIndex, ...style,
-      }}
-    >
-      {/* title bar */}
-      <div
-        style={{ height: 42, display: 'flex', alignItems: 'center', gap: 10, padding: '0 12px',
-          borderBottom: '1px solid var(--stroke-2)', cursor: 'grab', flexShrink: 0 }}
-        onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={endDrag}
-      >
+    <section ref={ref} onMouseDown={onFocus} style={{
+      position: 'absolute', display: 'flex', flexDirection: 'column',
+      background: 'var(--glass)', backdropFilter: 'blur(30px) saturate(150%)',
+      border: '1px solid var(--stroke)', borderRadius: 14,
+      boxShadow: '0 30px 70px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06)',
+      transition: 'opacity .22s ease, transform .22s cubic-bezier(.2,.9,.3,1.2)',
+      opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
+      transform: open ? 'none' : 'scale(.94) translateY(8px)',
+      zIndex, ...style,
+    }}>
+      <div style={{ height: 42, display: 'flex', alignItems: 'center', gap: 10, padding: '0 12px',
+        borderBottom: '1px solid var(--stroke-2)', cursor: 'grab', flexShrink: 0 }}
+        onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={() => { drag.current = null; }}>
         <div className="lights" style={{ display: 'flex', gap: 8 }}>
-          <i onClick={onClose} style={{ width: 12, height: 12, borderRadius: '50%', display: 'block',
-            background: '#ff5f57', border: '1px solid rgba(0,0,0,.25)', cursor: 'pointer' }} />
-          <i onClick={onMin} style={{ width: 12, height: 12, borderRadius: '50%', display: 'block',
-            background: '#febc2e', border: '1px solid rgba(0,0,0,.25)', cursor: 'pointer' }} />
-          <i style={{ width: 12, height: 12, borderRadius: '50%', display: 'block',
-            background: '#28c840', border: '1px solid rgba(0,0,0,.25)' }} />
+          <i onClick={onClose} style={{ width: 12, height: 12, borderRadius: '50%', display: 'block', background: '#ff5f57', border: '1px solid rgba(0,0,0,.25)', cursor: 'pointer' }} />
+          <i onClick={onMin} style={{ width: 12, height: 12, borderRadius: '50%', display: 'block', background: '#febc2e', border: '1px solid rgba(0,0,0,.25)', cursor: 'pointer' }} />
+          <i style={{ width: 12, height: 12, borderRadius: '50%', display: 'block', background: '#28c840', border: '1px solid rgba(0,0,0,.25)' }} />
         </div>
         <span style={{ fontSize: 13, fontWeight: 600, color: '#dfe4f6' }}>
-          {title} {subtitle && <span style={{ fontWeight: 400, color: '#7d84a6', marginLeft: 6 }}>{subtitle}</span>}
+          {title}{subtitle && <span style={{ fontWeight: 400, color: '#7d84a6', marginLeft: 6 }}>{subtitle}</span>}
         </span>
       </div>
-      {/* body */}
-      <div style={{ padding: 18, overflowY: 'auto', maxHeight: '68vh' }}>
-        {children}
-      </div>
+      <div style={{ padding: 18, overflowY: 'auto', maxHeight: '68vh' }}>{children}</div>
     </section>
   );
 }
 
-/* ── checkout overlay ─────────────────────── */
+/* ── Windows 11 draggable window ────────────────────────────── */
+function WinWindow({ title, subtitle, open, onClose, onMin, style, children, zIndex, onFocus }: {
+  title: string; subtitle?: string; open: boolean;
+  onClose: () => void; onMin: () => void;
+  style?: React.CSSProperties; children: React.ReactNode;
+  zIndex: number; onFocus: () => void;
+}) {
+  const ref = useRef<HTMLElement>(null);
+  const drag = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
+
+  const startDrag = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest('.win-ctrl')) return;
+    const el = ref.current!;
+    const rect = el.getBoundingClientRect();
+    el.style.left = rect.left + 'px'; el.style.top = rect.top + 'px'; el.style.margin = '0';
+    drag.current = { sx: e.clientX, sy: e.clientY, ox: rect.left, oy: rect.top };
+    (e.target as HTMLElement).setPointerCapture(e.pointerId); onFocus();
+  };
+  const moveDrag = (e: React.PointerEvent) => {
+    if (!drag.current) return;
+    const { sx, sy, ox, oy } = drag.current;
+    ref.current!.style.left = (ox + e.clientX - sx) + 'px';
+    ref.current!.style.top = Math.max(44, oy + e.clientY - sy) + 'px';
+  };
+  return (
+    <section ref={ref} onMouseDown={onFocus} style={{
+      position: 'absolute', display: 'flex', flexDirection: 'column',
+      background: 'rgba(18,24,44,.82)', backdropFilter: 'blur(40px) saturate(180%)',
+      border: '1px solid rgba(255,255,255,.12)', borderRadius: 10,
+      boxShadow: '0 32px 80px rgba(0,0,0,.65)',
+      transition: 'opacity .2s ease, transform .2s cubic-bezier(.2,.9,.3,1.2)',
+      opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
+      transform: open ? 'none' : 'scale(.96) translateY(6px)',
+      zIndex, fontFamily: '"Segoe UI",sans-serif', ...style,
+    }}>
+      <div style={{ height: 36, display: 'flex', alignItems: 'center', padding: '0 14px',
+        borderBottom: '1px solid rgba(255,255,255,.07)', cursor: 'grab', flexShrink: 0,
+        justifyContent: 'space-between' }}
+        onPointerDown={startDrag} onPointerMove={moveDrag} onPointerUp={() => { drag.current = null; }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: '#cdd3ef' }}>
+          {title}{subtitle && <span style={{ fontWeight: 400, color: '#7d84a6', marginLeft: 6 }}>{subtitle}</span>}
+        </span>
+        <div className="win-ctrl" style={{ display: 'flex' }}>
+          <button onClick={onMin} style={{ width: 46, height: 36, background: 'none', border: 'none',
+            color: '#cdd3ef', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit',
+            transition: 'background .1s' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.1)' )}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none' )}>─</button>
+          <button onClick={onClose} style={{ width: 46, height: 36, background: 'none', border: 'none',
+            color: '#cdd3ef', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit',
+            borderRadius: '0 10px 0 0', transition: 'background .1s' }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#c42b1c' )}
+            onMouseLeave={e => (e.currentTarget.style.background = 'none' )}>✕</button>
+        </div>
+      </div>
+      <div style={{ padding: 18, overflowY: 'auto', maxHeight: '68vh' }}>{children}</div>
+    </section>
+  );
+}
+
+/* ── iOS / Android slide-up sheet ───────────────────────────── */
+function Sheet({ open, onClose, title, os, children }: {
+  open: boolean; onClose: () => void; title: string; os: OSType; children: React.ReactNode;
+}) {
+  const isAndroid = os === 'android';
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 500, pointerEvents: open ? 'auto' : 'none' }}>
+      <div onClick={onClose} style={{
+        position: 'absolute', inset: 0, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(5px)',
+        opacity: open ? 1 : 0, transition: 'opacity .3s ease',
+      }} />
+      <div style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0, height: '93dvh',
+        background: isAndroid ? '#1a1f38' : 'linear-gradient(180deg,#141930,#0d1120)',
+        borderRadius: isAndroid ? '28px 28px 0 0' : '22px 22px 0 0',
+        border: '1px solid rgba(255,255,255,.1)', borderBottom: 'none',
+        transform: open ? 'translateY(0)' : 'translateY(100%)',
+        transition: 'transform .38s cubic-bezier(.25,.9,.3,1.05)',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        fontFamily: isAndroid ? '"Google Sans",Roboto,sans-serif' : '-apple-system,sans-serif',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '14px 0 6px', flexShrink: 0 }}>
+          <div style={{ width: isAndroid ? 32 : 38, height: 4, borderRadius: 2, background: 'rgba(255,255,255,.2)' }} />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '4px 20px 14px', flexShrink: 0 }}>
+          <h2 style={{ fontSize: 22, fontWeight: isAndroid ? 500 : 750, color: '#eef1fb', margin: 0 }}>{title}</h2>
+          <button onClick={onClose} style={{
+            width: 32, height: 32, borderRadius: isAndroid ? 8 : '50%',
+            background: 'rgba(255,255,255,.12)', border: 'none',
+            color: '#a7aecb', fontSize: 15, cursor: 'pointer',
+            display: 'grid', placeItems: 'center', fontFamily: 'inherit',
+          }}>✕</button>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px 48px' }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── checkout ───────────────────────────────────────────────── */
 function Checkout({ product, onClose }: { product: Product | null; onClose: () => void }) {
   const [paid, setPaid] = useState(false);
   useEffect(() => { setPaid(false); }, [product]);
-
   if (!product) return null;
   const price = product.isFree ? 0 : product.price / 100;
-
   return (
-    <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex',
         alignItems: 'center', justifyContent: 'center',
         background: 'rgba(3,4,12,.55)', backdropFilter: 'blur(6px)' }}>
       <div style={{ width: 'min(400px,92vw)', background: 'var(--glass)',
-        border: '1px solid var(--stroke)', borderRadius: 16,
+        border: '1px solid var(--stroke)', borderRadius: 20,
         boxShadow: '0 40px 90px rgba(0,0,0,.6)', overflow: 'hidden',
         animation: 'rise .3s cubic-bezier(.2,.9,.3,1.15)' }}>
         {paid ? (
           <div style={{ padding: '40px 24px', textAlign: 'center', display: 'flex',
             flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', display: 'grid',
-              placeItems: 'center', fontSize: 30,
-              background: 'radial-gradient(circle at 40% 35%, #4ff2b0, #16a06a)',
+            <div style={{ width: 64, height: 64, borderRadius: '50%', display: 'grid', placeItems: 'center',
+              fontSize: 30, background: 'radial-gradient(circle at 40% 35%,#4ff2b0,#16a06a)',
               boxShadow: '0 10px 30px rgba(61,220,151,.4)' }}>✓</div>
             <h3 style={{ fontSize: 17, fontWeight: 750 }}>Payment complete 🎉</h3>
-            <p style={{ fontSize: 13, color: '#a7aecb', maxWidth: '34ch' }}>
-              Your purchase is unlocking now. Thank you for the support.
-            </p>
+            <p style={{ fontSize: 13, color: '#a7aecb', maxWidth: '34ch' }}>Your purchase is unlocking now. Thank you for the support.</p>
             <button onClick={onClose} style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)',
               color: '#fff', border: 'none', padding: '10px 24px', borderRadius: 9,
-              fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>Done</button>
+              fontSize: 13, fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit' }}>Done</button>
           </div>
         ) : (
           <>
             <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--stroke-2)',
               display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 11, display: 'grid',
-                placeItems: 'center', fontSize: 22,
-                background: product.gradient, border: '1px solid var(--stroke)' }}>
-                {product.icon}
-              </div>
+              <div style={{ width: 44, height: 44, borderRadius: 11, display: 'grid', placeItems: 'center',
+                fontSize: 22, background: product.gradient, border: '1px solid var(--stroke)' }}>{product.icon}</div>
               <div>
                 <h3 style={{ fontSize: 15, fontWeight: 700 }}>{product.name}</h3>
                 <p style={{ fontSize: 12, color: '#a7aecb' }}>lanrae.co.uk · secure checkout</p>
               </div>
             </div>
             <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {[
-                ['Email', 'you@email.com'],
-                ['Card', '4242 4242 4242 4242'],
-                ['Expiry / CVC', '04 / 27   123'],
-              ].map(([label, val]) => (
-                <div key={label} style={{ background: 'rgba(255,255,255,.05)',
-                  border: '1px solid var(--stroke)', borderRadius: 9, padding: '11px 13px',
-                  fontSize: 13, color: '#a7aecb', display: 'flex', justifyContent: 'space-between' }}>
+              {[['Email', 'you@email.com'], ['Card', '4242 4242 4242 4242'], ['Expiry / CVC', '04 / 27   123']].map(([label, val]) => (
+                <div key={label} style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
+                  borderRadius: 9, padding: '11px 13px', fontSize: 13, color: '#a7aecb',
+                  display: 'flex', justifyContent: 'space-between' }}>
                   <span>{label}</span><span style={{ fontFamily: 'monospace', color: '#7d84a6' }}>{val}▏</span>
                 </div>
               ))}
@@ -150,7 +233,7 @@ function Checkout({ product, onClose }: { product: Product | null; onClose: () =
               <button onClick={() => setPaid(true)}
                 style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
                   border: 'none', padding: '12px', borderRadius: 9, fontSize: 13,
-                  fontWeight: 650, cursor: 'pointer', width: '100%' }}>
+                  fontWeight: 650, cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}>
                 Pay £{price.toFixed(2)}
               </button>
             </div>
@@ -161,12 +244,12 @@ function Checkout({ product, onClose }: { product: Product | null; onClose: () =
           </>
         )}
       </div>
-      <style>{`@keyframes rise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}`}</style>
+      <style>{`@keyframes rise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}} @keyframes load{to{width:100%}}`}</style>
     </div>
   );
 }
 
-/* ── main page ────────────────────────────── */
+/* ── main ───────────────────────────────────────────────────── */
 export default function Desktop() {
   const [products, setProducts] = useState<Product[]>([]);
   const [fans, setFans] = useState<Fan[]>([]);
@@ -177,13 +260,24 @@ export default function Desktop() {
   const [booted, setBooted] = useState(false);
   const [clock, setClock] = useState('');
   const [donateAmt, setDonateAmt] = useState(7);
+  const [isMobile, setIsMobile] = useState(false);
+  const [os, setOs] = useState<OSType>('mac');
+  const [activeTab, setActiveTab] = useState('store'); // android bottom nav
+
+  useEffect(() => {
+    const detected = detectOS();
+    setOs(detected);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const tick = () => {
       const d = new Date();
       const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const h = d.getHours() % 12 || 12, m = d.getMinutes();
-      const ap = d.getHours() >= 12 ? 'PM' : 'AM';
+      const h = d.getHours() % 12 || 12, m = d.getMinutes(), ap = d.getHours() >= 12 ? 'PM' : 'AM';
       setClock(`${days[d.getDay()]} ${h}:${m < 10 ? '0' : ''}${m} ${ap}`);
     };
     tick(); const t = setInterval(tick, 10000); return () => clearInterval(t);
@@ -197,34 +291,33 @@ export default function Desktop() {
       .finally(() => {
         setTimeout(() => {
           setBooted(true);
-          openWin('store');
-          setTimeout(() => openWin('fans'), 400);
+          if (window.innerWidth >= 768) {
+            openWin('store');
+            setTimeout(() => openWin('fans'), 400);
+          }
         }, 2200);
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const focusWin = (id: string) => {
-    const z = zTop + 1;
-    setZTop(z);
-    setZMap(m => ({ ...m, [id]: z }));
-  };
+  const focusWin = (id: string) => { const z = zTop + 1; setZTop(z); setZMap(m => ({ ...m, [id]: z })); };
   const openWin = (id: string) => { focusWin(id); setOpen(m => ({ ...m, [id]: true })); };
   const closeWin = (id: string) => setOpen(m => ({ ...m, [id]: false }));
+
+  const appsMeta = [
+    { id: 'store', icon: '🛍️', label: 'Store', gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' },
+    { id: 'members', icon: '🪪', label: 'Members', gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
+    { id: 'fans', icon: '🏆', label: 'Fans', gradient: 'linear-gradient(160deg,#f5c451,#9a6a00)' },
+    { id: 'donate', icon: '💛', label: 'Support', gradient: 'linear-gradient(160deg,#ff6ba8,#7a1d47)' },
+    { id: 'about', icon: '◐', label: 'About', gradient: 'linear-gradient(160deg,#35d6c7,#0e5a52)' },
+  ];
 
   const wins = [
     { id: 'store', title: 'Product Store', subtitle: '— AI, built by lanrae' },
     { id: 'fans', title: 'Top 10 Fans', subtitle: '— this month' },
     { id: 'members', title: 'Membership' },
     { id: 'donate', title: 'Support the work' },
-    { id: 'about', title: 'About This Studio' },
-  ];
-
-  const dockApps = [
-    { id: 'store', icon: '🛍️', label: 'Product Store' },
-    { id: 'members', icon: '🪪', label: 'Membership' },
-    { id: 'fans', icon: '🏆', label: 'Top 10 Fans' },
-    { id: 'donate', icon: '💛', label: 'Support' },
-    { id: 'about', icon: '◐', label: 'About' },
+    { id: 'about', title: 'About' },
   ];
 
   const winStyles: Record<string, React.CSSProperties> = {
@@ -235,28 +328,512 @@ export default function Desktop() {
     about: { width: 'min(420px,92vw)', top: 120, left: 'calc(50% - 210px)' },
   };
 
+  /* ── shared content ───────────────────────────────────── */
+  const renderContent = (id: string) => {
+    if (id === 'store') return (
+      <>
+        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>Featured · Built with AI</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>Ship-ready AI products</h2>
+        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>Own them outright, or unlock the full shelf with an Insider membership.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 14 }}>
+          {products.length === 0 ? (
+            <p style={{ color: '#7d84a6', fontSize: 13, gridColumn: '1/-1', padding: '20px 0' }}>
+              No products yet — add some in the <a href="/admin" style={{ color: '#9d90ff' }}>admin panel</a>.
+            </p>
+          ) : products.map(p => (
+            <div key={p.id} style={{ background: 'var(--glass-2)', border: '1px solid var(--stroke-2)',
+              borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ height: 86, display: 'grid', placeItems: 'center', fontSize: 30,
+                background: p.gradient, position: 'relative' }}>
+                {p.isNew && <span style={{ position: 'absolute', top: 8, left: 8, fontSize: 9,
+                  fontWeight: 700, letterSpacing: '.6px', textTransform: 'uppercase',
+                  padding: '3px 7px', borderRadius: 20, background: 'rgba(0,0,0,.4)',
+                  border: '1px solid rgba(245,196,81,.4)', color: '#ffd36b' }}>New</span>}
+                {p.requiresMembership && <span style={{ position: 'absolute', top: 8, right: 8 }}>🔒</span>}
+                {p.icon || '📦'}
+              </div>
+              <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <h3 style={{ fontSize: 14, fontWeight: 650 }}>{p.name}</h3>
+                <p style={{ fontSize: 11.5, color: '#a7aecb', lineHeight: 1.45 }}>{p.description}</p>
+                {(p.artifactUrl || p.githubUrl || p.vercelUrl) && (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {p.artifactUrl && <a href={p.artifactUrl} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 11, color: '#9d90ff', textDecoration: 'none', padding: '3px 7px',
+                        borderRadius: 6, border: '1px solid rgba(124,108,255,.3)', background: 'rgba(124,108,255,.1)' }}>📄 Artifact</a>}
+                    {p.githubUrl && <a href={p.githubUrl} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 11, color: '#9d90ff', textDecoration: 'none', padding: '3px 7px',
+                        borderRadius: 6, border: '1px solid rgba(124,108,255,.3)', background: 'rgba(124,108,255,.1)' }}>💻 GitHub</a>}
+                    {p.vercelUrl && <a href={p.vercelUrl} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 11, color: '#9d90ff', textDecoration: 'none', padding: '3px 7px',
+                        borderRadius: 6, border: '1px solid rgba(124,108,255,.3)', background: 'rgba(124,108,255,.1)' }}>▲ Live</a>}
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+                  <span style={{ fontSize: 14, fontWeight: 700 }}>{p.isFree ? 'Free' : `£${(p.price / 100).toFixed(2)}`}</span>
+                  <button onClick={() => setCheckout(p)}
+                    style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
+                      border: 'none', borderRadius: 9, padding: '7px 12px', fontSize: 12,
+                      fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {p.isFree ? 'Open' : p.requiresMembership ? 'Unlock' : 'Buy'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+
+    if (id === 'fans') return (
+      <>
+        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>Hall of fame</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>The people funding the future</h2>
+        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>Ranked by total support. Resets monthly.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {fans.length === 0 ? (
+            <p style={{ color: '#7d84a6', fontSize: 13, padding: '20px 0' }}>No fans yet — be the first to support!</p>
+          ) : fans.map(fan => {
+            const medal = fan.rank === 1 ? '🥇' : fan.rank === 2 ? '🥈' : fan.rank === 3 ? '🥉' : fan.rank;
+            return (
+              <div key={fan.id} style={{ display: 'grid', gridTemplateColumns: '44px 1fr auto',
+                alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 14,
+                background: fan.rank <= 3 ? 'linear-gradient(90deg,rgba(124,108,255,.14),transparent)' : 'rgba(255,255,255,.02)',
+                border: fan.rank <= 3 ? '1px solid var(--stroke-2)' : '1px solid transparent' }}>
+                <div style={{ textAlign: 'center', fontSize: 18, fontWeight: 800 }}>{medal}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: '50%', display: 'grid', placeItems: 'center',
+                    fontSize: 14, fontWeight: 700, color: '#0a0d1c', background: fan.avatarColor, flexShrink: 0 }}>{fan.initials}</div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{fan.displayName}</div>
+                    <div style={{ fontSize: 11.5, color: '#7d84a6' }}>{fan.membershipTier || 'Explorer'}</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <b style={{ fontSize: 14, fontVariantNumeric: 'tabular-nums' }}>£{(fan.totalSpent / 100).toFixed(0)}</b>
+                  <span style={{ display: 'block', fontSize: 10.5, color: '#7d84a6' }}>lifetime</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </>
+    );
+
+    if (id === 'members') return (
+      <>
+        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>Join the studio</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>Back the build. Get the perks.</h2>
+        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>Members fund what gets built next and top supporters get their name on the wall.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {[
+            { name: 'Explorer', price: 0, feat: false, features: ['Browse every launch', 'Free product: PromptDeck', 'Community changelog'] },
+            { name: 'Supporter', price: 5, feat: true, features: ['Everything in Explorer', 'Early access to launches', 'Name on Supporters wall', 'Vote on the roadmap'] },
+            { name: 'Insider', price: 15, feat: false, features: ['Everything in Supporter', 'Entire product library', 'Top 10 Fans eligible', 'Source access + build logs', 'Monthly office hours'] },
+          ].map(t => (
+            <div key={t.name} style={{ background: 'var(--glass-2)',
+              border: `1px solid ${t.feat ? 'rgba(124,108,255,.55)' : 'var(--stroke-2)'}`,
+              borderRadius: 16, padding: '20px 18px', position: 'relative',
+              boxShadow: t.feat ? '0 0 0 1px rgba(124,108,255,.25),0 18px 40px rgba(124,108,255,.16)' : undefined }}>
+              {t.feat && <div style={{ position: 'absolute', top: -11, left: 20,
+                background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', fontSize: 10,
+                fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', padding: '4px 12px', borderRadius: 20 }}>Popular</div>}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 700 }}>{t.name}</h3>
+                <div style={{ fontSize: 24, fontWeight: 800 }}>£{t.price}<small style={{ fontSize: 13, fontWeight: 500, color: '#a7aecb' }}>/mo</small></div>
+              </div>
+              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#d7dcf1', marginBottom: 14 }}>
+                {t.features.map(f => <li key={f} style={{ display: 'flex', gap: 8 }}><span style={{ color: '#3ddc97', fontWeight: 800 }}>✓</span>{f}</li>)}
+              </ul>
+              <button onClick={() => t.price > 0 ? setCheckout({ id: t.name, name: `${t.name} membership`, description: '', icon: '🪪', price: t.price * 100, isFree: false, isNew: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }) : undefined}
+                style={{ background: t.price === 0 ? 'rgba(255,255,255,.08)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)',
+                  color: '#fff', border: t.price === 0 ? '1px solid var(--stroke)' : 'none',
+                  borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 650, cursor: 'pointer',
+                  width: '100%', fontFamily: 'inherit' }}>
+                {t.price === 0 ? 'Current plan' : `Subscribe · £${t.price}/mo`}
+              </button>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+
+    if (id === 'donate') return (
+      <>
+        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>One-off tip</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>Buy me a GPU hour ☕</h2>
+        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>Every tip goes straight into building the next product.</p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 18 }}>
+          {[3, 7, 15, 30, 50].map(a => (
+            <span key={a} onClick={() => setDonateAmt(a)} style={{
+              padding: '11px 18px', borderRadius: 50,
+              border: `1px solid ${donateAmt === a ? 'transparent' : 'var(--stroke)'}`,
+              background: donateAmt === a ? 'linear-gradient(180deg,#9d90ff,#7c6cff)' : 'rgba(255,255,255,.05)',
+              fontWeight: 650, fontSize: 15, cursor: 'pointer', color: donateAmt === a ? '#fff' : '#eef1fb',
+            }}>£{a}</span>
+          ))}
+        </div>
+        <button onClick={() => setCheckout({ id: 'donate', name: `£${donateAmt} tip`, description: '', icon: '💛', price: donateAmt * 100, isFree: false, isNew: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#f5c451,#9a6a00)' })}
+          style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
+            border: 'none', borderRadius: 14, padding: '15px', fontSize: 15,
+            fontWeight: 650, cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}>
+          Donate £{donateAmt}
+        </button>
+        <div style={{ fontSize: 13, color: '#a7aecb', display: 'flex', gap: 8, alignItems: 'center', marginTop: 14 }}>
+          💛 <span>142 supporters have tipped this month</span>
+        </div>
+      </>
+    );
+
+    if (id === 'about') return (
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ width: 88, height: 88, borderRadius: 24, margin: '6px auto 18px', display: 'grid',
+          placeItems: 'center', fontSize: 38, background: 'linear-gradient(160deg,#35d6c7,#9d90ff)',
+          color: '#0a0d1c', fontWeight: 800 }}>L</div>
+        <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>lanrae · AI Product Engineer</h2>
+        <p style={{ fontSize: 14, color: '#a7aecb', maxWidth: '36ch', margin: '0 auto 20px', lineHeight: 1.6 }}>
+          I design, build, and ship AI-powered products end to end — then launch them here,
+          on a desktop you can actually drive. lanrae.co.uk is the studio, the storefront, and the changelog, all in one.
+        </p>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button onClick={() => { closeWin('about'); openWin('store'); }}
+            style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
+              border: 'none', borderRadius: 12, padding: '12px 20px', fontSize: 14,
+              fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit' }}>Browse products</button>
+          <button onClick={() => { closeWin('about'); openWin('members'); }}
+            style={{ background: 'rgba(255,255,255,.08)', color: '#e7ebfb',
+              border: '1px solid var(--stroke)', borderRadius: 12, padding: '12px 20px',
+              fontSize: 14, fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit' }}>Become a member</button>
+        </div>
+      </div>
+    );
+    return null;
+  };
+
+  const wallpaper = `
+    radial-gradient(120% 90% at 12% -8%,#3a1d6e 0%,transparent 48%),
+    radial-gradient(120% 100% at 92% 4%,#0e2a4d 0%,transparent 52%),
+    radial-gradient(140% 120% at 50% 120%,#1b1150 0%,transparent 60%),
+    linear-gradient(160deg,#0a0f26,#05060f)
+  `;
+
+  const bootScreen = (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 3000,
+      background: 'linear-gradient(160deg,#0a0f26,#05060f)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 26,
+      transition: 'opacity .7s ease', opacity: booted ? 0 : 1, pointerEvents: booted ? 'none' : 'auto' }}>
+      <div style={{ fontSize: 30, fontWeight: 800 }}>◐ lanrae<span style={{ color: '#9d90ff' }}>OS</span></div>
+      <div style={{ width: 200, height: 5, borderRadius: 5, background: 'rgba(255,255,255,.12)', overflow: 'hidden' }}>
+        <div style={{ height: '100%', background: 'linear-gradient(90deg,#9d90ff,#35d6c7)',
+          animation: 'load 2.1s ease forwards' }} />
+      </div>
+      <div style={{ fontSize: 12, color: '#7d84a6' }}>Starting up…</div>
+    </div>
+  );
+
+  /* ════════════════════════════════════════════════════════
+     iOS LAYOUT
+  ════════════════════════════════════════════════════════ */
+  if (isMobile && os === 'ios') {
+    const timeOnly = clock.split(' ').slice(1).join(' ');
+    return (
+      <>
+        {bootScreen}
+        <style>{`@keyframes load{to{width:100%}} @keyframes rise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}`}</style>
+        <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', background: wallpaper,
+          fontFamily: '-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif' }}>
+
+          {/* iOS status bar */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 50, zIndex: 200,
+            display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 22px 8px' }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: -.3 }}>{timeOnly}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <svg width="17" height="12" viewBox="0 0 17 12" fill="white"><rect x="0" y="7" width="3" height="5" rx="1" opacity=".5"/><rect x="4.5" y="4.5" width="3" height="7.5" rx="1" opacity=".7"/><rect x="9" y="2" width="3" height="10" rx="1" opacity=".9"/><rect x="13.5" y="0" width="3" height="12" rx="1"/></svg>
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="white"><path d="M8 9.5a1.5 1.5 0 100 3 1.5 1.5 0 000-3z"/><path d="M8 6C5.8 6 3.8 6.9 2.3 8.4l1.4 1.4C4.9 8.7 6.4 8 8 8s3.1.7 4.3 1.8l1.4-1.4C12.2 6.9 10.2 6 8 6z" opacity=".7"/><path d="M8 2.5C4.5 2.5 1.4 3.9 0 6.2l1.5 1.5C2.9 5.5 5.3 4 8 4s5.1 1.5 6.5 3.7L16 6.2C14.6 3.9 11.5 2.5 8 2.5z" opacity=".4"/></svg>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ width: 25, height: 12, borderRadius: 3, border: '1.5px solid rgba(255,255,255,.7)', position: 'relative', display: 'flex', alignItems: 'center', padding: '2px 2.5px' }}>
+                  <div style={{ height: '100%', width: '72%', borderRadius: 1.5, background: '#3ddc97' }} />
+                  <div style={{ position: 'absolute', right: -4, top: '50%', transform: 'translateY(-50%)', width: 2.5, height: 5, background: 'rgba(255,255,255,.5)', borderRadius: '0 1px 1px 0' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* date widget */}
+          <div style={{ position: 'absolute', top: 60, left: 0, right: 0, textAlign: 'center' }}>
+            <div style={{ fontSize: 13, color: 'rgba(255,255,255,.6)', fontWeight: 500 }}>
+              {new Date().toLocaleDateString('en-GB', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </div>
+            <div style={{ fontSize: 68, fontWeight: 200, color: '#fff', lineHeight: 1.1, marginTop: 2 }}>
+              {new Date().getDate()}
+            </div>
+          </div>
+
+          {/* app grid */}
+          <div style={{ position: 'absolute', top: 212, left: 0, right: 0, bottom: 110,
+            padding: '0 20px', overflowY: 'auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '22px 8px' }}>
+              {appsMeta.map(app => (
+                <div key={app.id} onClick={() => openWin(app.id)}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, cursor: 'pointer' }}>
+                  <div style={{ width: 62, height: 62, borderRadius: 15, background: app.gradient,
+                    display: 'grid', placeItems: 'center', fontSize: 28,
+                    boxShadow: '0 6px 18px rgba(0,0,0,.45)', border: '1px solid rgba(255,255,255,.12)' }}>{app.icon}</div>
+                  <span style={{ fontSize: 11, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,.7)', textAlign: 'center', fontWeight: 500 }}>{app.label}</span>
+                </div>
+              ))}
+              <a href="/admin" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, textDecoration: 'none' }}>
+                <div style={{ width: 62, height: 62, borderRadius: 15, background: 'linear-gradient(160deg,#2a2a3e,#151520)',
+                  display: 'grid', placeItems: 'center', fontSize: 26,
+                  boxShadow: '0 6px 18px rgba(0,0,0,.45)', border: '1px solid rgba(255,255,255,.1)' }}>⚙️</div>
+                <span style={{ fontSize: 11, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,.7)', textAlign: 'center', fontWeight: 500 }}>Admin</span>
+              </a>
+            </div>
+          </div>
+
+          {/* iOS dock */}
+          <div style={{ position: 'absolute', bottom: 12, left: 16, right: 16, zIndex: 200 }}>
+            <div style={{ background: 'rgba(255,255,255,.14)', backdropFilter: 'blur(30px) saturate(160%)',
+              borderRadius: 26, padding: '12px 16px', border: '1px solid rgba(255,255,255,.18)',
+              display: 'flex', justifyContent: 'space-around' }}>
+              {appsMeta.slice(0, 4).map(app => (
+                <div key={app.id} onClick={() => openWin(app.id)}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
+                  <div style={{ width: 56, height: 56, borderRadius: 14, background: app.gradient,
+                    display: 'grid', placeItems: 'center', fontSize: 26,
+                    boxShadow: '0 4px 14px rgba(0,0,0,.4)',
+                    border: open[app.id] ? '2px solid rgba(157,144,255,.7)' : '1px solid rgba(255,255,255,.1)' }}>{app.icon}</div>
+                  {open[app.id] && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#fff' }} />}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {wins.map(w => (
+            <Sheet key={w.id} open={!!open[w.id]} onClose={() => closeWin(w.id)} title={w.title} os={os}>
+              {renderContent(w.id)}
+            </Sheet>
+          ))}
+        </div>
+        {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
+      </>
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════
+     ANDROID LAYOUT — Material You
+  ════════════════════════════════════════════════════════ */
+  if (isMobile && os === 'android') {
+    const androidNav = appsMeta.slice(0, 4);
+    return (
+      <>
+        {bootScreen}
+        <style>{`@keyframes load{to{width:100%}} @keyframes rise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}`}</style>
+        <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', background: wallpaper,
+          fontFamily: '"Google Sans",Roboto,"Noto Sans",sans-serif' }}>
+
+          {/* Android status bar */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 28, zIndex: 200,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px' }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{clock.split(' ').slice(1).join(' ')}</span>
+            <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+              <svg width="15" height="11" viewBox="0 0 15 11" fill="white"><rect x="0" y="6" width="2.5" height="5" rx=".8"/><rect x="3.5" y="4" width="2.5" height="7" rx=".8" opacity=".8"/><rect x="7" y="2" width="2.5" height="9" rx=".8" opacity=".9"/><rect x="10.5" y="0" width="2.5" height="11" rx=".8"/></svg>
+              <svg width="14" height="10" viewBox="0 0 14 10" fill="white"><path d="M7 8a1.2 1.2 0 100 2.4A1.2 1.2 0 007 8z"/><path d="M7 5C5.1 5 3.4 5.8 2.2 7L3.4 8.1C4.2 7.3 5.5 6.8 7 6.8s2.8.5 3.6 1.3L11.8 7C10.6 5.8 8.9 5 7 5z" opacity=".7"/><path d="M7 2C4 2 1.3 3.2 0 5.1l1.3 1.2C2.5 4.5 4.6 3.4 7 3.4s4.5 1.1 5.7 2.9L14 5.1C12.7 3.2 10 2 7 2z" opacity=".4"/></svg>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <div style={{ width: 22, height: 11, borderRadius: 2.5, border: '1.5px solid rgba(255,255,255,.6)', position: 'relative', display: 'flex', alignItems: 'center', padding: '2px 2px' }}>
+                  <div style={{ height: '100%', width: '70%', borderRadius: 1, background: '#4caf8a' }} />
+                  <div style={{ position: 'absolute', right: -3.5, top: '50%', transform: 'translateY(-50%)', width: 2, height: 4, background: 'rgba(255,255,255,.5)', borderRadius: '0 1px 1px 0' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* top greeting bar */}
+          <div style={{ position: 'absolute', top: 28, left: 0, right: 0, padding: '16px 20px 0',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', fontWeight: 400 }}>Welcome to</div>
+              <div style={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>lanrae<span style={{ color: '#b8b0ff' }}>OS</span></div>
+            </div>
+            <a href="/admin" style={{ width: 44, height: 44, borderRadius: '50%', display: 'grid', placeItems: 'center',
+              fontSize: 20, background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)',
+              textDecoration: 'none', backdropFilter: 'blur(10px)' }}>⚙️</a>
+          </div>
+
+          {/* scrollable cards — one per section */}
+          <div style={{ position: 'absolute', top: 108, left: 0, right: 0, bottom: 72,
+            padding: '0 16px 16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+            {appsMeta.map(app => (
+              <div key={app.id} onClick={() => { setActiveTab(app.id); openWin(app.id); }}
+                style={{ background: 'rgba(255,255,255,.06)', backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255,255,255,.1)', borderRadius: 20,
+                  padding: '18px 20px', display: 'flex', alignItems: 'center', gap: 16,
+                  cursor: 'pointer', transition: 'background .15s' }}
+                onPointerDown={e => (e.currentTarget.style.background = 'rgba(255,255,255,.1)')}
+                onPointerUp={e => (e.currentTarget.style.background = 'rgba(255,255,255,.06)')}>
+                <div style={{ width: 56, height: 56, borderRadius: 16, background: app.gradient,
+                  display: 'grid', placeItems: 'center', fontSize: 26, flexShrink: 0,
+                  boxShadow: '0 4px 14px rgba(0,0,0,.4)' }}>{app.icon}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 16, fontWeight: 500, color: '#fff' }}>{app.label}</div>
+                  <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.5)', marginTop: 2 }}>
+                    {app.id === 'store' ? 'AI products by lanrae' :
+                     app.id === 'members' ? 'Explorer · Supporter · Insider' :
+                     app.id === 'fans' ? 'Top supporters this month' :
+                     app.id === 'donate' ? 'Buy me a GPU hour ☕' :
+                     'AI Product Engineer · lanrae.co.uk'}
+                  </div>
+                </div>
+                <span style={{ color: 'rgba(255,255,255,.3)', fontSize: 20 }}>›</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Material bottom nav */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 72, zIndex: 200,
+            background: 'rgba(14,16,36,.9)', backdropFilter: 'blur(30px)',
+            borderTop: '1px solid rgba(255,255,255,.08)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-around', padding: '0 0 8px' }}>
+            {androidNav.map(app => {
+              const isActive = activeTab === app.id;
+              return (
+                <div key={app.id} onClick={() => { setActiveTab(app.id); openWin(app.id); }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                    cursor: 'pointer', flex: 1 }}>
+                  <div style={{ width: 64, height: 32, borderRadius: 16, display: 'grid', placeItems: 'center',
+                    background: isActive ? 'rgba(157,144,255,.25)' : 'transparent',
+                    transition: 'background .2s', fontSize: 20 }}>{app.icon}</div>
+                  <span style={{ fontSize: 11, color: isActive ? '#b8b0ff' : 'rgba(255,255,255,.4)',
+                    fontWeight: isActive ? 600 : 400, transition: 'color .2s' }}>{app.label}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {wins.map(w => (
+            <Sheet key={w.id} open={!!open[w.id]} onClose={() => closeWin(w.id)} title={w.title} os={os}>
+              {renderContent(w.id)}
+            </Sheet>
+          ))}
+        </div>
+        {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
+      </>
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════
+     WINDOWS 11 DESKTOP LAYOUT — Fluent Design
+  ════════════════════════════════════════════════════════ */
+  if (os === 'windows' && !isMobile) {
+    const winWinStyles: Record<string, React.CSSProperties> = {
+      store: { width: 'min(660px,92vw)', top: 56, left: 'calc(50% - 300px)' },
+      fans: { width: 'min(440px,92vw)', top: 100, left: 'calc(50% + 80px)' },
+      members: { width: 'min(680px,92vw)', top: 80, left: 'calc(50% - 340px)' },
+      donate: { width: 'min(380px,92vw)', top: 110, left: 'calc(50% - 190px)' },
+      about: { width: 'min(420px,92vw)', top: 100, left: 'calc(50% - 210px)' },
+    };
+
+    return (
+      <>
+        {bootScreen}
+        <style>{`@keyframes load{to{width:100%}} @keyframes rise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}} body{font-family:"Segoe UI",sans-serif!important}`}</style>
+        <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', background: wallpaper,
+          fontFamily: '"Segoe UI","Segoe UI Variable",sans-serif' }}>
+
+          {/* Windows top bar (system tray style) */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 40, zIndex: 900,
+            display: 'flex', alignItems: 'center', padding: '0 16px',
+            background: 'rgba(9,11,24,.65)', backdropFilter: 'blur(28px)',
+            borderBottom: '1px solid rgba(255,255,255,.07)', fontSize: 13 }}>
+            <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: -.2 }}>
+              ⊞ lanrae<span style={{ color: '#9d90ff' }}>OS</span>
+            </span>
+            {['store', 'members', 'fans', 'donate', 'about'].map(id => (
+              <span key={id} onClick={() => openWin(id)}
+                style={{ color: '#cdd3ef', opacity: .8, cursor: 'default', marginLeft: 20,
+                  padding: '4px 8px', borderRadius: 5, fontSize: 13,
+                  transition: 'background .1s' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.1)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                {id === 'fans' ? 'Top Fans' : id === 'donate' ? 'Support' : id.charAt(0).toUpperCase() + id.slice(1)}
+              </span>
+            ))}
+            <span style={{ marginLeft: 'auto', color: '#cdd3ef', fontVariantNumeric: 'tabular-nums', fontSize: 12 }}>{clock}</span>
+          </div>
+
+          {/* desktop icons */}
+          {[
+            { id: 'store', icon: '🛍️', label: 'Store', top: 60, left: 24 },
+            { id: 'fans', icon: '🏆', label: 'Top Fans', top: 160, left: 24 },
+            { id: 'about', icon: '◐', label: 'About', top: 260, left: 24 },
+          ].map(({ id, icon, label, top, left }) => (
+            <div key={id} onClick={() => openWin(id)}
+              style={{ position: 'absolute', top, left, width: 80, textAlign: 'center',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'default' }}>
+              <div style={{ width: 52, height: 52, borderRadius: 8, display: 'grid', placeItems: 'center',
+                fontSize: 24, background: 'rgba(255,255,255,.08)', backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255,255,255,.12)', boxShadow: '0 6px 20px rgba(0,0,0,.4)' }}>{icon}</div>
+              <span style={{ fontSize: 11.5, color: '#e8ecf7', textShadow: '0 1px 4px rgba(0,0,0,.8)',
+                padding: '2px 5px', borderRadius: 4, background: 'rgba(0,0,0,.25)' }}>{label}</span>
+            </div>
+          ))}
+
+          {/* Windows */}
+          {wins.map(({ id, title, subtitle }) => (
+            <WinWindow key={id} title={title} subtitle={subtitle}
+              open={!!open[id]} onClose={() => closeWin(id)} onMin={() => closeWin(id)}
+              style={winWinStyles[id]} zIndex={zMap[id] || 100} onFocus={() => focusWin(id)}>
+              {renderContent(id)}
+            </WinWindow>
+          ))}
+
+          {/* Windows 11 centered taskbar */}
+          <div style={{ position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', zIndex: 800,
+            display: 'flex', alignItems: 'center', gap: 4, padding: '6px 12px',
+            background: 'rgba(14,18,40,.72)', backdropFilter: 'blur(32px)',
+            border: '1px solid rgba(255,255,255,.1)', borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,.55)' }}>
+            {/* Start button */}
+            <div style={{ width: 42, height: 40, display: 'grid', placeItems: 'center', fontSize: 20,
+              borderRadius: 8, cursor: 'pointer', transition: 'background .1s',
+              marginRight: 6, borderRight: '1px solid rgba(255,255,255,.08)', paddingRight: 10 }}>⊞</div>
+            {appsMeta.map(app => (
+              <div key={app.id} title={app.label} onClick={() => openWin(app.id)}
+                style={{ width: 44, height: 40, borderRadius: 8, display: 'grid', placeItems: 'center',
+                  fontSize: 22, cursor: 'pointer', position: 'relative',
+                  background: open[app.id] ? 'rgba(157,144,255,.2)' : 'transparent',
+                  transition: 'background .1s' }}
+                onMouseEnter={e => { if (!open[app.id]) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.1)'; }}
+                onMouseLeave={e => { if (!open[app.id]) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                {app.icon}
+                {open[app.id] && <div style={{ position: 'absolute', bottom: 2, left: '50%',
+                  transform: 'translateX(-50%)', width: 14, height: 2, borderRadius: 1,
+                  background: '#9d90ff' }} />}
+              </div>
+            ))}
+            {/* admin */}
+            <a href="/admin" style={{ width: 44, height: 40, borderRadius: 8, display: 'grid', placeItems: 'center',
+              fontSize: 18, cursor: 'pointer', marginLeft: 6, borderLeft: '1px solid rgba(255,255,255,.08)',
+              paddingLeft: 10, textDecoration: 'none',
+              transition: 'background .1s' }}
+              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.1)')}
+              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}>⚙️</a>
+          </div>
+        </div>
+
+        {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
+      </>
+    );
+  }
+
+  /* ════════════════════════════════════════════════════════
+     macOS DESKTOP LAYOUT (default)
+  ════════════════════════════════════════════════════════ */
   return (
     <>
-      {/* ── boot screen ── */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 3000,
-        background: 'linear-gradient(160deg,#0a0f26,#05060f)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 26,
-        transition: 'opacity .7s ease', opacity: booted ? 0 : 1, pointerEvents: booted ? 'none' : 'auto' }}>
-        <div style={{ fontSize: 30, fontWeight: 800 }}>◐ lanrae<span style={{ color: '#9d90ff' }}>OS</span></div>
-        <div style={{ width: 200, height: 5, borderRadius: 5, background: 'rgba(255,255,255,.12)', overflow: 'hidden' }}>
-          <div style={{ height: '100%', background: 'linear-gradient(90deg,#9d90ff,#35d6c7)',
-            animation: 'load 2.1s ease forwards' }} />
-        </div>
-        <div style={{ fontSize: 12, color: '#7d84a6' }}>Starting up…</div>
-        <style>{`@keyframes load{to{width:100%}} @keyframes blink{50%{opacity:0}}`}</style>
-      </div>
-
-      {/* ── desktop ── */}
-      <div style={{ position: 'fixed', inset: 0, overflow: 'hidden',
-        background: `radial-gradient(120% 90% at 12% -8%,#3a1d6e 0%,transparent 48%),
-          radial-gradient(120% 100% at 92% 4%,#0e2a4d 0%,transparent 52%),
-          radial-gradient(140% 120% at 50% 120%,#1b1150 0%,transparent 60%),
-          linear-gradient(160deg,#0a0f26,#05060f)` }}>
+      {bootScreen}
+      <style>{`@keyframes load{to{width:100%}} @keyframes rise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}`}</style>
+      <div style={{ position: 'fixed', inset: 0, overflow: 'hidden', background: wallpaper }}>
 
         {/* menu bar */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 30, zIndex: 900,
@@ -264,7 +841,7 @@ export default function Desktop() {
           background: 'rgba(9,11,24,.55)', backdropFilter: 'blur(22px) saturate(160%)',
           borderBottom: '1px solid var(--stroke-2)', fontSize: 13 }}>
           <span style={{ fontWeight: 800 }}>◐ lanrae<span style={{ color: '#9d90ff' }}>OS</span></span>
-          {['store','members','fans','donate','about'].map(id => (
+          {['store', 'members', 'fans', 'donate', 'about'].map(id => (
             <span key={id} onClick={() => openWin(id)}
               style={{ color: '#dfe3f4', opacity: .86, cursor: 'default', textTransform: 'capitalize' }}>
               {id === 'fans' ? 'Top Fans' : id === 'donate' ? 'Support' : id.charAt(0).toUpperCase() + id.slice(1)}
@@ -290,204 +867,13 @@ export default function Desktop() {
           </div>
         ))}
 
-        {/* windows */}
+        {/* macOS windows */}
         {wins.map(({ id, title, subtitle }) => (
-          <Win key={id} id={id} title={title} subtitle={subtitle}
+          <MacWin key={id} title={title} subtitle={subtitle}
             open={!!open[id]} onClose={() => closeWin(id)} onMin={() => closeWin(id)}
             style={winStyles[id]} zIndex={zMap[id] || 100} onFocus={() => focusWin(id)}>
-
-            {id === 'store' && (
-              <>
-                <div style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px',
-                  color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>Featured · Built with AI</div>
-                <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>Ship-ready AI products</h2>
-                <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>
-                  Own them outright, or unlock the full shelf with an Insider membership.
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(200px,1fr))', gap: 14 }}>
-                  {products.length === 0 ? (
-                    <p style={{ color: '#7d84a6', fontSize: 13, gridColumn: '1/-1', padding: '20px 0' }}>
-                      No products yet — add some in the <a href="/admin" style={{ color: '#9d90ff' }}>admin panel</a>.
-                    </p>
-                  ) : products.map(p => (
-                    <div key={p.id} style={{ background: 'var(--glass-2)', border: '1px solid var(--stroke-2)',
-                      borderRadius: 12, overflow: 'hidden', display: 'flex', flexDirection: 'column',
-                      transition: 'transform .18s ease, border-color .18s ease' }}
-                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-3px)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(124,108,255,.5)'; }}
-                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.borderColor = ''; }}>
-                      <div style={{ height: 90, display: 'grid', placeItems: 'center', fontSize: 32,
-                        background: p.gradient, position: 'relative' }}>
-                        {p.isNew && <span style={{ position: 'absolute', top: 9, left: 9, fontSize: 9.5,
-                          fontWeight: 700, letterSpacing: '.6px', textTransform: 'uppercase',
-                          padding: '3px 7px', borderRadius: 20, background: 'rgba(0,0,0,.4)',
-                          border: '1px solid rgba(245,196,81,.4)', color: '#ffd36b' }}>New</span>}
-                        {p.requiresMembership && <span style={{ position: 'absolute', top: 9, right: 9 }}>🔒</span>}
-                        {p.icon || '📦'}
-                      </div>
-                      <div style={{ padding: '12px 13px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <h3 style={{ fontSize: 14.5, fontWeight: 650 }}>{p.name}</h3>
-                        <p style={{ fontSize: 11.5, color: '#a7aecb', lineHeight: 1.45, minHeight: 33 }}>{p.description}</p>
-                        {/* links row */}
-                        {(p.artifactUrl || p.githubUrl || p.vercelUrl) && (
-                          <div style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
-                            {p.artifactUrl && <a href={p.artifactUrl} target="_blank" rel="noopener noreferrer"
-                              style={{ fontSize: 11, color: '#9d90ff', textDecoration: 'none',
-                                padding: '3px 7px', borderRadius: 6, border: '1px solid rgba(124,108,255,.3)',
-                                background: 'rgba(124,108,255,.1)' }}>📄 Artifact</a>}
-                            {p.githubUrl && <a href={p.githubUrl} target="_blank" rel="noopener noreferrer"
-                              style={{ fontSize: 11, color: '#9d90ff', textDecoration: 'none',
-                                padding: '3px 7px', borderRadius: 6, border: '1px solid rgba(124,108,255,.3)',
-                                background: 'rgba(124,108,255,.1)' }}>💻 GitHub</a>}
-                            {p.vercelUrl && <a href={p.vercelUrl} target="_blank" rel="noopener noreferrer"
-                              style={{ fontSize: 11, color: '#9d90ff', textDecoration: 'none',
-                                padding: '3px 7px', borderRadius: 6, border: '1px solid rgba(124,108,255,.3)',
-                                background: 'rgba(124,108,255,.1)' }}>▲ Live</a>}
-                          </div>
-                        )}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ fontSize: 14, fontWeight: 700 }}>
-                            {p.isFree ? 'Free' : `£${(p.price / 100).toFixed(2)}`}
-                          </span>
-                          <button onClick={() => setCheckout(p)}
-                            style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
-                              border: 'none', borderRadius: 9, padding: '7px 12px', fontSize: 12,
-                              fontWeight: 650, cursor: 'pointer' }}>
-                            {p.isFree ? 'Open' : p.requiresMembership ? 'Unlock' : 'Buy'}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {id === 'fans' && (
-              <>
-                <div style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px',
-                  color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>Hall of fame</div>
-                <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>The people funding the future</h2>
-                <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>Ranked by total support. Resets monthly.</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {fans.length === 0 ? (
-                    <p style={{ color: '#7d84a6', fontSize: 13, padding: '20px 0' }}>No fans yet — be the first to support!</p>
-                  ) : fans.map(fan => {
-                    const medal = fan.rank === 1 ? '🥇' : fan.rank === 2 ? '🥈' : fan.rank === 3 ? '🥉' : fan.rank;
-                    return (
-                      <div key={fan.id} style={{ display: 'grid', gridTemplateColumns: '44px 1fr auto',
-                        alignItems: 'center', gap: 12, padding: '10px 12px', borderRadius: 10,
-                        background: fan.rank <= 3 ? 'linear-gradient(90deg,rgba(124,108,255,.14),transparent)' : undefined,
-                        border: fan.rank <= 3 ? '1px solid var(--stroke-2)' : '1px solid transparent' }}>
-                        <div style={{ textAlign: 'center', fontSize: 16, fontWeight: 800 }}>{medal}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                          <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'grid',
-                            placeItems: 'center', fontSize: 13, fontWeight: 700, color: '#0a0d1c',
-                            background: fan.avatarColor, flexShrink: 0 }}>{fan.initials}</div>
-                          <div>
-                            <div style={{ fontSize: 13.5, fontWeight: 600 }}>{fan.displayName}</div>
-                            <div style={{ fontSize: 11, color: '#7d84a6' }}>{fan.membershipTier || 'Explorer'}</div>
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <b style={{ fontSize: 14, fontVariantNumeric: 'tabular-nums' }}>£{(fan.totalSpent / 100).toFixed(0)}</b>
-                          <span style={{ display: 'block', fontSize: 10.5, color: '#7d84a6' }}>lifetime</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-
-            {id === 'members' && (
-              <>
-                <div style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px',
-                  color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>Join the studio</div>
-                <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>Back the build. Get the perks.</h2>
-                <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>
-                  Members fund what gets built next and top supporters get their name on the wall.
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
-                  {[
-                    { name: 'Explorer', price: 0, feat: false, features: ['Browse every launch','Free product: PromptDeck','Community changelog'] },
-                    { name: 'Supporter', price: 5, feat: true, features: ['Everything in Explorer','Early access to launches','Name on Supporters wall','Vote on the roadmap'] },
-                    { name: 'Insider', price: 15, feat: false, features: ['Everything in Supporter','Entire product library','Top 10 Fans eligible','Source access + build logs','Monthly office hours'] },
-                  ].map(t => (
-                    <div key={t.name} style={{ background: 'var(--glass-2)', border: `1px solid ${t.feat ? 'rgba(124,108,255,.55)' : 'var(--stroke-2)'}`,
-                      borderRadius: 14, padding: '18px 16px', display: 'flex', flexDirection: 'column', gap: 12,
-                      position: 'relative', boxShadow: t.feat ? '0 0 0 1px rgba(124,108,255,.25), 0 18px 40px rgba(124,108,255,.16)' : undefined }}>
-                      {t.feat && <div style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)',
-                        background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', fontSize: 10,
-                        fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', padding: '4px 12px', borderRadius: 20 }}>Popular</div>}
-                      <h3 style={{ fontSize: 15, fontWeight: 700 }}>{t.name}</h3>
-                      <div style={{ fontSize: 30, fontWeight: 800 }}>£{t.price}<small style={{ fontSize: 13, fontWeight: 500, color: '#a7aecb' }}>/mo</small></div>
-                      <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 12.5, color: '#d7dcf1' }}>
-                        {t.features.map(f => <li key={f} style={{ display: 'flex', gap: 8 }}><span style={{ color: '#3ddc97', fontWeight: 800 }}>✓</span>{f}</li>)}
-                      </ul>
-                      <button onClick={() => t.price > 0 ? setCheckout({ id: t.name, name: `${t.name} membership`, description: '', icon: '🪪', price: t.price * 100, isFree: false, isNew: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }) : undefined}
-                        style={{ background: t.price === 0 ? 'rgba(255,255,255,.08)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)',
-                          color: '#fff', border: t.price === 0 ? '1px solid var(--stroke)' : 'none',
-                          borderRadius: 9, padding: '11px', fontSize: 12.5, fontWeight: 650, cursor: 'pointer', width: '100%' }}>
-                        {t.price === 0 ? 'Current plan' : `Subscribe · £${t.price}/mo`}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-
-            {id === 'donate' && (
-              <>
-                <div style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px',
-                  color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>One-off tip</div>
-                <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>Buy me a GPU hour ☕</h2>
-                <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>Every tip goes straight into building the next product.</p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9, marginBottom: 14 }}>
-                  {[3, 7, 15, 30, 50].map(a => (
-                    <span key={a} onClick={() => setDonateAmt(a)}
-                      style={{ padding: '9px 15px', borderRadius: 20,
-                        border: `1px solid ${donateAmt === a ? 'transparent' : 'var(--stroke)'}`,
-                        background: donateAmt === a ? 'linear-gradient(180deg,#9d90ff,#7c6cff)' : 'rgba(255,255,255,.05)',
-                        fontWeight: 650, fontSize: 13, cursor: 'pointer',
-                        color: donateAmt === a ? '#fff' : '#eef1fb' }}>£{a}</span>
-                  ))}
-                </div>
-                <button onClick={() => setCheckout({ id: 'donate', name: `£${donateAmt} tip`, description: '', icon: '💛', price: donateAmt * 100, isFree: false, isNew: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#f5c451,#9a6a00)' })}
-                  style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
-                    border: 'none', borderRadius: 9, padding: '12px', fontSize: 13,
-                    fontWeight: 650, cursor: 'pointer', width: '100%' }}>
-                  Donate £{donateAmt}
-                </button>
-                <div style={{ fontSize: 12.5, color: '#a7aecb', display: 'flex', gap: 7, alignItems: 'center', marginTop: 10 }}>
-                  💛 <span>142 supporters have tipped this month</span>
-                </div>
-              </>
-            )}
-
-            {id === 'about' && (
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ width: 84, height: 84, borderRadius: 22, margin: '6px auto 14px', display: 'grid',
-                  placeItems: 'center', fontSize: 36, background: 'linear-gradient(160deg,#35d6c7,#9d90ff)',
-                  color: '#0a0d1c', fontWeight: 800 }}>L</div>
-                <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 8 }}>lanrae · AI Product Engineer</h2>
-                <p style={{ fontSize: 13, color: '#a7aecb', maxWidth: '36ch', margin: '0 auto 16px' }}>
-                  I design, build, and ship AI-powered products end to end — then launch them here,
-                  on a desktop you can actually drive. lanrae.co.uk is the studio, the storefront,
-                  and the changelog, all in one.
-                </p>
-                <div style={{ display: 'flex', gap: 9, justifyContent: 'center', flexWrap: 'wrap' }}>
-                  <button onClick={() => { closeWin('about'); openWin('store'); }}
-                    style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
-                      border: 'none', borderRadius: 9, padding: '10px 16px', fontSize: 12.5,
-                      fontWeight: 650, cursor: 'pointer' }}>Browse products</button>
-                  <button onClick={() => { closeWin('about'); openWin('members'); }}
-                    style={{ background: 'rgba(255,255,255,.08)', color: '#e7ebfb',
-                      border: '1px solid var(--stroke)', borderRadius: 9, padding: '10px 16px',
-                      fontSize: 12.5, fontWeight: 650, cursor: 'pointer' }}>Become a member</button>
-                </div>
-              </div>
-            )}
-          </Win>
+            {renderContent(id)}
+          </MacWin>
         ))}
 
         {/* dock */}
@@ -495,7 +881,7 @@ export default function Desktop() {
           display: 'flex', alignItems: 'flex-end', gap: 8, padding: '9px 12px',
           background: 'rgba(18,20,40,.5)', backdropFilter: 'blur(26px) saturate(160%)',
           border: '1px solid var(--stroke)', borderRadius: 20, boxShadow: '0 18px 44px rgba(0,0,0,.5)' }}>
-          {dockApps.map(({ id, icon, label }) => (
+          {appsMeta.map(({ id, icon, label }) => (
             <div key={id} title={label} onClick={() => openWin(id)}
               style={{ width: 50, height: 50, borderRadius: 13, display: 'grid', placeItems: 'center',
                 fontSize: 25, cursor: 'pointer', position: 'relative',
@@ -511,7 +897,6 @@ export default function Desktop() {
           ))}
         </div>
 
-        {/* admin shortcut */}
         <a href="/admin" style={{ position: 'absolute', bottom: 78, right: 20, fontSize: 11,
           color: '#7d84a6', textDecoration: 'none', padding: '5px 10px',
           background: 'rgba(0,0,0,.3)', borderRadius: 8, border: '1px solid var(--stroke-2)' }}>
