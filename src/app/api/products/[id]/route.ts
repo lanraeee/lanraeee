@@ -1,21 +1,25 @@
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+type Ctx = { params: Promise<{ id: string }> };
+
+export async function GET(_: Request, { params }: Ctx) {
   try {
-    const product = await prisma.product.findUnique({ where: { id: params.id } });
+    const { id } = await params;
+    const product = await prisma.product.findUnique({ where: { id } });
     if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json(product);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch product' }, { status: 500 });
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: Ctx) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const product = await prisma.product.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name: body.name,
         description: body.description,
@@ -32,16 +36,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       },
     });
     return NextResponse.json(product);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
 }
 
-export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: Ctx) {
   try {
-    await prisma.product.delete({ where: { id: params.id } });
+    const { id } = await params;
+    await prisma.product.delete({ where: { id } });
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
   }
 }
