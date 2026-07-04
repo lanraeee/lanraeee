@@ -135,7 +135,7 @@ function ProductForm({ product, onSave, onCancel }: {
       </div>
 
       <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={() => onSave(form)}
+        <button onClick={() => onSave({ ...form, price: parseFloat(form.price) || 0 })}
           style={{ flex: 1, background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
             border: 'none', borderRadius: 9, padding: '11px', fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
           {product ? 'Save changes' : 'Create product'}
