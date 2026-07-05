@@ -263,6 +263,8 @@ export default function Desktop() {
   const [isMobile, setIsMobile] = useState(false);
   const [os, setOs] = useState<OSType>('mac');
   const [activeTab, setActiveTab] = useState('store'); // android bottom nav
+  const [reqForm, setReqForm] = useState({ name: '', email: '', title: '', description: '' });
+  const [reqStatus, setReqStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
 
   useEffect(() => {
     const detected = detectOS();
@@ -304,12 +306,26 @@ export default function Desktop() {
   const openWin = (id: string) => { focusWin(id); setOpen(m => ({ ...m, [id]: true })); };
   const closeWin = (id: string) => setOpen(m => ({ ...m, [id]: false }));
 
+  const submitRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setReqStatus('sending');
+    try {
+      const res = await fetch('/api/project-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reqForm),
+      });
+      if (res.ok) { setReqStatus('sent'); setReqForm({ name: '', email: '', title: '', description: '' }); }
+      else setReqStatus('error');
+    } catch { setReqStatus('error'); }
+  };
+
   const appsMeta = [
     { id: 'store', icon: '🛍️', label: 'Store', gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' },
     { id: 'members', icon: '🪪', label: 'Members', gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
     { id: 'fans', icon: '🏆', label: 'Fans', gradient: 'linear-gradient(160deg,#f5c451,#9a6a00)' },
     { id: 'donate', icon: '💛', label: 'Support', gradient: 'linear-gradient(160deg,#ff6ba8,#7a1d47)' },
-    { id: 'about', icon: '◐', label: 'About', gradient: 'linear-gradient(160deg,#35d6c7,#0e5a52)' },
+    { id: 'about', icon: 'ℹ️', label: 'About', gradient: 'linear-gradient(160deg,#35d6c7,#0e5a52)' },
   ];
 
   const wins = [
@@ -453,6 +469,64 @@ export default function Desktop() {
               </button>
             </div>
           ))}
+        </div>
+
+        {/* Request a Project */}
+        <div style={{ marginTop: 28, borderTop: '1px solid var(--stroke-2)', paddingTop: 24 }}>
+          <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>Members · Build with me</p>
+          <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>Request a project</h3>
+          <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 18 }}>Got an idea? Tell me what you want built — top-voted requests shape the roadmap.</p>
+
+          {reqStatus === 'sent' ? (
+            <div style={{ background: 'rgba(61,220,151,.08)', border: '1px solid rgba(61,220,151,.25)',
+              borderRadius: 14, padding: '20px', textAlign: 'center', display: 'flex',
+              flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <div style={{ fontSize: 32 }}>🎉</div>
+              <p style={{ fontSize: 14, fontWeight: 650, color: '#3ddc97' }}>Request submitted!</p>
+              <p style={{ fontSize: 12, color: '#a7aecb' }}>I'll review it and add top requests to the roadmap.</p>
+              <button onClick={() => setReqStatus('idle')}
+                style={{ fontSize: 12, color: '#9d90ff', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+                Submit another
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={submitRequest} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <input required value={reqForm.name} onChange={e => setReqForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="Your name"
+                  style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
+                    borderRadius: 10, padding: '11px 13px', fontSize: 13, color: '#eef1fb',
+                    fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+                <input required type="email" value={reqForm.email} onChange={e => setReqForm(f => ({ ...f, email: e.target.value }))}
+                  placeholder="Your email"
+                  style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
+                    borderRadius: 10, padding: '11px 13px', fontSize: 13, color: '#eef1fb',
+                    fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+              </div>
+              <input required value={reqForm.title} onChange={e => setReqForm(f => ({ ...f, title: e.target.value }))}
+                placeholder="Project title — e.g. AI invoice scanner"
+                style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
+                  borderRadius: 10, padding: '11px 13px', fontSize: 13, color: '#eef1fb',
+                  fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+              <textarea required value={reqForm.description} onChange={e => setReqForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="Describe what it does and why you need it…"
+                rows={3}
+                style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
+                  borderRadius: 10, padding: '11px 13px', fontSize: 13, color: '#eef1fb',
+                  fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box',
+                  resize: 'vertical', lineHeight: 1.5 }} />
+              {reqStatus === 'error' && (
+                <p style={{ fontSize: 12, color: '#ff7c78', margin: 0 }}>Something went wrong — try again.</p>
+              )}
+              <button type="submit" disabled={reqStatus === 'sending'}
+                style={{ background: reqStatus === 'sending' ? 'rgba(124,108,255,.4)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)',
+                  color: '#fff', border: 'none', borderRadius: 12, padding: '13px',
+                  fontSize: 14, fontWeight: 650, cursor: reqStatus === 'sending' ? 'wait' : 'pointer',
+                  fontFamily: 'inherit', transition: 'opacity .15s' }}>
+                {reqStatus === 'sending' ? 'Sending…' : '🚀 Submit request'}
+              </button>
+            </form>
+          )}
         </div>
       </>
     );
@@ -765,7 +839,7 @@ export default function Desktop() {
           {[
             { id: 'store', icon: '🛍️', label: 'Store', top: 60, left: 24 },
             { id: 'fans', icon: '🏆', label: 'Top Fans', top: 160, left: 24 },
-            { id: 'about', icon: '◐', label: 'About', top: 260, left: 24 },
+            { id: 'about', icon: 'ℹ️', label: 'About', top: 260, left: 24 },
           ].map(({ id, icon, label, top, left }) => (
             <div key={id} onClick={() => openWin(id)}
               style={{ position: 'absolute', top, left, width: 80, textAlign: 'center',
@@ -854,7 +928,7 @@ export default function Desktop() {
         {[
           { id: 'store', icon: '🛍️', label: 'Store', top: 52, left: 28 },
           { id: 'fans', icon: '🏆', label: 'Top Fans', top: 158, left: 28 },
-          { id: 'about', icon: '◐', label: 'About', top: 264, left: 28 },
+          { id: 'about', icon: 'ℹ️', label: 'About', top: 264, left: 28 },
         ].map(({ id, icon, label, top, left }) => (
           <div key={id} onClick={() => openWin(id)}
             style={{ position: 'absolute', top, left, width: 88, textAlign: 'center',
