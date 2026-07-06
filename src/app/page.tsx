@@ -336,6 +336,14 @@ export default function Desktop() {
   const [memberMessages, setMemberMessages] = useState<{ id: string; content: string; fromAdmin: boolean; createdAt: string }[]>([]);
   const [memberChatInput, setMemberChatInput] = useState('');
   const [memberTab, setMemberTab] = useState<'profile' | 'chat'>('profile');
+  const [setPasswordToken, setSetPasswordToken] = useState<string | null>(null);
+  const [setPasswordInput, setSetPasswordInput] = useState('');
+  const [setPasswordConfirm, setSetPasswordConfirm] = useState('');
+  const [setPasswordLoading, setSetPasswordLoading] = useState(false);
+  const [setPasswordError, setSetPasswordError] = useState<string | null>(null);
+  const [setPasswordDone, setSetPasswordDone] = useState(false);
+  const [memberPassword, setMemberPassword] = useState('');
+  const [needsPassword, setNeedsPassword] = useState(false);
 
   useEffect(() => {
     const detected = detectOS();
@@ -387,6 +395,16 @@ export default function Desktop() {
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('set-password');
+    if (token) {
+      setSetPasswordToken(token);
+      window.history.replaceState({}, '', window.location.pathname);
+      openWin('profile');
+    }
+  }, []);
+
+  useEffect(() => {
     Promise.all([fetch('/api/products'), fetch('/api/fans')])
       .then(([p, f]) => Promise.all([p.json(), f.json()]))
       .then(([p, f]) => { setProducts(p); setFans(f); })
@@ -428,12 +446,19 @@ export default function Desktop() {
     setMemberLoginLoading(true);
     setMemberLoginError(null);
     try {
-      const res = await fetch('/api/member/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: memberEmail }) });
+      const body: Record<string, string> = { email: memberEmail };
+      if (needsPassword || memberPassword) body.password = memberPassword;
+      const res = await fetch('/api/member/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await res.json();
       if (res.ok) {
         setMemberUser(data);
+        setNeedsPassword(false);
+        setMemberPassword('');
         fetch('/api/member/profile').then(r => r.json()).then(p => { setMemberProfile(p); setMemberProfileEdits(p); });
         fetch('/api/member/chat').then(r => r.json()).then(msgs => Array.isArray(msgs) && setMemberMessages(msgs));
+      } else if (data.needsPassword) {
+        setNeedsPassword(true);
+        setMemberLoginError('This account has a password. Please enter it below.');
       } else {
         setMemberLoginError(data.error || 'Login failed');
       }
@@ -744,32 +769,133 @@ export default function Desktop() {
         borderRadius: 9, padding: '10px 13px', fontSize: 13, color: '#eef1fb',
         fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box',
       };
+      if (!memberUser && setPasswordToken) return (
+        <div>
+          <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#1a8a6a', fontWeight: 700, marginBottom: 8 }}>Welcome to lanrae</p>
+          <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>{setPasswordDone ? 'Password set!' : 'Set your password'}</h2>
+          {setPasswordDone ? (
+            <p style={{ fontSize: 13, color: '#a7aecb' }}>You're all set. You can now log in with your email and password.</p>
+          ) : (
+            <form onSubmit={async e => {
+              e.preventDefault();
+              if (setPasswordInput !== setPasswordConfirm) { setSetPasswordError('Passwords do not match'); return; }
+              if (setPasswordInput.length < 6) { setSetPasswordError('Password must be at least 6 characters'); return; }
+              setSetPasswordLoading(true); setSetPasswordError(null);
+              try {
+                const res = await fetch('/api/member/set-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: setPasswordToken, password: setPasswordInput }) });
+                const data = await res.json();
+                if (!res.ok) { setSetPasswordError(data.error || 'Something went wrong'); return; }
+                setSetPasswordDone(true);
+                setSetPasswordToken(null);
+                const authRes = await fetch('/api/member/auth');
+                if (authRes.ok) {
+                  const auth = await authRes.json();
+                  if (auth?.userId) {
+                    setMemberUser(auth);
+                    fetch('/api/member/profile').then(r => r.json()).then(p => { setMemberProfile(p); setMemberProfileEdits(p); });
+                    fetch('/api/member/chat').then(r => r.json()).then(msgs => Array.isArray(msgs) && setMemberMessages(msgs));
+                  }
+                }
+              } catch { setSetPasswordError('Network error — please try again'); }
+              finally { setSetPasswordLoading(false); }
+            }} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
+              <input required type="password" placeholder="New password" value={setPasswordInput} onChange={e => setSetPasswordInput(e.target.value)} style={inputStyle} />
+              <input required type="password" placeholder="Confirm password" value={setPasswordConfirm} onChange={e => setSetPasswordConfirm(e.target.value)} style={inputStyle} />
+              {setPasswordError && <div style={{ background: 'rgba(255,95,87,.08)', border: '1px solid rgba(255,95,87,.25)', borderRadius: 9, padding: '10px 13px', fontSize: 13, color: '#ff7c78' }}>{setPasswordError}</div>}
+              <button type="submit" disabled={setPasswordLoading}
+                style={{ background: setPasswordLoading ? 'rgba(26,138,106,.5)' : 'linear-gradient(180deg,#1a8a6a,#0a3d2a)', color: '#fff', border: 'none', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 650, cursor: setPasswordLoading ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
+                {setPasswordLoading ? 'Setting password…' : 'Set password & sign in'}
+              </button>
+            </form>
+          )}
+        </div>
+      );
       if (!memberUser) return (
         <div>
-          <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#1a8a6a', fontWeight: 700, marginBottom: 8 }}>Member Area</p>
-          <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>Access your profile</h2>
-          <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 20 }}>Enter the email address you used when purchasing a Supporter or Insider membership.</p>
-          <form onSubmit={memberLogin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <input required type="email" placeholder="your@email.com" value={memberEmail}
-              onChange={e => setMemberEmail(e.target.value)} style={inputStyle} />
-            {memberLoginError && (
-              <div style={{ background: 'rgba(255,95,87,.08)', border: '1px solid rgba(255,95,87,.25)', borderRadius: 9, padding: '10px 13px', fontSize: 13, color: '#ff7c78' }}>
-                {memberLoginError}
-                {memberLoginError.includes('membership') && (
-                  <span> — <button type="button" onClick={() => { closeWin('profile'); openWin('members'); }}
-                    style={{ color: '#9d90ff', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, textDecoration: 'underline', padding: 0 }}>
-                    get membership
-                  </button></span>
+          {setPasswordToken && !setPasswordDone ? (
+            <>
+              <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#1a8a6a', fontWeight: 700, marginBottom: 8 }}>Set Password</p>
+              <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>Secure your account</h2>
+              <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 20 }}>Create a password to protect your lanraeOS account.</p>
+              <form onSubmit={async e => {
+                e.preventDefault();
+                if (setPasswordInput !== setPasswordConfirm) { setSetPasswordError('Passwords do not match'); return; }
+                if (setPasswordInput.length < 6) { setSetPasswordError('Password must be at least 6 characters'); return; }
+                setSetPasswordLoading(true);
+                setSetPasswordError(null);
+                try {
+                  const res = await fetch('/api/member/set-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: setPasswordToken, password: setPasswordInput }),
+                  });
+                  const data = await res.json();
+                  if (res.ok) {
+                    setSetPasswordDone(true);
+                    setSetPasswordToken(null);
+                    // Auto-log in — the API sets the cookie, re-fetch auth
+                    const authRes = await fetch('/api/member/auth');
+                    const authData = authRes.ok ? await authRes.json() : null;
+                    if (authData?.userId) {
+                      setMemberUser(authData);
+                      fetch('/api/member/profile').then(r => r.json()).then(p => { setMemberProfile(p); setMemberProfileEdits(p); });
+                      fetch('/api/member/chat').then(r => r.json()).then(msgs => Array.isArray(msgs) && setMemberMessages(msgs));
+                    }
+                  } else {
+                    setSetPasswordError(data.error || 'Failed to set password');
+                  }
+                } catch { setSetPasswordError('Something went wrong'); }
+                finally { setSetPasswordLoading(false); }
+              }} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <input required type="password" placeholder="New password (min 6 chars)" value={setPasswordInput}
+                  onChange={e => setSetPasswordInput(e.target.value)} style={inputStyle} />
+                <input required type="password" placeholder="Confirm password" value={setPasswordConfirm}
+                  onChange={e => setSetPasswordConfirm(e.target.value)} style={inputStyle} />
+                {setPasswordError && (
+                  <div style={{ background: 'rgba(255,95,87,.08)', border: '1px solid rgba(255,95,87,.25)', borderRadius: 9, padding: '10px 13px', fontSize: 13, color: '#ff7c78' }}>
+                    {setPasswordError}
+                  </div>
                 )}
-              </div>
-            )}
-            <button type="submit" disabled={memberLoginLoading}
-              style={{ background: memberLoginLoading ? 'rgba(26,138,106,.5)' : 'linear-gradient(180deg,#1a8a6a,#0a3d2a)', color: '#fff',
-                border: 'none', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 650,
-                cursor: memberLoginLoading ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
-              {memberLoginLoading ? 'Checking…' : 'Access my profile'}
-            </button>
-          </form>
+                <button type="submit" disabled={setPasswordLoading}
+                  style={{ background: setPasswordLoading ? 'rgba(26,138,106,.5)' : 'linear-gradient(180deg,#1a8a6a,#0a3d2a)', color: '#fff',
+                    border: 'none', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 650,
+                    cursor: setPasswordLoading ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
+                  {setPasswordLoading ? 'Setting password…' : 'Set password & sign in'}
+                </button>
+              </form>
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#1a8a6a', fontWeight: 700, marginBottom: 8 }}>Member Area</p>
+              <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>Access your profile</h2>
+              <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 20 }}>Enter the email address you used when purchasing a Supporter or Insider membership.</p>
+              <form onSubmit={memberLogin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <input required type="email" placeholder="your@email.com" value={memberEmail}
+                  onChange={e => setMemberEmail(e.target.value)} style={inputStyle} />
+                {needsPassword && (
+                  <input required type="password" placeholder="Password" value={memberPassword}
+                    onChange={e => setMemberPassword(e.target.value)} style={inputStyle} autoFocus />
+                )}
+                {memberLoginError && (
+                  <div style={{ background: 'rgba(255,95,87,.08)', border: '1px solid rgba(255,95,87,.25)', borderRadius: 9, padding: '10px 13px', fontSize: 13, color: '#ff7c78' }}>
+                    {memberLoginError}
+                    {memberLoginError.includes('membership') && (
+                      <span> — <button type="button" onClick={() => { closeWin('profile'); openWin('members'); }}
+                        style={{ color: '#9d90ff', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, textDecoration: 'underline', padding: 0 }}>
+                        get membership
+                      </button></span>
+                    )}
+                  </div>
+                )}
+                <button type="submit" disabled={memberLoginLoading}
+                  style={{ background: memberLoginLoading ? 'rgba(26,138,106,.5)' : 'linear-gradient(180deg,#1a8a6a,#0a3d2a)', color: '#fff',
+                    border: 'none', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 650,
+                    cursor: memberLoginLoading ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
+                  {memberLoginLoading ? 'Checking…' : needsPassword ? 'Sign in' : 'Access my profile'}
+                </button>
+              </form>
+            </>
+          )}
         </div>
       );
       return (
