@@ -27,6 +27,8 @@ const CONTENT_DEFAULTS: Record<string, string> = {
   'donate.subheading': 'Every tip goes straight into building the next product.',
   'about.heading': 'lanrae · AI Product Engineer',
   'about.body': 'I design, build, and ship AI-powered products end to end — then launch them here, on a desktop you can actually drive. lanrae.co.uk is the studio, the storefront, and the changelog, all in one.',
+  'app.profile.icon': '👤', 'app.profile.label': 'Profile',
+  'win.profile.title': 'Member Profile', 'win.profile.subtitle': '',
 };
 
 /* ── types ─────────────────────────────────────────────────── */
@@ -295,6 +297,16 @@ export default function Desktop() {
   const [content, setContent] = useState<Record<string, string>>({});
   const [toasts, setToasts] = useState<{ id: string; city: string | null; country: string | null; browser: string | null; device: string | null }[]>([]);
   const lastPoll = useRef(new Date().toISOString());
+  const [memberUser, setMemberUser] = useState<{ userId: string; email: string } | null>(null);
+  const [memberEmail, setMemberEmail] = useState('');
+  const [memberLoginLoading, setMemberLoginLoading] = useState(false);
+  const [memberLoginError, setMemberLoginError] = useState<string | null>(null);
+  const [memberProfile, setMemberProfile] = useState<Record<string, unknown>>({});
+  const [memberProfileEdits, setMemberProfileEdits] = useState<Record<string, string>>({});
+  const [memberProfileSaving, setMemberProfileSaving] = useState(false);
+  const [memberMessages, setMemberMessages] = useState<{ id: string; content: string; fromAdmin: boolean; createdAt: string }[]>([]);
+  const [memberChatInput, setMemberChatInput] = useState('');
+  const [memberTab, setMemberTab] = useState<'profile' | 'chat'>('profile');
 
   useEffect(() => {
     const detected = detectOS();
@@ -336,6 +348,16 @@ export default function Desktop() {
   }, []);
 
   useEffect(() => {
+    fetch('/api/member/auth').then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.userId) {
+        setMemberUser(d);
+        fetch('/api/member/profile').then(r => r.json()).then(p => { setMemberProfile(p); setMemberProfileEdits(p); });
+        fetch('/api/member/chat').then(r => r.json()).then(msgs => Array.isArray(msgs) && setMemberMessages(msgs));
+      }
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     Promise.all([fetch('/api/products'), fetch('/api/fans')])
       .then(([p, f]) => Promise.all([p.json(), f.json()]))
       .then(([p, f]) => { setProducts(p); setFans(f); })
@@ -372,6 +394,41 @@ export default function Desktop() {
     } catch { setReqStatus('error'); }
   };
 
+  const memberLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMemberLoginLoading(true);
+    setMemberLoginError(null);
+    try {
+      const res = await fetch('/api/member/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: memberEmail }) });
+      const data = await res.json();
+      if (res.ok) {
+        setMemberUser(data);
+        fetch('/api/member/profile').then(r => r.json()).then(p => { setMemberProfile(p); setMemberProfileEdits(p); });
+        fetch('/api/member/chat').then(r => r.json()).then(msgs => Array.isArray(msgs) && setMemberMessages(msgs));
+      } else {
+        setMemberLoginError(data.error || 'Login failed');
+      }
+    } catch { setMemberLoginError('Something went wrong'); }
+    finally { setMemberLoginLoading(false); }
+  };
+
+  const saveMemberProfile = async () => {
+    setMemberProfileSaving(true);
+    await fetch('/api/member/profile', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(memberProfileEdits) });
+    setMemberProfile({ ...memberProfileEdits });
+    setMemberProfileSaving(false);
+  };
+
+  const sendMemberMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!memberChatInput.trim()) return;
+    const content = memberChatInput;
+    setMemberChatInput('');
+    const res = await fetch('/api/member/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content }) });
+    const msg = await res.json();
+    if (msg.id) setMemberMessages(prev => [...prev, msg]);
+  };
+
   const appsMeta = [
     { id: 'store',   icon: c('app.store.icon'),   label: c('app.store.label'),   gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' },
     { id: 'members', icon: c('app.members.icon'), label: c('app.members.label'), gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
@@ -379,6 +436,7 @@ export default function Desktop() {
     { id: 'request', icon: c('app.request.icon'), label: c('app.request.label'), gradient: 'linear-gradient(160deg,#ff9d4d,#7a3a00)' },
     { id: 'donate',  icon: c('app.donate.icon'),  label: c('app.donate.label'),  gradient: 'linear-gradient(160deg,#ff6ba8,#7a1d47)' },
     { id: 'about',   icon: c('app.about.icon'),   label: c('app.about.label'),   gradient: 'linear-gradient(160deg,#35d6c7,#0e5a52)' },
+    { id: 'profile', icon: c('app.profile.icon'), label: c('app.profile.label'), gradient: 'linear-gradient(160deg,#1a8a6a,#0a3d2a)' },
   ];
 
   const wins = [
@@ -388,6 +446,7 @@ export default function Desktop() {
     { id: 'request', title: 'Request a Project', subtitle: '— shape the roadmap' },
     { id: 'donate', title: 'Support the work' },
     { id: 'about', title: 'About' },
+    { id: 'profile', title: c('win.profile.title'), subtitle: c('win.profile.subtitle') || undefined },
   ];
 
   const winStyles: Record<string, React.CSSProperties> = {
@@ -397,6 +456,7 @@ export default function Desktop() {
     request: { width: 'min(520px,92vw)', top: 110, left: 'calc(50% - 260px)' },
     donate: { width: 'min(380px,92vw)', top: 130, left: 'calc(50% - 190px)' },
     about: { width: 'min(420px,92vw)', top: 120, left: 'calc(50% - 210px)' },
+    profile: { width: 'min(500px,92vw)', top: 90, left: 'calc(50% - 250px)' },
   };
 
   /* ── shared content ───────────────────────────────────── */
@@ -648,6 +708,130 @@ export default function Desktop() {
         </div>
       </div>
     );
+
+    if (id === 'profile') {
+      const inputStyle: React.CSSProperties = {
+        background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
+        borderRadius: 9, padding: '10px 13px', fontSize: 13, color: '#eef1fb',
+        fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box',
+      };
+      if (!memberUser) return (
+        <div>
+          <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#1a8a6a', fontWeight: 700, marginBottom: 8 }}>Member Area</p>
+          <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>Access your profile</h2>
+          <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 20 }}>Enter the email address you used when purchasing a Supporter or Insider membership.</p>
+          <form onSubmit={memberLogin} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <input required type="email" placeholder="your@email.com" value={memberEmail}
+              onChange={e => setMemberEmail(e.target.value)} style={inputStyle} />
+            {memberLoginError && (
+              <div style={{ background: 'rgba(255,95,87,.08)', border: '1px solid rgba(255,95,87,.25)', borderRadius: 9, padding: '10px 13px', fontSize: 13, color: '#ff7c78' }}>
+                {memberLoginError}
+                {memberLoginError.includes('membership') && (
+                  <span> — <button type="button" onClick={() => { closeWin('profile'); openWin('members'); }}
+                    style={{ color: '#9d90ff', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, textDecoration: 'underline', padding: 0 }}>
+                    get membership
+                  </button></span>
+                )}
+              </div>
+            )}
+            <button type="submit" disabled={memberLoginLoading}
+              style={{ background: memberLoginLoading ? 'rgba(26,138,106,.5)' : 'linear-gradient(180deg,#1a8a6a,#0a3d2a)', color: '#fff',
+                border: 'none', borderRadius: 10, padding: '13px', fontSize: 14, fontWeight: 650,
+                cursor: memberLoginLoading ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
+              {memberLoginLoading ? 'Checking…' : 'Access my profile'}
+            </button>
+          </form>
+        </div>
+      );
+      return (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div style={{ fontSize: 12, color: '#7d84a6' }}>Signed in as <b style={{ color: '#a7aecb' }}>{memberUser.email}</b></div>
+            <button onClick={async () => { await fetch('/api/member/auth', { method: 'DELETE' }); setMemberUser(null); setMemberEmail(''); }}
+              style={{ background: 'rgba(255,95,87,.12)', color: '#ff7c78', border: '1px solid rgba(255,95,87,.2)', borderRadius: 7, padding: '5px 11px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>
+              Sign out
+            </button>
+          </div>
+          <div style={{ display: 'flex', gap: 0, marginBottom: 16, background: 'rgba(255,255,255,.04)', borderRadius: 10, padding: 3 }}>
+            {(['profile', 'chat'] as const).map(t => (
+              <button key={t} onClick={() => setMemberTab(t)}
+                style={{ flex: 1, background: memberTab === t ? 'linear-gradient(180deg,#1a8a6a,#0a3d2a)' : 'none',
+                  border: 'none', color: memberTab === t ? '#fff' : '#a7aecb', padding: '8px', borderRadius: 8,
+                  fontSize: 13, fontWeight: memberTab === t ? 650 : 400, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>
+                {t === 'profile' ? '👤 Profile' : '💬 Chat'}
+              </button>
+            ))}
+          </div>
+
+          {memberTab === 'profile' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                { key: 'displayName', label: 'Display name', placeholder: 'How you want to be known' },
+                { key: 'designation', label: 'Job title / designation', placeholder: 'e.g. Full Stack Engineer' },
+                { key: 'cvUrl', label: 'CV / resume URL', placeholder: 'https://...' },
+                { key: 'profilePicUrl', label: 'Profile picture URL', placeholder: 'https://...' },
+              ].map(({ key, label, placeholder }) => (
+                <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>{label}</label>
+                  <input value={(memberProfileEdits[key] as string) || ''} placeholder={placeholder}
+                    onChange={e => setMemberProfileEdits(p => ({ ...p, [key]: e.target.value }))} style={inputStyle} />
+                </div>
+              ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Bio</label>
+                <textarea rows={3} value={(memberProfileEdits.bio as string) || ''} placeholder="A short bio about yourself"
+                  onChange={e => setMemberProfileEdits(p => ({ ...p, bio: e.target.value }))}
+                  style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.55 }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>GitHub repos (one per line)</label>
+                <textarea rows={3} value={Array.isArray(memberProfileEdits.repos) ? (memberProfileEdits.repos as string[]).join('\n') : (memberProfileEdits.repos as string) || ''}
+                  placeholder="https://github.com/you/repo"
+                  onChange={e => setMemberProfileEdits(p => ({ ...p, repos: e.target.value as unknown as string }))}
+                  style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.55 }} />
+              </div>
+              <button onClick={saveMemberProfile} disabled={memberProfileSaving}
+                style={{ background: memberProfileSaving ? 'rgba(26,138,106,.5)' : 'linear-gradient(180deg,#1a8a6a,#0a3d2a)', color: '#fff',
+                  border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 650,
+                  cursor: memberProfileSaving ? 'wait' : 'pointer', fontFamily: 'inherit' }}>
+                {memberProfileSaving ? 'Saving…' : 'Save profile'}
+              </button>
+            </div>
+          )}
+
+          {memberTab === 'chat' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid var(--stroke)', borderRadius: 12, padding: 12, minHeight: 200, maxHeight: 300, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {memberMessages.length === 0 ? (
+                  <p style={{ fontSize: 13, color: '#7d84a6', margin: 'auto', textAlign: 'center' }}>No messages yet — say hello!</p>
+                ) : memberMessages.map(msg => (
+                  <div key={msg.id} style={{ display: 'flex', justifyContent: msg.fromAdmin ? 'flex-start' : 'flex-end' }}>
+                    <div style={{ maxWidth: '78%', background: msg.fromAdmin ? 'rgba(255,255,255,.08)' : 'linear-gradient(160deg,#1a8a6a,#0a3d2a)',
+                      borderRadius: msg.fromAdmin ? '4px 14px 14px 14px' : '14px 4px 14px 14px',
+                      padding: '9px 13px', fontSize: 13, lineHeight: 1.5 }}>
+                      {msg.fromAdmin && <div style={{ fontSize: 10, color: '#1a8a6a', fontWeight: 700, marginBottom: 3 }}>lanrae</div>}
+                      {msg.content}
+                      <div style={{ fontSize: 10, color: 'rgba(255,255,255,.35)', marginTop: 3, textAlign: 'right' }}>
+                        {new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <form onSubmit={sendMemberMessage} style={{ display: 'flex', gap: 8 }}>
+                <input value={memberChatInput} onChange={e => setMemberChatInput(e.target.value)}
+                  placeholder="Send a message to lanrae…" style={{ ...inputStyle, flex: 1 }} />
+                <button type="submit"
+                  style={{ background: 'linear-gradient(180deg,#1a8a6a,#0a3d2a)', color: '#fff', border: 'none',
+                    borderRadius: 9, padding: '10px 16px', fontSize: 13, fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                  Send
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+      );
+    }
     return null;
   };
 
@@ -828,9 +1012,9 @@ export default function Desktop() {
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', fontWeight: 400 }}>Welcome to</div>
               <div style={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>lanrae<span style={{ color: '#b8b0ff' }}>OS</span></div>
             </div>
-            <a href="/admin" style={{ width: 44, height: 44, borderRadius: '50%', display: 'grid', placeItems: 'center',
+            <button onClick={() => openWin('profile')} style={{ width: 44, height: 44, borderRadius: '50%', display: 'grid', placeItems: 'center',
               fontSize: 20, background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)',
-              textDecoration: 'none', backdropFilter: 'blur(10px)' }}>⚙️</a>
+              cursor: 'pointer', backdropFilter: 'blur(10px)' }}>👤</button>
           </div>
 
           {/* scrollable cards — one per section */}
@@ -907,6 +1091,7 @@ export default function Desktop() {
       request: { width: 'min(520px,92vw)', top: 90, left: 'calc(50% - 260px)' },
       donate: { width: 'min(380px,92vw)', top: 110, left: 'calc(50% - 190px)' },
       about: { width: 'min(420px,92vw)', top: 100, left: 'calc(50% - 210px)' },
+      profile: { width: 'min(500px,92vw)', top: 70, left: 'calc(50% - 250px)' },
     };
 
     return (

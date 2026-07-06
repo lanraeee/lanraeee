@@ -222,7 +222,7 @@ const CONTENT_DEFAULTS: Record<string, string> = {
 };
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'products' | 'memberships' | 'fans' | 'requests' | 'content' | 'analytics'>('products');
+  const [tab, setTab] = useState<'products' | 'memberships' | 'fans' | 'requests' | 'content' | 'analytics' | 'messages'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [fans, setFans] = useState<any[]>([]);
@@ -235,6 +235,8 @@ export default function AdminPage() {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null | 'new'>(null);
   const [loading, setLoading] = useState(true);
+  const [messages, setMessages] = useState<{ id: string; userId: string; userEmail: string; content: string; fromAdmin: boolean; createdAt: string }[]>([]);
+  const [chatReply, setChatReply] = useState<Record<string, string>>({});
 
   const fetchAll = async () => {
     try {
@@ -310,9 +312,15 @@ export default function AdminPage() {
     setAnalyticsLoading(false);
   };
 
+  const fetchMessages = async () => {
+    const data = await fetch('/api/member/chat/admin').then(r => r.json()).catch(() => []);
+    setMessages(Array.isArray(data) ? data : []);
+  };
+
   useEffect(() => {
     if (tab === 'content') fetchContent();
     if (tab === 'analytics') fetchAnalytics();
+    if (tab === 'messages') fetchMessages();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
@@ -342,6 +350,7 @@ export default function AdminPage() {
           {navItem('requests', '💡 Requests')}
           {navItem('content', '✏️ Content')}
           {navItem('analytics', '📊 Analytics')}
+          {navItem('messages', '💬 Messages')}
         </nav>
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ padding: '12px', background: 'rgba(53,214,199,.08)', border: '1px solid rgba(53,214,199,.2)',
@@ -701,6 +710,78 @@ export default function AdminPage() {
             )}
           </>
         )}
+
+        {tab === 'messages' && (() => {
+          const threads: Record<string, { userEmail: string; msgs: typeof messages }> = {};
+          messages.forEach(m => {
+            if (!threads[m.userId]) threads[m.userId] = { userEmail: m.userEmail, msgs: [] };
+            threads[m.userId].msgs.push(m);
+          });
+          const threadList = Object.entries(threads).sort((a, b) => {
+            const la = a[1].msgs[0]?.createdAt ?? '';
+            const lb = b[1].msgs[0]?.createdAt ?? '';
+            return lb.localeCompare(la);
+          });
+          return (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+                <h2 style={{ fontSize: 26, fontWeight: 700 }}>Member Messages</h2>
+                <button onClick={fetchMessages}
+                  style={{ background: 'rgba(255,255,255,.08)', color: '#cdd3ef', border: '1px solid var(--stroke)',
+                    padding: '8px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>
+                  ↻ Refresh
+                </button>
+              </div>
+              {threadList.length === 0 ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', border: '1px dashed var(--stroke)', borderRadius: 12, color: '#7d84a6', fontSize: 14 }}>
+                  No member messages yet.
+                </div>
+              ) : threadList.map(([userId, thread]) => (
+                <div key={userId} style={{ background: 'var(--glass)', border: '1px solid var(--stroke)', borderRadius: 14, padding: 20, marginBottom: 16 }}>
+                  <div style={{ fontSize: 13, fontWeight: 650, color: '#9d90ff', marginBottom: 12 }}>{thread.userEmail}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12, maxHeight: 300, overflowY: 'auto' }}>
+                    {[...thread.msgs].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map(msg => (
+                      <div key={msg.id} style={{ display: 'flex', justifyContent: msg.fromAdmin ? 'flex-end' : 'flex-start' }}>
+                        <div style={{ maxWidth: '72%', background: msg.fromAdmin ? 'linear-gradient(160deg,#9d90ff,#7c6cff)' : 'rgba(255,255,255,.07)',
+                          borderRadius: msg.fromAdmin ? '14px 4px 14px 14px' : '4px 14px 14px 14px',
+                          padding: '9px 13px', fontSize: 13 }}>
+                          {msg.fromAdmin && <div style={{ fontSize: 10, color: 'rgba(255,255,255,.6)', fontWeight: 700, marginBottom: 3 }}>You (lanrae)</div>}
+                          {msg.content}
+                          <div style={{ fontSize: 10, color: 'rgba(255,255,255,.35)', marginTop: 3, textAlign: 'right' }}>
+                            {new Date(msg.createdAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input value={chatReply[userId] || ''} onChange={e => setChatReply(r => ({ ...r, [userId]: e.target.value }))}
+                      placeholder="Reply…"
+                      onKeyDown={async e => {
+                        if (e.key === 'Enter' && chatReply[userId]?.trim()) {
+                          const content = chatReply[userId].trim();
+                          setChatReply(r => ({ ...r, [userId]: '' }));
+                          await fetch('/api/member/chat/admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, content }) });
+                          fetchMessages();
+                        }
+                      }}
+                      style={{ flex: 1, background: 'rgba(255,255,255,.04)', border: '1px solid var(--stroke)', borderRadius: 9, padding: '10px 13px', fontSize: 13, color: '#eef1fb', fontFamily: 'inherit', outline: 'none' }} />
+                    <button onClick={async () => {
+                      if (!chatReply[userId]?.trim()) return;
+                      const content = chatReply[userId].trim();
+                      setChatReply(r => ({ ...r, [userId]: '' }));
+                      await fetch('/api/member/chat/admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, content }) });
+                      fetchMessages();
+                    }}
+                      style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none', borderRadius: 9, padding: '10px 18px', fontSize: 13, fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                      Reply
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </>
+          );
+        })()}
       </div>
     </div>
   );

@@ -16,6 +16,8 @@ model User {
   updatedAt    DateTime      @updatedAt
   transactions Transaction[]
   fan          Fan?
+  profile      MemberProfile?
+  messages     ChatMessage[]
 }
 
 model Product {
@@ -104,5 +106,29 @@ model PageView {
   city      String?
   browser   String?
   device    String?
+  createdAt DateTime @default(now())
+}
+
+model MemberProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName   String?
+  bio           String?
+  designation   String?
+  cvUrl         String?
+  profilePicUrl String?
+  repos         String[]
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  fromAdmin Boolean  @default(false)
+  read      Boolean  @default(false)
   createdAt DateTime @default(now())
 }
