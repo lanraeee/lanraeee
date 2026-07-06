@@ -498,7 +498,7 @@ export default function Desktop() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 14 }}>
           {products.length === 0 ? (
             <p style={{ color: '#7d84a6', fontSize: 13, gridColumn: '1/-1', padding: '20px 0' }}>
-              No products yet — add some in the <a href="/admin" style={{ color: '#9d90ff' }}>admin panel</a>.
+              No products yet — check back soon.
             </p>
           ) : products.map(p => (
             <div key={p.id} style={{ background: 'var(--glass-2)', border: '1px solid var(--stroke-2)',
@@ -970,12 +970,6 @@ export default function Desktop() {
                   <span style={{ fontSize: 11, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,.7)', textAlign: 'center', fontWeight: 500 }}>{app.label}</span>
                 </div>
               ))}
-              <a href="/admin" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, textDecoration: 'none' }}>
-                <div style={{ width: 62, height: 62, borderRadius: 15, background: 'linear-gradient(160deg,#2a2a3e,#151520)',
-                  display: 'grid', placeItems: 'center', fontSize: 26,
-                  boxShadow: '0 6px 18px rgba(0,0,0,.45)', border: '1px solid rgba(255,255,255,.1)' }}>⚙️</div>
-                <span style={{ fontSize: 11, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,.7)', textAlign: 'center', fontWeight: 500 }}>Admin</span>
-              </a>
             </div>
           </div>
 
@@ -1209,13 +1203,6 @@ export default function Desktop() {
                   background: '#9d90ff' }} />}
               </div>
             ))}
-            {/* admin */}
-            <a href="/admin" style={{ width: 44, height: 40, borderRadius: 8, display: 'grid', placeItems: 'center',
-              fontSize: 18, cursor: 'pointer', marginLeft: 6, borderLeft: '1px solid rgba(255,255,255,.08)',
-              paddingLeft: 10, textDecoration: 'none',
-              transition: 'background .1s' }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.1)')}
-              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}>⚙️</a>
           </div>
         </div>
 
@@ -1299,11 +1286,6 @@ export default function Desktop() {
           ))}
         </div>
 
-        <a href="/admin" style={{ position: 'absolute', bottom: 78, right: 20, fontSize: 11,
-          color: '#7d84a6', textDecoration: 'none', padding: '5px 10px',
-          background: 'rgba(0,0,0,.3)', borderRadius: 8, border: '1px solid var(--stroke-2)' }}>
-          ⚙️ Admin
-        </a>
       </div>
 
       {visitorToasts}
