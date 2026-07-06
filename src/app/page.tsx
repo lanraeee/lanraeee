@@ -27,6 +27,18 @@ const CONTENT_DEFAULTS: Record<string, string> = {
   'donate.subheading': 'Every tip goes straight into building the next product.',
   'about.heading': 'lanrae · AI Product Engineer',
   'about.body': 'I design, build, and ship AI-powered products end to end — then launch them here, on a desktop you can actually drive. lanrae.co.uk is the studio, the storefront, and the changelog, all in one.',
+  'win.store.title': 'Product Store',
+  'win.store.subtitle': '— AI, built by lanrae',
+  'win.fans.title': 'Top 10 Fans',
+  'win.fans.subtitle': '— this month',
+  'win.members.title': 'Membership',
+  'win.members.subtitle': '',
+  'win.request.title': 'Request a Project',
+  'win.request.subtitle': '— shape the roadmap',
+  'win.donate.title': 'Support the work',
+  'win.donate.subtitle': '',
+  'win.about.title': 'About',
+  'win.about.subtitle': '',
 };
 
 /* ── types ─────────────────────────────────────────────────── */
@@ -382,12 +394,12 @@ export default function Desktop() {
   ];
 
   const wins = [
-    { id: 'store', title: 'Product Store', subtitle: '— AI, built by lanrae' },
-    { id: 'fans', title: 'Top 10 Fans', subtitle: '— this month' },
-    { id: 'members', title: 'Membership' },
-    { id: 'request', title: 'Request a Project', subtitle: '— shape the roadmap' },
-    { id: 'donate', title: 'Support the work' },
-    { id: 'about', title: 'About' },
+    { id: 'store',   title: c('win.store.title'),   subtitle: c('win.store.subtitle') || undefined },
+    { id: 'fans',    title: c('win.fans.title'),    subtitle: c('win.fans.subtitle') || undefined },
+    { id: 'members', title: c('win.members.title'), subtitle: c('win.members.subtitle') || undefined },
+    { id: 'request', title: c('win.request.title'), subtitle: c('win.request.subtitle') || undefined },
+    { id: 'donate',  title: c('win.donate.title'),  subtitle: c('win.donate.subtitle') || undefined },
+    { id: 'about',   title: c('win.about.title'),   subtitle: c('win.about.subtitle') || undefined },
   ];
 
   const winStyles: Record<string, React.CSSProperties> = {
@@ -694,7 +706,10 @@ export default function Desktop() {
       background: 'linear-gradient(160deg,#0a0f26,#05060f)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 26,
       transition: 'opacity .7s ease', opacity: booted ? 0 : 1, pointerEvents: booted ? 'none' : 'auto' }}>
-      <div style={{ fontSize: 30, fontWeight: 800 }}>◐ lanrae<span style={{ color: '#9d90ff' }}>OS</span></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <img src="/logo.png" alt="lanrae" style={{ width: 40, height: 40, borderRadius: 8 }} />
+        <span style={{ fontSize: 30, fontWeight: 800 }}>lanrae<span style={{ color: '#9d90ff' }}>OS</span></span>
+      </div>
       <div style={{ width: 200, height: 5, borderRadius: 5, background: 'rgba(255,255,255,.12)', overflow: 'hidden' }}>
         <div style={{ height: '100%', background: 'linear-gradient(90deg,#9d90ff,#35d6c7)',
           animation: 'load 2.1s ease forwards' }} />
@@ -826,7 +841,10 @@ export default function Desktop() {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', fontWeight: 400 }}>Welcome to</div>
-              <div style={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>lanrae<span style={{ color: '#b8b0ff' }}>OS</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <img src="/logo.png" alt="lanrae" style={{ width: 28, height: 28, borderRadius: 6 }} />
+                <span style={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>lanrae<span style={{ color: '#b8b0ff' }}>OS</span></span>
+              </div>
             </div>
             <a href="/admin" style={{ width: 44, height: 44, borderRadius: '50%', display: 'grid', placeItems: 'center',
               fontSize: 20, background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)',
@@ -922,7 +940,8 @@ export default function Desktop() {
             background: 'rgba(9,11,24,.65)', backdropFilter: 'blur(28px)',
             borderBottom: '1px solid rgba(255,255,255,.07)', fontSize: 13 }}>
             <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: -.2 }}>
-              ⊞ lanrae<span style={{ color: '#9d90ff' }}>OS</span>
+              <img src="/logo.png" alt="lanrae" style={{ width: 20, height: 20, borderRadius: 4, marginRight: 6, verticalAlign: 'middle' }} />
+              lanrae<span style={{ color: '#9d90ff' }}>OS</span>
             </span>
             {['store', 'members', 'fans', 'donate', 'about'].map(id => (
               <span key={id} onClick={() => openWin(id)}
@@ -1017,7 +1036,10 @@ export default function Desktop() {
           display: 'flex', alignItems: 'center', gap: 20, padding: '0 14px',
           background: 'rgba(9,11,24,.55)', backdropFilter: 'blur(22px) saturate(160%)',
           borderBottom: '1px solid var(--stroke-2)', fontSize: 13 }}>
-          <span style={{ fontWeight: 800 }}>◐ lanrae<span style={{ color: '#9d90ff' }}>OS</span></span>
+          <span style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <img src="/logo.png" alt="lanrae" style={{ width: 18, height: 18, borderRadius: 4 }} />
+            lanrae<span style={{ color: '#9d90ff' }}>OS</span>
+          </span>
           {['store', 'members', 'fans', 'donate', 'about'].map(id => (
             <span key={id} onClick={() => openWin(id)}
               style={{ color: '#dfe3f4', opacity: .86, cursor: 'default', textTransform: 'capitalize' }}>

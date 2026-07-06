@@ -156,6 +156,20 @@ function ProductForm({ product, onSave, onCancel }: {
 }
 
 const CONTENT_KEYS = [
+  { section: 'Window Titles', fields: [
+    { key: 'win.store.title',   label: 'Store — title' },
+    { key: 'win.store.subtitle', label: 'Store — subtitle' },
+    { key: 'win.fans.title',    label: 'Fans — title' },
+    { key: 'win.fans.subtitle', label: 'Fans — subtitle' },
+    { key: 'win.members.title', label: 'Members — title' },
+    { key: 'win.members.subtitle', label: 'Members — subtitle' },
+    { key: 'win.request.title', label: 'Request — title' },
+    { key: 'win.request.subtitle', label: 'Request — subtitle' },
+    { key: 'win.donate.title',  label: 'Support — title' },
+    { key: 'win.donate.subtitle', label: 'Support — subtitle' },
+    { key: 'win.about.title',   label: 'About — title' },
+    { key: 'win.about.subtitle', label: 'About — subtitle' },
+  ]},
   { section: 'Apps', fields: [
     { key: 'app.store.icon', label: 'Store icon', type: 'emoji' },   { key: 'app.store.label', label: 'Store label' },
     { key: 'app.members.icon', label: 'Members icon', type: 'emoji' }, { key: 'app.members.label', label: 'Members label' },
@@ -219,6 +233,12 @@ const CONTENT_DEFAULTS: Record<string, string> = {
   'donate.subheading': 'Every tip goes straight into building the next product.',
   'about.heading': 'lanrae · AI Product Engineer',
   'about.body': 'I design, build, and ship AI-powered products end to end — then launch them here, on a desktop you can actually drive. lanrae.co.uk is the studio, the storefront, and the changelog, all in one.',
+  'win.store.title': 'Product Store',    'win.store.subtitle': '— AI, built by lanrae',
+  'win.fans.title': 'Top 10 Fans',       'win.fans.subtitle': '— this month',
+  'win.members.title': 'Membership',     'win.members.subtitle': '',
+  'win.request.title': 'Request a Project', 'win.request.subtitle': '— shape the roadmap',
+  'win.donate.title': 'Support the work','win.donate.subtitle': '',
+  'win.about.title': 'About',            'win.about.subtitle': '',
 };
 
 export default function AdminPage() {
