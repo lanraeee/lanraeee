@@ -324,6 +324,7 @@ export default function Desktop() {
     { id: 'store', icon: '🛍️', label: 'Store', gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' },
     { id: 'members', icon: '🪪', label: 'Members', gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
     { id: 'fans', icon: '🏆', label: 'Fans', gradient: 'linear-gradient(160deg,#f5c451,#9a6a00)' },
+    { id: 'request', icon: '💡', label: 'Request', gradient: 'linear-gradient(160deg,#ff9d4d,#7a3a00)' },
     { id: 'donate', icon: '💛', label: 'Support', gradient: 'linear-gradient(160deg,#ff6ba8,#7a1d47)' },
     { id: 'about', icon: 'ℹ️', label: 'About', gradient: 'linear-gradient(160deg,#35d6c7,#0e5a52)' },
   ];
@@ -332,6 +333,7 @@ export default function Desktop() {
     { id: 'store', title: 'Product Store', subtitle: '— AI, built by lanrae' },
     { id: 'fans', title: 'Top 10 Fans', subtitle: '— this month' },
     { id: 'members', title: 'Membership' },
+    { id: 'request', title: 'Request a Project', subtitle: '— shape the roadmap' },
     { id: 'donate', title: 'Support the work' },
     { id: 'about', title: 'About' },
   ];
@@ -340,6 +342,7 @@ export default function Desktop() {
     store: { width: 'min(660px,92vw)', top: 76, left: 'calc(50% - 300px)' },
     fans: { width: 'min(440px,92vw)', top: 120, left: 'calc(50% + 80px)' },
     members: { width: 'min(680px,92vw)', top: 100, left: 'calc(50% - 340px)' },
+    request: { width: 'min(520px,92vw)', top: 110, left: 'calc(50% - 260px)' },
     donate: { width: 'min(380px,92vw)', top: 130, left: 'calc(50% - 190px)' },
     about: { width: 'min(420px,92vw)', top: 120, left: 'calc(50% - 210px)' },
   };
@@ -471,63 +474,77 @@ export default function Desktop() {
           ))}
         </div>
 
-        {/* Request a Project */}
-        <div style={{ marginTop: 28, borderTop: '1px solid var(--stroke-2)', paddingTop: 24 }}>
-          <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>Members · Build with me</p>
-          <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>Request a project</h3>
-          <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 18 }}>Got an idea? Tell me what you want built — top-voted requests shape the roadmap.</p>
-
-          {reqStatus === 'sent' ? (
-            <div style={{ background: 'rgba(61,220,151,.08)', border: '1px solid rgba(61,220,151,.25)',
-              borderRadius: 14, padding: '20px', textAlign: 'center', display: 'flex',
-              flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-              <div style={{ fontSize: 32 }}>🎉</div>
-              <p style={{ fontSize: 14, fontWeight: 650, color: '#3ddc97' }}>Request submitted!</p>
-              <p style={{ fontSize: 12, color: '#a7aecb' }}>I'll review it and add top requests to the roadmap.</p>
-              <button onClick={() => setReqStatus('idle')}
-                style={{ fontSize: 12, color: '#9d90ff', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
-                Submit another
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={submitRequest} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <input required value={reqForm.name} onChange={e => setReqForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="Your name"
-                  style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
-                    borderRadius: 10, padding: '11px 13px', fontSize: 13, color: '#eef1fb',
-                    fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-                <input required type="email" value={reqForm.email} onChange={e => setReqForm(f => ({ ...f, email: e.target.value }))}
-                  placeholder="Your email"
-                  style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
-                    borderRadius: 10, padding: '11px 13px', fontSize: 13, color: '#eef1fb',
-                    fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-              </div>
-              <input required value={reqForm.title} onChange={e => setReqForm(f => ({ ...f, title: e.target.value }))}
-                placeholder="Project title — e.g. AI invoice scanner"
-                style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
-                  borderRadius: 10, padding: '11px 13px', fontSize: 13, color: '#eef1fb',
-                  fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-              <textarea required value={reqForm.description} onChange={e => setReqForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="Describe what it does and why you need it…"
-                rows={3}
-                style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
-                  borderRadius: 10, padding: '11px 13px', fontSize: 13, color: '#eef1fb',
-                  fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box',
-                  resize: 'vertical', lineHeight: 1.5 }} />
-              {reqStatus === 'error' && (
-                <p style={{ fontSize: 12, color: '#ff7c78', margin: 0 }}>Something went wrong — try again.</p>
-              )}
-              <button type="submit" disabled={reqStatus === 'sending'}
-                style={{ background: reqStatus === 'sending' ? 'rgba(124,108,255,.4)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)',
-                  color: '#fff', border: 'none', borderRadius: 12, padding: '13px',
-                  fontSize: 14, fontWeight: 650, cursor: reqStatus === 'sending' ? 'wait' : 'pointer',
-                  fontFamily: 'inherit', transition: 'opacity .15s' }}>
-                {reqStatus === 'sending' ? 'Sending…' : '🚀 Submit request'}
-              </button>
-            </form>
-          )}
+        <div style={{ marginTop: 24, padding: '16px 18px', background: 'rgba(255,157,77,.06)',
+          border: '1px solid rgba(255,157,77,.2)', borderRadius: 14, display: 'flex',
+          alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 650, marginBottom: 3 }}>💡 Got a project idea?</div>
+            <div style={{ fontSize: 12, color: '#a7aecb' }}>Tell me what you want built — top requests shape the roadmap.</div>
+          </div>
+          <button onClick={() => openWin('request')}
+            style={{ background: 'linear-gradient(180deg,#ff9d4d,#c96a00)', color: '#fff', border: 'none',
+              borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 650,
+              cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+            Request →
+          </button>
         </div>
+      </>
+    );
+
+    if (id === 'request') return (
+      <>
+        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#ff9d4d', fontWeight: 700, marginBottom: 8 }}>Build with me</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>Request a project</h2>
+        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 20 }}>Got an idea? Tell me what you want built — top-voted requests shape the roadmap.</p>
+
+        {reqStatus === 'sent' ? (
+          <div style={{ background: 'rgba(61,220,151,.08)', border: '1px solid rgba(61,220,151,.25)',
+            borderRadius: 16, padding: '32px 20px', textAlign: 'center',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 40 }}>🎉</div>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#3ddc97' }}>Request submitted!</p>
+            <p style={{ fontSize: 13, color: '#a7aecb', maxWidth: '32ch' }}>I'll review it and add top requests to the roadmap.</p>
+            <button onClick={() => { setReqStatus('idle'); setReqForm({ name: '', email: '', title: '', description: '' }); }}
+              style={{ marginTop: 4, fontSize: 13, color: '#9d90ff', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+              Submit another
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={submitRequest} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {(['name', 'email'] as const).map(field => (
+                <input key={field} required type={field === 'email' ? 'email' : 'text'}
+                  value={reqForm[field]} onChange={e => setReqForm(f => ({ ...f, [field]: e.target.value }))}
+                  placeholder={field === 'name' ? 'Your name' : 'Your email'}
+                  style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
+                    borderRadius: 10, padding: '11px 13px', fontSize: 13, color: '#eef1fb',
+                    fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+              ))}
+            </div>
+            <input required value={reqForm.title} onChange={e => setReqForm(f => ({ ...f, title: e.target.value }))}
+              placeholder="Project title — e.g. AI invoice scanner"
+              style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
+                borderRadius: 10, padding: '11px 13px', fontSize: 13, color: '#eef1fb',
+                fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+            <textarea required rows={4} value={reqForm.description}
+              onChange={e => setReqForm(f => ({ ...f, description: e.target.value }))}
+              placeholder="What does it do? Why do you need it? Who would use it?"
+              style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
+                borderRadius: 10, padding: '11px 13px', fontSize: 13, color: '#eef1fb',
+                fontFamily: 'inherit', outline: 'none', width: '100%', boxSizing: 'border-box',
+                resize: 'vertical', lineHeight: 1.55 }} />
+            {reqStatus === 'error' && (
+              <p style={{ fontSize: 12, color: '#ff7c78', margin: 0 }}>Something went wrong — try again.</p>
+            )}
+            <button type="submit" disabled={reqStatus === 'sending'}
+              style={{ background: reqStatus === 'sending' ? 'rgba(255,157,77,.4)' : 'linear-gradient(180deg,#ff9d4d,#c96a00)',
+                color: '#fff', border: 'none', borderRadius: 12, padding: '13px',
+                fontSize: 14, fontWeight: 650, cursor: reqStatus === 'sending' ? 'wait' : 'pointer',
+                fontFamily: 'inherit', transition: 'opacity .15s' }}>
+              {reqStatus === 'sending' ? 'Sending…' : '🚀 Submit request'}
+            </button>
+          </form>
+        )}
       </>
     );
 
@@ -803,6 +820,7 @@ export default function Desktop() {
       store: { width: 'min(660px,92vw)', top: 56, left: 'calc(50% - 300px)' },
       fans: { width: 'min(440px,92vw)', top: 100, left: 'calc(50% + 80px)' },
       members: { width: 'min(680px,92vw)', top: 80, left: 'calc(50% - 340px)' },
+      request: { width: 'min(520px,92vw)', top: 90, left: 'calc(50% - 260px)' },
       donate: { width: 'min(380px,92vw)', top: 110, left: 'calc(50% - 190px)' },
       about: { width: 'min(420px,92vw)', top: 100, left: 'calc(50% - 210px)' },
     };

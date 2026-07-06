@@ -14,6 +14,11 @@ type Membership = {
   id: string; tier: string; name: string; price: number; description: string; features: string[];
 };
 
+type ProjectRequest = {
+  id: string; name: string; email: string; title: string; description: string;
+  status: string; createdAt: string;
+};
+
 const GRADIENTS = [
   'linear-gradient(160deg,#7c6cff,#3a1d6e)',
   'linear-gradient(160deg,#1f6feb,#0d3a7a)',
@@ -151,23 +156,26 @@ function ProductForm({ product, onSave, onCancel }: {
 }
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'products' | 'memberships' | 'fans'>('products');
+  const [tab, setTab] = useState<'products' | 'memberships' | 'fans' | 'requests'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [fans, setFans] = useState<any[]>([]);
+  const [requests, setRequests] = useState<ProjectRequest[]>([]);
   const [editProduct, setEditProduct] = useState<Product | null | 'new'>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchAll = async () => {
     try {
-      const [p, m, f] = await Promise.all([
+      const [p, m, f, r] = await Promise.all([
         fetch('/api/products').then(r => r.json()),
         fetch('/api/memberships').then(r => r.json()),
         fetch('/api/fans').then(r => r.json()),
+        fetch('/api/project-requests').then(r => r.json()),
       ]);
       setProducts(Array.isArray(p) ? p : []);
       setMemberships(Array.isArray(m) ? m : []);
       setFans(Array.isArray(f) ? f : []);
+      setRequests(Array.isArray(r) ? r : []);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
@@ -186,6 +194,21 @@ export default function AdminPage() {
   const deleteProduct = async (id: string) => {
     if (!confirm('Delete this product?')) return;
     await fetch(`/api/products/${id}`, { method: 'DELETE' });
+    fetchAll();
+  };
+
+  const updateRequestStatus = async (id: string, status: string) => {
+    await fetch(`/api/project-requests/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    fetchAll();
+  };
+
+  const deleteRequest = async (id: string) => {
+    if (!confirm('Delete this request?')) return;
+    await fetch(`/api/project-requests/${id}`, { method: 'DELETE' });
     fetchAll();
   };
 
@@ -212,6 +235,7 @@ export default function AdminPage() {
           {navItem('products', '📦 Products')}
           {navItem('memberships', '🪪 Memberships')}
           {navItem('fans', '🏆 Top Fans')}
+          {navItem('requests', '💡 Requests')}
         </nav>
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ padding: '12px', background: 'rgba(53,214,199,.08)', border: '1px solid rgba(53,214,199,.2)',
@@ -356,6 +380,77 @@ export default function AdminPage() {
                 </span>
               </div>
             ))}
+          </>
+        )}
+
+        {tab === 'requests' && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+              <h2 style={{ fontSize: 26, fontWeight: 700 }}>Project Requests</h2>
+              <span style={{ fontSize: 13, color: '#7d84a6' }}>{requests.length} total</span>
+            </div>
+            {loading ? (
+              <p style={{ color: '#7d84a6' }}>Loading…</p>
+            ) : requests.length === 0 ? (
+              <div style={{ padding: '40px 20px', textAlign: 'center', border: '1px dashed var(--stroke)',
+                borderRadius: 12, color: '#7d84a6', fontSize: 14 }}>
+                No requests yet — they'll appear here once members submit ideas.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {requests.map(r => {
+                  const statusColors: Record<string, { bg: string; text: string; border: string }> = {
+                    pending:    { bg: 'rgba(245,196,81,.1)',  text: '#f5c451', border: 'rgba(245,196,81,.3)' },
+                    'in-review':{ bg: 'rgba(124,108,255,.1)', text: '#9d90ff', border: 'rgba(124,108,255,.3)' },
+                    building:   { bg: 'rgba(53,214,199,.1)',  text: '#35d6c7', border: 'rgba(53,214,199,.3)' },
+                    done:       { bg: 'rgba(61,220,151,.1)',  text: '#3ddc97', border: 'rgba(61,220,151,.3)' },
+                    declined:   { bg: 'rgba(255,95,87,.1)',   text: '#ff7c78', border: 'rgba(255,95,87,.3)' },
+                  };
+                  const sc = statusColors[r.status] ?? statusColors['pending'];
+                  return (
+                    <div key={r.id} style={{ background: 'var(--glass)', border: '1px solid var(--stroke)',
+                      borderRadius: 14, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                            <span style={{ fontSize: 15, fontWeight: 700 }}>💡 {r.title}</span>
+                            <span style={{ fontSize: 11, fontWeight: 650, padding: '3px 9px', borderRadius: 20,
+                              background: sc.bg, color: sc.text, border: `1px solid ${sc.border}`,
+                              textTransform: 'capitalize' }}>{r.status}</span>
+                          </div>
+                          <p style={{ fontSize: 13, color: '#a7aecb', lineHeight: 1.5, margin: 0 }}>{r.description}</p>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        borderTop: '1px solid var(--stroke-2)', paddingTop: 10 }}>
+                        <div style={{ fontSize: 12, color: '#7d84a6' }}>
+                          <b style={{ color: '#a7aecb' }}>{r.name}</b> · {r.email} ·{' '}
+                          {new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <select value={r.status}
+                            onChange={e => updateRequestStatus(r.id, e.target.value)}
+                            style={{ background: 'rgba(255,255,255,.06)', border: '1px solid var(--stroke)',
+                              borderRadius: 7, padding: '5px 8px', fontSize: 12, color: '#eef1fb',
+                              cursor: 'pointer', fontFamily: 'inherit' }}>
+                            <option value="pending">Pending</option>
+                            <option value="in-review">In Review</option>
+                            <option value="building">Building</option>
+                            <option value="done">Done</option>
+                            <option value="declined">Declined</option>
+                          </select>
+                          <button onClick={() => deleteRequest(r.id)}
+                            style={{ background: 'rgba(255,95,87,.15)', color: '#ff7c78', border: 'none',
+                              borderRadius: 7, padding: '5px 11px', fontSize: 12, fontWeight: 650, cursor: 'pointer' }}>
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </>
         )}
       </div>
