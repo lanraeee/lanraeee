@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { sendEmail } from '@/lib/email';
+import { sendEmail, getAdminEmail } from '@/lib/email';
 
 async function getMemberUserId(request: NextRequest): Promise<string | null> {
   const userId = request.cookies.get('member_token')?.value;
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
   // Alert admin of the new member message (non-blocking).
   const member = await prisma.user.findUnique({ where: { id: userId } });
-  await sendEmail('admin_new_chat', process.env.ADMIN_EMAIL || '', {
+  await sendEmail('admin_new_chat', await getAdminEmail(), {
     email: member?.email || 'a member',
     messagePreview: content.trim().slice(0, 100),
   });

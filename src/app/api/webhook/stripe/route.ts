@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
-import { sendEmail, seedTemplates } from '@/lib/email';
+import { sendEmail, seedTemplates, getAdminEmail } from '@/lib/email';
 
 export const runtime = 'nodejs';
 
@@ -86,14 +86,14 @@ export async function POST(request: NextRequest) {
           displayName: email.split('@')[0],
           setPasswordUrl,
         });
-        await sendEmail('admin_new_member', process.env.ADMIN_EMAIL || '', {
+        await sendEmail('admin_new_member', await getAdminEmail(), {
           email,
           tier: meta.membershipTier || 'membership',
           amount: (amountPaid / 100).toFixed(2),
         });
       } else {
         // product / donate receipt + admin alert
-        await sendEmail('admin_new_payment', process.env.ADMIN_EMAIL || '', {
+        await sendEmail('admin_new_payment', await getAdminEmail(), {
           email,
           amount: (amountPaid / 100).toFixed(2),
           productName: meta.productName || 'product',

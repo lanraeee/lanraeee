@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { sendEmail } from '@/lib/email';
+import { sendEmail, getAdminEmail } from '@/lib/email';
 
 const prisma = new PrismaClient();
 
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   });
 
   // Alert admin of the new project request (non-blocking).
-  await sendEmail('admin_new_request', process.env.ADMIN_EMAIL || '', {
+  await sendEmail('admin_new_request', await getAdminEmail(), {
     name: name.trim(),
     email: email.trim(),
     title: title.trim(),

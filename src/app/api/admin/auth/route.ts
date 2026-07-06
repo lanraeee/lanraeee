@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { sendEmail } from '@/lib/email';
+import { sendEmail, getAdminEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   const { password } = await request.json();
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Admin login alert (non-blocking).
-  await sendEmail('admin_login_alert', process.env.ADMIN_EMAIL || '', {
+  await sendEmail('admin_login_alert', await getAdminEmail(), {
     time: new Date().toLocaleString('en-GB'),
     ip: request.headers.get('x-forwarded-for') || 'unknown',
   });

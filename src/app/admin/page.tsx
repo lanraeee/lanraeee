@@ -266,6 +266,9 @@ export default function AdminPage() {
   const [grantEmail, setGrantEmail] = useState('');
   const [grantTier, setGrantTier] = useState('supporter');
   const [grantStatus, setGrantStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
+  const [adminEmailSetting, setAdminEmailSetting] = useState('');
+  const [adminEmailSaving, setAdminEmailSaving] = useState(false);
+  const [adminEmailSaved, setAdminEmailSaved] = useState(false);
 
   const fetchAll = async () => {
     try {
@@ -349,6 +352,20 @@ export default function AdminPage() {
   const fetchEmailTemplates = async () => {
     const data = await fetch('/api/admin/email-templates').then(r => r.json()).catch(() => []);
     setEmailTemplates(Array.isArray(data) ? data : []);
+    const setting = await fetch('/api/content').then(r => r.json()).catch(() => ({}));
+    setAdminEmailSetting(setting['email.admin'] || '');
+  };
+
+  const saveAdminEmail = async () => {
+    setAdminEmailSaving(true);
+    await fetch('/api/content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 'email.admin': adminEmailSetting }),
+    });
+    setAdminEmailSaving(false);
+    setAdminEmailSaved(true);
+    setTimeout(() => setAdminEmailSaved(false), 2000);
   };
 
   const saveEmailTemplate = async () => {
@@ -815,13 +832,30 @@ export default function AdminPage() {
 
         {tab === 'email' && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-              <h2 style={{ fontSize: 26, fontWeight: 700 }}>Email Templates</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <h2 style={{ fontSize: 26, fontWeight: 700 }}>Email</h2>
               <button onClick={fetchEmailTemplates}
                 style={{ background: 'rgba(255,255,255,.08)', color: '#cdd3ef', border: '1px solid var(--stroke)', padding: '8px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>
                 ↻ Refresh
               </button>
             </div>
+
+            {/* Notification address */}
+            <div style={{ background: 'rgba(255,255,255,.04)', border: '1px solid var(--stroke)', borderRadius: 14, padding: 20, marginBottom: 28 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, color: '#a7aecb' }}>📬 Send notifications to</h3>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                <input type="email" value={adminEmailSetting} onChange={e => { setAdminEmailSetting(e.target.value); setAdminEmailSaved(false); }}
+                  placeholder="your@email.com"
+                  style={{ flex: 1, background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)', borderRadius: 9, padding: '10px 13px', fontSize: 13, color: '#eef1fb', fontFamily: 'inherit', outline: 'none' }} />
+                <button onClick={saveAdminEmail} disabled={adminEmailSaving}
+                  style={{ background: adminEmailSaved ? 'rgba(53,214,199,.2)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: adminEmailSaved ? '#35d6c7' : '#fff', border: adminEmailSaved ? '1px solid rgba(53,214,199,.4)' : 'none', borderRadius: 9, padding: '10px 20px', fontSize: 13, fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                  {adminEmailSaving ? 'Saving…' : adminEmailSaved ? '✓ Saved' : 'Save'}
+                </button>
+              </div>
+              <p style={{ fontSize: 12, color: '#7d84a6', marginTop: 8 }}>All admin alerts (new members, payments, chat messages, project requests) will be sent here.</p>
+            </div>
+
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>Templates</h3>
 
             <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 20, minHeight: 500 }}>
               {/* Template list */}

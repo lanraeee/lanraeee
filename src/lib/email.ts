@@ -34,8 +34,17 @@ function interpolate(str: string, vars: Vars): string {
   });
 }
 
+/** Returns the admin notification address: DB setting first, env var fallback. */
+export async function getAdminEmail(): Promise<string> {
+  try {
+    const row = await prisma.siteContent.findUnique({ where: { key: 'email.admin' } });
+    if (row?.value) return row.value;
+  } catch {}
+  return process.env.ADMIN_EMAIL || '';
+}
+
 /**
- * Look up a template by name, interpolate the vars and send it via Resend.
+ * Look up a template by name, interpolate the vars and send it via nodemailer.
  * Silently returns if the template is missing/disabled or if sending fails —
  * email must never break the calling request.
  */
