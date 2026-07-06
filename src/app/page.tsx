@@ -1032,18 +1032,69 @@ export default function Desktop() {
 
   const bootScreen = (
     <div style={{ position: 'fixed', inset: 0, zIndex: 3000,
-      background: 'linear-gradient(160deg,#0a0f26,#05060f)',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 26,
-      transition: 'opacity .7s ease', opacity: booted ? 0 : 1, pointerEvents: booted ? 'none' : 'auto' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 40, height: 40, borderRadius: 8 }} />
-        <span style={{ fontSize: 30, fontWeight: 800 }}>lanrae<span style={{ color: '#9d90ff' }}>Ai</span></span>
+      background: 'radial-gradient(ellipse at 50% 45%, #12103a 0%, #0a0f26 50%, #05060f 100%)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 32,
+      transition: 'opacity .8s cubic-bezier(.4,0,.2,1)', opacity: booted ? 0 : 1, pointerEvents: booted ? 'none' : 'auto' }}>
+      <style>{`
+        @keyframes logoIn{0%{opacity:0;transform:scale(.25) rotate(-8deg);filter:blur(18px)}55%{opacity:1;transform:scale(1.12) rotate(1.5deg);filter:blur(0)}75%{transform:scale(.97) rotate(0deg)}88%{transform:scale(1.04)}100%{transform:scale(1) rotate(0deg)}}
+        @keyframes logoPulse{0%,100%{box-shadow:0 0 0 0 rgba(157,144,255,0)}50%{box-shadow:0 0 55px 18px rgba(157,144,255,.35),0 0 100px 35px rgba(124,108,255,.18)}}
+        @keyframes textIn{0%{opacity:0;transform:translateY(10px) scaleX(.9);letter-spacing:.35em}100%{opacity:1;transform:translateY(0) scaleX(1);letter-spacing:-.01em}}
+        @keyframes tagIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
+        @keyframes spark1{0%,100%{opacity:0;transform:scale(0) rotate(0deg)}30%,70%{opacity:1;transform:scale(1) rotate(180deg)}}
+        @keyframes spark2{0%,100%{opacity:0;transform:scale(0) rotate(45deg)}40%,65%{opacity:1;transform:scale(1.2) rotate(225deg)}}
+        @keyframes barIn{0%{width:0;opacity:0}5%{opacity:1}100%{width:100%;opacity:1}}
+        @keyframes dotPulse{0%,100%{opacity:.3;transform:scale(.7)}50%{opacity:1;transform:scale(1)}}
+      `}</style>
+
+      {/* sparkles */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        {[
+          [200, 260, 18, '0s', 1.1], [380, 180, 10, '.4s', .8], [520, 310, 14, '.2s', 1],
+          [150, 340, 8, '.6s', .7], [460, 230, 12, '.3s', .9], [330, 150, 7, '.5s', .6],
+        ].map(([x, y, size, delay, dur], i) => (
+          <div key={i} style={{ position: 'absolute', left: `calc(50% + ${(x as number) - 330}px)`, top: `calc(50% + ${(y as number) - 280}px)`,
+            width: size as number, height: size as number, opacity: 0,
+            animation: `${i % 2 === 0 ? 'spark1' : 'spark2'} ${dur as number * 1.4 + 1}s ${delay} ease-in-out infinite` }}>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
+              <path d="M12 2L13.5 9.5L21 12L13.5 14.5L12 22L10.5 14.5L3 12L10.5 9.5L12 2Z" fill="rgba(200,190,255,.7)"/>
+            </svg>
+          </div>
+        ))}
       </div>
-      <div style={{ width: 200, height: 5, borderRadius: 5, background: 'rgba(255,255,255,.12)', overflow: 'hidden' }}>
-        <div style={{ height: '100%', background: 'linear-gradient(90deg,#9d90ff,#35d6c7)',
-          animation: 'load 2.1s ease forwards' }} />
+
+      {/* logo */}
+      <div style={{ position: 'relative', animation: 'logoIn .9s cubic-bezier(.34,1.56,.64,1) .1s both' }}>
+        <div style={{ animation: 'logoPulse 2.2s ease-in-out .8s infinite', borderRadius: 28 }}>
+          <img src={c('site.logoUrl')} alt="lanrae"
+            style={{ width: 110, height: 110, borderRadius: 28, display: 'block',
+              boxShadow: '0 24px 64px rgba(124,108,255,.4), 0 8px 24px rgba(0,0,0,.5)' }} />
+        </div>
       </div>
-      <div style={{ fontSize: 12, color: '#7d84a6' }}>Starting up…</div>
+
+      {/* brand name */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+        <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-.01em', lineHeight: 1,
+          animation: 'textIn .6s cubic-bezier(.34,1.2,.64,1) .75s both' }}>
+          lanrae<span style={{ color: '#9d90ff' }}>Ai</span>
+        </div>
+        <div style={{ fontSize: 12, color: '#7d84a6', letterSpacing: '.12em', textTransform: 'uppercase', fontWeight: 500,
+          animation: 'tagIn .5s ease .95s both' }}>AI Products Studio</div>
+      </div>
+
+      {/* progress bar */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
+        animation: 'tagIn .4s ease 1.1s both' }}>
+        <div style={{ width: 180, height: 3, borderRadius: 3, background: 'rgba(255,255,255,.08)', overflow: 'hidden' }}>
+          <div style={{ height: '100%', background: 'linear-gradient(90deg,#7c6cff,#9d90ff,#35d6c7)',
+            borderRadius: 3, animation: 'barIn 1.8s cubic-bezier(.4,0,.2,1) 1.1s both' }} />
+        </div>
+        <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+          {[0, .15, .3].map(d => (
+            <div key={d} style={{ width: 4, height: 4, borderRadius: '50%', background: '#7c6cff',
+              animation: `dotPulse .9s ease ${d}s infinite` }} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 
@@ -1354,10 +1405,10 @@ export default function Desktop() {
           display: 'flex', alignItems: 'center', gap: 20, padding: '0 14px',
           background: 'rgba(9,11,24,.55)', backdropFilter: 'blur(22px) saturate(160%)',
           borderBottom: '1px solid var(--stroke-2)', fontSize: 13 }}>
-          <span style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 18, height: 18, borderRadius: 4 }} />
-            lanrae<span style={{ color: '#9d90ff' }}>Ai</span>
-          </span>
+          <div style={{ fontWeight: 800, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 18, height: 18, borderRadius: 4, display: 'block' }} />
+            <span>lanrae<span style={{ color: '#9d90ff' }}>Ai</span></span>
+          </div>
           {['store', 'members', 'fans', 'donate', 'about'].map(id => (
             <span key={id} onClick={() => openWin(id)}
               style={{ color: '#dfe3f4', opacity: .86, cursor: 'default', textTransform: 'capitalize' }}>
