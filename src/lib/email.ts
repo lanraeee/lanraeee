@@ -1,12 +1,28 @@
-import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import { prisma } from '@/lib/prisma';
 
 /**
  * Environment variables required for email delivery (set these in Vercel / .env):
- *   RESEND_API_KEY — your Resend API key from https://resend.com
- *   FROM_EMAIL     — verified sender address, e.g. `lanrae <hello@lanrae.co.uk>`
- *   ADMIN_EMAIL    — Lanrae's address that receives admin alert emails
+ *   SMTP_USER    — your full Microsoft 365 / Outlook email e.g. fawaz@belloite.com
+ *   SMTP_PASS    — your email password (or app password if MFA is on)
+ *   FROM_EMAIL   — display name + address e.g. `lanrae <fawaz@belloite.com>`
+ *   ADMIN_EMAIL  — address that receives admin alert emails
+ *
+ * SMTP host: smtp.office365.com  port: 587  STARTTLS
  */
+
+function createTransport() {
+  return nodemailer.createTransport({
+    host: 'smtp.office365.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+    tls: { ciphers: 'SSLv3' },
+  });
+}
 
 type Vars = Record<string, string | number | undefined | null>;
 
@@ -32,14 +48,14 @@ export async function sendEmail(templateName: string, to: string, vars: Vars = {
     const subject = interpolate(template.subject, vars);
     const html = interpolate(template.html, vars);
 
-    if (!process.env.RESEND_API_KEY) {
-      console.warn(`[email] RESEND_API_KEY not set — skipping "${templateName}" to ${to}`);
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.warn(`[email] SMTP_USER / SMTP_PASS not set — skipping "${templateName}" to ${to}`);
       return;
     }
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'lanrae <hello@lanrae.co.uk>',
+    const transporter = createTransport();
+    await transporter.sendMail({
+      from: process.env.FROM_EMAIL || process.env.SMTP_USER,
       to,
       subject,
       html,
