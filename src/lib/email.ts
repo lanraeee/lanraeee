@@ -3,24 +3,23 @@ import { prisma } from '@/lib/prisma';
 
 /**
  * Environment variables required for email delivery (set these in Vercel / .env):
- *   SMTP_USER    — your full Microsoft 365 / Outlook email e.g. fawaz@belloite.com
- *   SMTP_PASS    — your email password (or app password if MFA is on)
- *   FROM_EMAIL   — display name + address e.g. `lanrae <fawaz@belloite.com>`
- *   ADMIN_EMAIL  — address that receives admin alert emails
+ *   SMTP_USER    — hello@lanrae.co.uk
+ *   SMTP_PASS    — livemail password
+ *   FROM_EMAIL   — display name + address e.g. `lanrae <hello@lanrae.co.uk>`
+ *   ADMIN_EMAIL  — address that receives admin alert emails (or set in admin UI)
  *
- * SMTP host: smtp.office365.com  port: 587  STARTTLS
+ * SMTP host: smtp.livemail.co.uk  port: 587  STARTTLS
  */
 
 function createTransport() {
   return nodemailer.createTransport({
-    host: 'smtp.office365.com',
+    host: 'smtp.livemail.co.uk',
     port: 587,
     secure: false,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
-    tls: { ciphers: 'SSLv3' },
   });
 }
 
@@ -64,7 +63,7 @@ export async function sendEmail(templateName: string, to: string, vars: Vars = {
 
     const transporter = createTransport();
     await transporter.sendMail({
-      from: process.env.FROM_EMAIL || process.env.SMTP_USER,
+      from: process.env.FROM_EMAIL || 'lanrae <hello@lanrae.co.uk>',
       to,
       subject,
       html,
