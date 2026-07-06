@@ -1080,7 +1080,7 @@ export default function Desktop() {
           lanrae<span style={{ color: '#9d90ff' }}>Ai</span>
         </div>
         <div style={{ fontSize: 12, color: '#7d84a6', letterSpacing: '.12em', textTransform: 'uppercase', fontWeight: 500,
-          animation: 'tagIn .5s ease .95s both' }}>AI Products Studio</div>
+          animation: 'tagIn .5s ease .95s both' }}>AI Product Engineering</div>
       </div>
 
       {/* progress bar */}

@@ -712,7 +712,7 @@ export default function AdminPage() {
                 { key: 'site.name', label: 'Brand name', placeholder: 'lanraeAi' },
                 { key: 'site.logoUrl', label: 'Logo URL (leave blank to use default)', placeholder: 'https://...' },
                 { key: 'site.fromName', label: 'Email from name', placeholder: 'lanraeAi' },
-                { key: 'seo.title', label: 'SEO page title', placeholder: 'lanraeAi — AI Products Studio' },
+                { key: 'seo.title', label: 'SEO page title', placeholder: 'lanraeAi — AI Product Engineering' },
                 { key: 'seo.description', label: 'SEO meta description', placeholder: 'Browse and buy AI-powered products built by lanrae.' },
                 { key: 'seo.keywords', label: 'SEO keywords (comma-separated)', placeholder: 'AI, products, studio, lanrae' },
                 { key: 'seo.ogImage', label: 'OG / social share image URL', placeholder: 'https://lanrae.co.uk/logo.png' },
