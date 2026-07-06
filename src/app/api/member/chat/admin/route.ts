@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { sendEmail } from '@/lib/email';
 
 function isAdmin(request: NextRequest): boolean {
   return (
@@ -42,6 +43,16 @@ export async function POST(request: NextRequest) {
     data: { userId, content: content.trim(), fromAdmin: true },
     include: { user: { select: { email: true } } },
   });
+
+  // Notify the member of the new reply (non-blocking).
+  const memberUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (memberUser) {
+    await sendEmail('member_chat_reply', memberUser.email, {
+      displayName: memberUser.email.split('@')[0],
+      replyContent: content.trim(),
+      profileUrl: 'https://lanrae.co.uk',
+    });
+  }
 
   return NextResponse.json({
     id: msg.id,

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { sendEmail } from '@/lib/email';
 
 const prisma = new PrismaClient();
 
@@ -12,6 +13,15 @@ export async function POST(request: NextRequest) {
   const entry = await prisma.projectRequest.create({
     data: { name: name.trim(), email: email.trim(), title: title.trim(), description: description.trim() },
   });
+
+  // Alert admin of the new project request (non-blocking).
+  await sendEmail('admin_new_request', process.env.ADMIN_EMAIL || '', {
+    name: name.trim(),
+    email: email.trim(),
+    title: title.trim(),
+    description: description.trim().slice(0, 200),
+  });
+
   return NextResponse.json(entry, { status: 201 });
 }
 

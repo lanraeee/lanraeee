@@ -242,7 +242,7 @@ const CONTENT_DEFAULTS: Record<string, string> = {
 };
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'products' | 'memberships' | 'fans' | 'requests' | 'content' | 'analytics' | 'messages'>('products');
+  const [tab, setTab] = useState<'products' | 'memberships' | 'fans' | 'requests' | 'content' | 'analytics' | 'messages' | 'email'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [fans, setFans] = useState<any[]>([]);
@@ -257,6 +257,15 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<{ id: string; userId: string; userEmail: string; content: string; fromAdmin: boolean; createdAt: string }[]>([]);
   const [chatReply, setChatReply] = useState<Record<string, string>>({});
+  const [emailTemplates, setEmailTemplates] = useState<{ id: string; name: string; subject: string; html: string; enabled: boolean }[]>([]);
+  const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
+  const [templateEdits, setTemplateEdits] = useState<{ subject: string; html: string; enabled: boolean }>({ subject: '', html: '', enabled: true });
+  const [templateSaving, setTemplateSaving] = useState(false);
+  const [templateSaved, setTemplateSaved] = useState(false);
+  const [testSending, setTestSending] = useState(false);
+  const [grantEmail, setGrantEmail] = useState('');
+  const [grantTier, setGrantTier] = useState('supporter');
+  const [grantStatus, setGrantStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
 
   const fetchAll = async () => {
     try {
@@ -337,10 +346,56 @@ export default function AdminPage() {
     setMessages(Array.isArray(data) ? data : []);
   };
 
+  const fetchEmailTemplates = async () => {
+    const data = await fetch('/api/admin/email-templates').then(r => r.json()).catch(() => []);
+    setEmailTemplates(Array.isArray(data) ? data : []);
+  };
+
+  const saveEmailTemplate = async () => {
+    if (!editingTemplate) return;
+    setTemplateSaving(true);
+    await fetch('/api/admin/email-templates', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: editingTemplate, ...templateEdits }),
+    });
+    await fetchEmailTemplates();
+    setTemplateSaving(false);
+    setTemplateSaved(true);
+    setTimeout(() => setTemplateSaved(false), 2000);
+  };
+
+  const sendTestEmail = async () => {
+    if (!editingTemplate) return;
+    setTestSending(true);
+    await fetch('/api/admin/email-templates/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: editingTemplate }),
+    });
+    setTestSending(false);
+  };
+
+  const grantMembership = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGrantStatus('sending');
+    try {
+      const res = await fetch('/api/admin/grant-membership', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: grantEmail, tier: grantTier }),
+      });
+      if (res.ok) { setGrantStatus('done'); setGrantEmail(''); }
+      else setGrantStatus('error');
+    } catch { setGrantStatus('error'); }
+    setTimeout(() => setGrantStatus('idle'), 3000);
+  };
+
   useEffect(() => {
     if (tab === 'content') fetchContent();
     if (tab === 'analytics') fetchAnalytics();
     if (tab === 'messages') fetchMessages();
+    if (tab === 'email') fetchEmailTemplates();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
@@ -371,6 +426,7 @@ export default function AdminPage() {
           {navItem('content', '✏️ Content')}
           {navItem('analytics', '📊 Analytics')}
           {navItem('messages', '💬 Messages')}
+          {navItem('email', '📧 Email')}
         </nav>
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ padding: '12px', background: 'rgba(53,214,199,.08)', border: '1px solid rgba(53,214,199,.2)',
@@ -459,6 +515,32 @@ export default function AdminPage() {
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
               <h2 style={{ fontSize: 26, fontWeight: 700 }}>Membership Tiers</h2>
+            </div>
+
+            {/* Grant membership */}
+            <div style={{ background: 'rgba(157,144,255,.08)', border: '1px solid rgba(157,144,255,.3)', borderRadius: 14, padding: 20, marginBottom: 28 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 14, color: '#9d90ff' }}>🎁 Grant Membership</h3>
+              <form onSubmit={grantMembership} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                <div style={{ flex: '1 1 220px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 12, color: '#a7aecb', fontWeight: 600 }}>Email address</label>
+                  <input value={grantEmail} onChange={e => setGrantEmail(e.target.value)} placeholder="member@email.com" required type="email"
+                    style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)', borderRadius: 9, padding: '10px 13px', fontSize: 13, color: '#eef1fb', fontFamily: 'inherit', outline: 'none' }} />
+                </div>
+                <div style={{ flex: '0 1 160px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 12, color: '#a7aecb', fontWeight: 600 }}>Tier</label>
+                  <select value={grantTier} onChange={e => setGrantTier(e.target.value)}
+                    style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)', borderRadius: 9, padding: '10px 13px', fontSize: 13, color: '#eef1fb', fontFamily: 'inherit', outline: 'none' }}>
+                    <option value="explorer">Explorer (Free)</option>
+                    <option value="supporter">Supporter</option>
+                    <option value="insider">Insider</option>
+                  </select>
+                </div>
+                <button type="submit" disabled={grantStatus === 'sending'}
+                  style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none', borderRadius: 9, padding: '10px 20px', fontSize: 13, fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+                  {grantStatus === 'sending' ? 'Granting…' : grantStatus === 'done' ? '✓ Granted!' : grantStatus === 'error' ? 'Error' : 'Grant & Send Welcome Email'}
+                </button>
+              </form>
+              <p style={{ fontSize: 12, color: '#7d84a6', marginTop: 10 }}>Creates the member account, records the transaction, and emails a welcome + set-password link.</p>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 20 }}>
               {memberships.map(m => (
@@ -728,6 +810,97 @@ export default function AdminPage() {
                 </div>
               </>
             )}
+          </>
+        )}
+
+        {tab === 'email' && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+              <h2 style={{ fontSize: 26, fontWeight: 700 }}>Email Templates</h2>
+              <button onClick={fetchEmailTemplates}
+                style={{ background: 'rgba(255,255,255,.08)', color: '#cdd3ef', border: '1px solid var(--stroke)', padding: '8px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>
+                ↻ Refresh
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 20, minHeight: 500 }}>
+              {/* Template list */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {emailTemplates.map(t => (
+                  <button key={t.id} onClick={() => { setEditingTemplate(t.name); setTemplateEdits({ subject: t.subject, html: t.html, enabled: t.enabled }); setTemplateSaved(false); }}
+                    style={{ background: editingTemplate === t.name ? 'rgba(157,144,255,.15)' : 'var(--glass)', border: `1px solid ${editingTemplate === t.name ? 'rgba(157,144,255,.5)' : 'var(--stroke)'}`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <span style={{ fontSize: 12, fontWeight: editingTemplate === t.name ? 700 : 500, color: editingTemplate === t.name ? '#9d90ff' : '#cdd3ef', lineHeight: 1.3 }}>{t.name.replace(/_/g, ' ')}</span>
+                    <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 20, background: t.enabled ? 'rgba(53,214,199,.15)' : 'rgba(255,255,255,.06)', color: t.enabled ? '#35d6c7' : '#7d84a6', fontWeight: 650, whiteSpace: 'nowrap' }}>
+                      {t.enabled ? 'ON' : 'OFF'}
+                    </span>
+                  </button>
+                ))}
+                {emailTemplates.length === 0 && (
+                  <div style={{ padding: '20px 12px', color: '#7d84a6', fontSize: 13, textAlign: 'center', border: '1px dashed var(--stroke)', borderRadius: 10 }}>No templates yet</div>
+                )}
+              </div>
+
+              {/* Editor panel */}
+              {editingTemplate && templateEdits ? (
+                <div style={{ background: 'var(--glass)', border: '1px solid var(--stroke)', borderRadius: 14, padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, color: '#9d90ff' }}>{editingTemplate.replace(/_/g, ' ')}</h3>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13 }}>
+                      <span style={{ color: '#a7aecb' }}>Enabled</span>
+                      <div onClick={() => setTemplateEdits((e: any) => ({ ...e, enabled: !e.enabled }))}
+                        style={{ width: 36, height: 20, borderRadius: 10, background: templateEdits.enabled ? '#7c6cff' : 'rgba(255,255,255,.1)', position: 'relative', cursor: 'pointer', transition: 'background .2s' }}>
+                        <div style={{ position: 'absolute', width: 14, height: 14, borderRadius: '50%', background: '#fff', top: 3, left: templateEdits.enabled ? 18 : 3, transition: 'left .2s' }} />
+                      </div>
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 12, color: '#a7aecb', fontWeight: 600 }}>Subject</label>
+                    <input value={templateEdits.subject} onChange={e => setTemplateEdits((d: any) => ({ ...d, subject: e.target.value }))}
+                      style={{ background: 'rgba(255,255,255,.04)', border: '1px solid var(--stroke)', borderRadius: 9, padding: '10px 13px', fontSize: 13, color: '#eef1fb', fontFamily: 'inherit', outline: 'none' }} />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <label style={{ fontSize: 12, color: '#a7aecb', fontWeight: 600 }}>HTML Body</label>
+                      <span style={{ fontSize: 11, color: '#7d84a6' }}>Use {'{{variableName}}'} for dynamic values</span>
+                    </div>
+                    <textarea value={templateEdits.html} onChange={e => setTemplateEdits((d: any) => ({ ...d, html: e.target.value }))}
+                      spellCheck={false}
+                      style={{ flex: 1, minHeight: 320, background: '#080c1e', border: '1px solid var(--stroke)', borderRadius: 9, padding: '12px 14px', fontSize: 12, color: '#cdd3ef', fontFamily: '"Fira Code", "Cascadia Code", "SF Mono", monospace', outline: 'none', resize: 'vertical', lineHeight: 1.6 }} />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <button onClick={saveEmailTemplate} disabled={templateSaving}
+                      style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none', borderRadius: 9, padding: '10px 22px', fontSize: 13, fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      {templateSaving ? 'Saving…' : templateSaved ? '✓ Saved' : 'Save Template'}
+                    </button>
+                    <button onClick={() => sendTestEmail(editingTemplate)} disabled={testSending}
+                      style={{ background: 'rgba(255,255,255,.07)', color: '#cdd3ef', border: '1px solid var(--stroke)', borderRadius: 9, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                      {testSending ? 'Sending…' : '📨 Send Test to Admin'}
+                    </button>
+                    <span style={{ fontSize: 12, color: '#7d84a6' }}>Test uses [test value] for all variables</span>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed var(--stroke)', borderRadius: 14, color: '#7d84a6', fontSize: 14 }}>
+                  Select a template to edit
+                </div>
+              )}
+            </div>
+
+            {/* Variable reference */}
+            <div style={{ marginTop: 24, background: 'var(--glass)', border: '1px solid var(--stroke)', borderRadius: 12, padding: 16 }}>
+              <h4 style={{ fontSize: 13, fontWeight: 700, color: '#a7aecb', marginBottom: 10 }}>Available Variables</h4>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {[['{{displayName}}','Member name'],['{{email}}','Member email'],['{{setPasswordUrl}}','Password setup link'],['{{membershipTier}}','Tier name'],['{{loginTime}}','Login timestamp'],['{{loginDevice}}','Device/browser'],['{{requestTitle}}','Project request title'],['{{requestDetails}}','Request body'],['{{chatMessage}}','Chat message content'],['{{adminReply}}','Admin reply'],['{{productName}}','Product name'],['{{amount}}','Payment amount']].map(([v, d]) => (
+                  <div key={v} style={{ background: 'rgba(157,144,255,.08)', border: '1px solid rgba(157,144,255,.2)', borderRadius: 8, padding: '5px 10px', fontSize: 12 }}>
+                    <code style={{ color: '#9d90ff' }}>{v}</code>
+                    <span style={{ color: '#7d84a6', marginLeft: 6 }}>{d}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </>
         )}
 

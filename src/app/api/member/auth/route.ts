@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { sendEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const { email, password } = await request.json();
     if (!email) return NextResponse.json({ error: 'Email required' }, { status: 400 });
 
     const user = await prisma.user.findUnique({ where: { email } });
@@ -18,6 +20,25 @@ export async function POST(request: NextRequest) {
     if (!membership) {
       return NextResponse.json({ error: 'No active membership found for this email' }, { status: 401 });
     }
+
+    // If the member has set a password, require and verify it.
+    // Legacy members without a passwordHash keep email-only access until they set one.
+    if (user.passwordHash) {
+      if (!password) {
+        return NextResponse.json({ error: 'Password required', needsPassword: true }, { status: 401 });
+      }
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) {
+        return NextResponse.json({ error: 'Incorrect password' }, { status: 401 });
+      }
+    }
+
+    // Login alert email (non-blocking).
+    await sendEmail('member_login_alert', user.email, {
+      displayName: user.email.split('@')[0],
+      time: new Date().toLocaleString('en-GB'),
+      device: request.headers.get('user-agent')?.split('(')[1]?.split(')')[0] || 'Unknown',
+    });
 
     const res = NextResponse.json({ userId: user.id, email: user.email });
     res.cookies.set('member_token', user.id, {
