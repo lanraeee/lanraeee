@@ -27,6 +27,18 @@ const CONTENT_DEFAULTS: Record<string, string> = {
   'donate.subheading': 'Every tip goes straight into building the next product.',
   'about.heading': 'lanrae · AI Product Engineer',
   'about.body': 'I design, build, and ship AI-powered products end to end — then launch them here, on a desktop you can actually drive. lanrae.co.uk is the studio, the storefront, and the changelog, all in one.',
+  'win.store.title': 'Product Store',
+  'win.store.subtitle': '— AI, built by lanrae',
+  'win.fans.title': 'Top 10 Fans',
+  'win.fans.subtitle': '— this month',
+  'win.members.title': 'Membership',
+  'win.members.subtitle': '',
+  'win.request.title': 'Request a Project',
+  'win.request.subtitle': '— shape the roadmap',
+  'win.donate.title': 'Support the work',
+  'win.donate.subtitle': '',
+  'win.about.title': 'About',
+  'win.about.subtitle': '',
   'app.profile.icon': '👤', 'app.profile.label': 'Profile',
   'win.profile.title': 'Member Profile', 'win.profile.subtitle': '',
 };
@@ -211,10 +223,48 @@ function Sheet({ open, onClose, title, os, children }: {
 
 /* ── checkout ───────────────────────────────────────────────── */
 function Checkout({ product, onClose }: { product: Product | null; onClose: () => void }) {
-  const [paid, setPaid] = useState(false);
-  useEffect(() => { setPaid(false); }, [product]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => { setLoading(false); setError(null); }, [product]);
   if (!product) return null;
   const price = product.isFree ? 0 : product.price / 100;
+
+  const handlePay = async () => {
+    if (product.isFree) {
+      if (product.artifactUrl) window.open(product.artifactUrl, '_blank');
+      onClose();
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const MEMBERSHIP_TIERS = ['explorer', 'supporter', 'insider'];
+      let body: Record<string, unknown>;
+      if (product.id === 'donate') {
+        body = { type: 'donate', amount: price };
+      } else if (MEMBERSHIP_TIERS.includes(product.id.toLowerCase())) {
+        body = { type: 'membership', membershipTier: product.id.toLowerCase() };
+      } else {
+        body = { type: 'product', productId: product.id };
+      }
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error || 'Something went wrong');
+        setLoading(false);
+      }
+    } catch {
+      setError('Failed to start checkout');
+      setLoading(false);
+    }
+  };
+
   return (
     <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex',
@@ -224,54 +274,33 @@ function Checkout({ product, onClose }: { product: Product | null; onClose: () =
         border: '1px solid var(--stroke)', borderRadius: 20,
         boxShadow: '0 40px 90px rgba(0,0,0,.6)', overflow: 'hidden',
         animation: 'rise .3s cubic-bezier(.2,.9,.3,1.15)' }}>
-        {paid ? (
-          <div style={{ padding: '40px 24px', textAlign: 'center', display: 'flex',
-            flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', display: 'grid', placeItems: 'center',
-              fontSize: 30, background: 'radial-gradient(circle at 40% 35%,#4ff2b0,#16a06a)',
-              boxShadow: '0 10px 30px rgba(61,220,151,.4)' }}>✓</div>
-            <h3 style={{ fontSize: 17, fontWeight: 750 }}>Payment complete 🎉</h3>
-            <p style={{ fontSize: 13, color: '#a7aecb', maxWidth: '34ch' }}>Your purchase is unlocking now. Thank you for the support.</p>
-            <button onClick={onClose} style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)',
-              color: '#fff', border: 'none', padding: '10px 24px', borderRadius: 9,
-              fontSize: 13, fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit' }}>Done</button>
+        <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--stroke-2)',
+          display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 11, display: 'grid', placeItems: 'center',
+            fontSize: 22, background: product.gradient, border: '1px solid var(--stroke)' }}>{product.icon}</div>
+          <div>
+            <h3 style={{ fontSize: 15, fontWeight: 700 }}>{product.name}</h3>
+            <p style={{ fontSize: 12, color: '#a7aecb' }}>lanrae.co.uk · secure checkout</p>
           </div>
-        ) : (
-          <>
-            <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--stroke-2)',
-              display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 11, display: 'grid', placeItems: 'center',
-                fontSize: 22, background: product.gradient, border: '1px solid var(--stroke)' }}>{product.icon}</div>
-              <div>
-                <h3 style={{ fontSize: 15, fontWeight: 700 }}>{product.name}</h3>
-                <p style={{ fontSize: 12, color: '#a7aecb' }}>lanrae.co.uk · secure checkout</p>
-              </div>
-            </div>
-            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {[['Email', 'you@email.com'], ['Card', '4242 4242 4242 4242'], ['Expiry / CVC', '04 / 27   123']].map(([label, val]) => (
-                <div key={label} style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
-                  borderRadius: 9, padding: '11px 13px', fontSize: 13, color: '#a7aecb',
-                  display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{label}</span><span style={{ fontFamily: 'monospace', color: '#7d84a6' }}>{val}▏</span>
-                </div>
-              ))}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 4 }}>
-                <span style={{ color: '#a7aecb', fontSize: 13 }}>Total</span>
-                <span style={{ fontSize: 22, fontWeight: 800 }}>£{price.toFixed(2)}</span>
-              </div>
-              <button onClick={() => setPaid(true)}
-                style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
-                  border: 'none', padding: '12px', borderRadius: 9, fontSize: 13,
-                  fontWeight: 650, cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}>
-                Pay £{price.toFixed(2)}
-              </button>
-            </div>
-            <div style={{ padding: '12px', borderTop: '1px solid var(--stroke-2)',
-              textAlign: 'center', fontSize: 11, color: '#7d84a6' }}>
-              🔒 Powered by <b style={{ color: '#a99dff' }}>stripe</b> · demo — no real charge
-            </div>
-          </>
-        )}
+        </div>
+        <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ color: '#a7aecb', fontSize: 13 }}>Total</span>
+            <span style={{ fontSize: 26, fontWeight: 800 }}>£{price.toFixed(2)}</span>
+          </div>
+          {error && <p style={{ fontSize: 13, color: '#ff6b6b', margin: 0 }}>{error}</p>}
+          <button onClick={handlePay} disabled={loading}
+            style={{ background: loading ? 'rgba(157,144,255,.5)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)',
+              color: '#fff', border: 'none', padding: '14px', borderRadius: 12, fontSize: 14,
+              fontWeight: 650, cursor: loading ? 'not-allowed' : 'pointer',
+              width: '100%', fontFamily: 'inherit', transition: 'opacity .2s' }}>
+            {loading ? 'Redirecting…' : `Pay £${price.toFixed(2)} with Stripe`}
+          </button>
+        </div>
+        <div style={{ padding: '12px', borderTop: '1px solid var(--stroke-2)',
+          textAlign: 'center', fontSize: 11, color: '#7d84a6' }}>
+          🔒 Secure payment powered by <b style={{ color: '#a99dff' }}>Stripe</b>
+        </div>
       </div>
       <style>{`@keyframes rise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}} @keyframes load{to{width:100%}}`}</style>
     </div>
@@ -440,12 +469,12 @@ export default function Desktop() {
   ];
 
   const wins = [
-    { id: 'store', title: 'Product Store', subtitle: '— AI, built by lanrae' },
-    { id: 'fans', title: 'Top 10 Fans', subtitle: '— this month' },
-    { id: 'members', title: 'Membership' },
-    { id: 'request', title: 'Request a Project', subtitle: '— shape the roadmap' },
-    { id: 'donate', title: 'Support the work' },
-    { id: 'about', title: 'About' },
+    { id: 'store',   title: c('win.store.title'),   subtitle: c('win.store.subtitle') || undefined },
+    { id: 'fans',    title: c('win.fans.title'),    subtitle: c('win.fans.subtitle') || undefined },
+    { id: 'members', title: c('win.members.title'), subtitle: c('win.members.subtitle') || undefined },
+    { id: 'request', title: c('win.request.title'), subtitle: c('win.request.subtitle') || undefined },
+    { id: 'donate',  title: c('win.donate.title'),  subtitle: c('win.donate.subtitle') || undefined },
+    { id: 'about',   title: c('win.about.title'),   subtitle: c('win.about.subtitle') || undefined },
     { id: 'profile', title: c('win.profile.title'), subtitle: c('win.profile.subtitle') || undefined },
   ];
 
@@ -615,7 +644,7 @@ export default function Desktop() {
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
             <div style={{ fontSize: 40 }}>🎉</div>
             <p style={{ fontSize: 15, fontWeight: 700, color: '#3ddc97' }}>Request submitted!</p>
-            <p style={{ fontSize: 13, color: '#a7aecb', maxWidth: '32ch' }}>I'll review it and add top requests to the roadmap.</p>
+            <p style={{ fontSize: 13, color: '#a7aecb', maxWidth: '32ch' }}>I&apos;ll review it and add top requests to the roadmap.</p>
             <button onClick={() => { setReqStatus('idle'); setReqForm({ name: '', email: '', title: '', description: '' }); }}
               style={{ marginTop: 4, fontSize: 13, color: '#9d90ff', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
               Submit another
@@ -878,7 +907,10 @@ export default function Desktop() {
       background: 'linear-gradient(160deg,#0a0f26,#05060f)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 26,
       transition: 'opacity .7s ease', opacity: booted ? 0 : 1, pointerEvents: booted ? 'none' : 'auto' }}>
-      <div style={{ fontSize: 30, fontWeight: 800 }}>◐ lanrae<span style={{ color: '#9d90ff' }}>OS</span></div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <img src="/logo.png" alt="lanrae" style={{ width: 40, height: 40, borderRadius: 8 }} />
+        <span style={{ fontSize: 30, fontWeight: 800 }}>lanrae<span style={{ color: '#9d90ff' }}>OS</span></span>
+      </div>
       <div style={{ width: 200, height: 5, borderRadius: 5, background: 'rgba(255,255,255,.12)', overflow: 'hidden' }}>
         <div style={{ height: '100%', background: 'linear-gradient(90deg,#9d90ff,#35d6c7)',
           animation: 'load 2.1s ease forwards' }} />
@@ -1010,7 +1042,10 @@ export default function Desktop() {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', fontWeight: 400 }}>Welcome to</div>
-              <div style={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>lanrae<span style={{ color: '#b8b0ff' }}>OS</span></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <img src="/logo.png" alt="lanrae" style={{ width: 28, height: 28, borderRadius: 6 }} />
+                <span style={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>lanrae<span style={{ color: '#b8b0ff' }}>OS</span></span>
+              </div>
             </div>
             <button onClick={() => openWin('profile')} style={{ width: 44, height: 44, borderRadius: '50%', display: 'grid', placeItems: 'center',
               fontSize: 20, background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)',
@@ -1039,6 +1074,7 @@ export default function Desktop() {
                      app.id === 'members' ? 'Explorer · Supporter · Insider' :
                      app.id === 'fans' ? 'Top supporters this month' :
                      app.id === 'donate' ? 'Buy me a GPU hour ☕' :
+                     app.id === 'profile' ? 'Your member profile & chat' :
                      'AI Product Engineer · lanrae.co.uk'}
                   </div>
                 </div>
@@ -1107,7 +1143,8 @@ export default function Desktop() {
             background: 'rgba(9,11,24,.65)', backdropFilter: 'blur(28px)',
             borderBottom: '1px solid rgba(255,255,255,.07)', fontSize: 13 }}>
             <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: -.2 }}>
-              ⊞ lanrae<span style={{ color: '#9d90ff' }}>OS</span>
+              <img src="/logo.png" alt="lanrae" style={{ width: 20, height: 20, borderRadius: 4, marginRight: 6, verticalAlign: 'middle' }} />
+              lanrae<span style={{ color: '#9d90ff' }}>OS</span>
             </span>
             {['store', 'members', 'fans', 'donate', 'about'].map(id => (
               <span key={id} onClick={() => openWin(id)}
@@ -1202,7 +1239,10 @@ export default function Desktop() {
           display: 'flex', alignItems: 'center', gap: 20, padding: '0 14px',
           background: 'rgba(9,11,24,.55)', backdropFilter: 'blur(22px) saturate(160%)',
           borderBottom: '1px solid var(--stroke-2)', fontSize: 13 }}>
-          <span style={{ fontWeight: 800 }}>◐ lanrae<span style={{ color: '#9d90ff' }}>OS</span></span>
+          <span style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <img src="/logo.png" alt="lanrae" style={{ width: 18, height: 18, borderRadius: 4 }} />
+            lanrae<span style={{ color: '#9d90ff' }}>OS</span>
+          </span>
           {['store', 'members', 'fans', 'donate', 'about'].map(id => (
             <span key={id} onClick={() => openWin(id)}
               style={{ color: '#dfe3f4', opacity: .86, cursor: 'default', textTransform: 'capitalize' }}>
