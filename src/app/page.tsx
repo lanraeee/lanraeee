@@ -96,9 +96,9 @@ function MacWin({ title, subtitle, open, onClose, onMin, style, children, zIndex
   return (
     <section ref={ref} onMouseDown={onFocus} style={{
       position: 'absolute', display: 'flex', flexDirection: 'column',
-      background: 'var(--glass)', backdropFilter: 'blur(30px) saturate(150%)',
+      background: 'var(--glass)', backdropFilter: 'blur(40px) saturate(180%)',
       border: '1px solid var(--stroke)', borderRadius: 14,
-      boxShadow: '0 30px 70px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06)',
+      boxShadow: '0 30px 70px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.14)',
       transition: 'opacity .22s ease, transform .22s cubic-bezier(.2,.9,.3,1.2)',
       opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
       transform: open ? 'none' : 'scale(.94) translateY(8px)',
@@ -148,9 +148,9 @@ function WinWindow({ title, subtitle, open, onClose, onMin, style, children, zIn
   return (
     <section ref={ref} onMouseDown={onFocus} style={{
       position: 'absolute', display: 'flex', flexDirection: 'column',
-      background: 'rgba(18,24,44,.82)', backdropFilter: 'blur(40px) saturate(180%)',
-      border: '1px solid rgba(255,255,255,.12)', borderRadius: 10,
-      boxShadow: '0 32px 80px rgba(0,0,0,.65)',
+      background: 'rgba(14,19,40,.52)', backdropFilter: 'blur(44px) saturate(180%)',
+      border: '1px solid rgba(255,255,255,.13)', borderRadius: 10,
+      boxShadow: '0 32px 80px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.12)',
       transition: 'opacity .2s ease, transform .2s cubic-bezier(.2,.9,.3,1.2)',
       opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
       transform: open ? 'none' : 'scale(.96) translateY(6px)',
@@ -1024,10 +1024,13 @@ export default function Desktop() {
   );
 
   const wallpaper = `
-    radial-gradient(120% 90% at 12% -8%,#3a1d6e 0%,transparent 48%),
-    radial-gradient(120% 100% at 92% 4%,#0e2a4d 0%,transparent 52%),
-    radial-gradient(140% 120% at 50% 120%,#1b1150 0%,transparent 60%),
-    linear-gradient(160deg,#0a0f26,#05060f)
+    radial-gradient(80% 60% at 30% 40%,rgba(58,29,110,.55) 0%,transparent 65%),
+    radial-gradient(70% 55% at 72% 55%,rgba(14,42,77,.50) 0%,transparent 60%),
+    radial-gradient(60% 50% at 55% 25%,rgba(53,214,199,.10) 0%,transparent 55%),
+    radial-gradient(120% 90% at 8% -10%,#3a1d6e 0%,transparent 45%),
+    radial-gradient(120% 100% at 96% 2%,#0e2a4d 0%,transparent 50%),
+    radial-gradient(140% 120% at 50% 115%,#1b1150 0%,transparent 58%),
+    linear-gradient(160deg,#0b1028,#05060f)
   `;
 
   const bootScreen = (
@@ -1447,8 +1450,9 @@ export default function Desktop() {
         {/* dock */}
         <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 800,
           display: 'flex', alignItems: 'flex-end', gap: 8, padding: '9px 12px',
-          background: 'rgba(18,20,40,.5)', backdropFilter: 'blur(26px) saturate(160%)',
-          border: '1px solid var(--stroke)', borderRadius: 20, boxShadow: '0 18px 44px rgba(0,0,0,.5)' }}>
+          background: 'rgba(14,16,36,.48)', backdropFilter: 'blur(32px) saturate(180%)',
+          border: '1px solid var(--stroke)', borderRadius: 20,
+          boxShadow: '0 18px 44px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1)' }}>
           {appsMeta.map(({ id, icon, label }) => (
             <div key={id} title={label} onClick={() => openWin(id)}
               style={{ width: 50, height: 50, borderRadius: 13, display: 'grid', placeItems: 'center',

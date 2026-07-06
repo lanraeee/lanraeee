@@ -4,10 +4,10 @@
   --accent: #7c6cff;
   --accent-soft: #9d90ff;
   --glow: #35d6c7;
-  --glass: rgba(20, 24, 44, 0.62);
-  --glass-2: rgba(30, 34, 60, 0.72);
-  --stroke: rgba(255, 255, 255, 0.12);
-  --stroke-2: rgba(255, 255, 255, 0.07);
+  --glass: rgba(16, 20, 42, 0.48);
+  --glass-2: rgba(22, 26, 52, 0.58);
+  --stroke: rgba(255, 255, 255, 0.14);
+  --stroke-2: rgba(255, 255, 255, 0.08);
 }
 
 * { box-sizing: border-box; }
