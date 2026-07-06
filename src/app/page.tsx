@@ -1024,13 +1024,12 @@ export default function Desktop() {
   );
 
   const wallpaper = `
-    radial-gradient(80% 60% at 30% 40%,rgba(58,29,110,.55) 0%,transparent 65%),
-    radial-gradient(70% 55% at 72% 55%,rgba(14,42,77,.50) 0%,transparent 60%),
-    radial-gradient(60% 50% at 55% 25%,rgba(53,214,199,.10) 0%,transparent 55%),
-    radial-gradient(120% 90% at 8% -10%,#3a1d6e 0%,transparent 45%),
-    radial-gradient(120% 100% at 96% 2%,#0e2a4d 0%,transparent 50%),
-    radial-gradient(140% 120% at 50% 115%,#1b1150 0%,transparent 58%),
-    linear-gradient(160deg,#0b1028,#05060f)
+    radial-gradient(ellipse 130% 90% at 20% 35%, #2e1868 0%, transparent 52%),
+    radial-gradient(ellipse 110% 80% at 80% 20%, #1a2a6e 0%, transparent 50%),
+    radial-gradient(ellipse 100% 70% at 55% 75%, #1f1060 0%, transparent 52%),
+    radial-gradient(ellipse 70% 55% at 60% 45%, #1a1550 0%, transparent 48%),
+    radial-gradient(ellipse 50% 40% at 30% 70%, #251060 0%, transparent 45%),
+    linear-gradient(150deg, #13103e 0%, #0e0e28 45%, #070812 100%)
   `;
 
   const bootScreen = (
@@ -1345,8 +1344,8 @@ export default function Desktop() {
               style={{ position: 'absolute', top, left, width: 80, textAlign: 'center',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'default' }}>
               <div style={{ width: 52, height: 52, borderRadius: 8, display: 'grid', placeItems: 'center',
-                fontSize: 24, background: 'rgba(255,255,255,.08)', backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,.12)', boxShadow: '0 6px 20px rgba(0,0,0,.4)' }}>{icon}</div>
+                fontSize: 24, background: 'var(--glass)', backdropFilter: 'blur(20px) saturate(160%)',
+                border: '1px solid rgba(255,255,255,.14)', boxShadow: '0 6px 20px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.1)' }}>{icon}</div>
               <span style={{ fontSize: 11.5, color: '#e8ecf7', textShadow: '0 1px 4px rgba(0,0,0,.8)',
                 padding: '2px 5px', borderRadius: 4, background: 'rgba(0,0,0,.25)' }}>{label}</span>
             </div>
@@ -1431,8 +1430,8 @@ export default function Desktop() {
             style={{ position: 'absolute', top, left, width: 88, textAlign: 'center',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'default' }}>
             <div style={{ width: 56, height: 56, borderRadius: 12, display: 'grid', placeItems: 'center',
-              fontSize: 26, background: 'linear-gradient(160deg,rgba(255,255,255,.12),rgba(255,255,255,.03))',
-              border: '1px solid var(--stroke)', boxShadow: '0 8px 22px rgba(0,0,0,.35)' }}>{icon}</div>
+              fontSize: 26, background: 'var(--glass)', backdropFilter: 'blur(20px) saturate(160%)',
+              border: '1px solid var(--stroke)', boxShadow: '0 8px 22px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.1)' }}>{icon}</div>
             <span style={{ fontSize: 11.5, color: '#eaeefb', textShadow: '0 1px 4px rgba(0,0,0,.7)',
               padding: '1px 6px', borderRadius: 5 }}>{label}</span>
           </div>
@@ -1457,7 +1456,7 @@ export default function Desktop() {
             <div key={id} title={label} onClick={() => openWin(id)}
               style={{ width: 50, height: 50, borderRadius: 13, display: 'grid', placeItems: 'center',
                 fontSize: 25, cursor: 'pointer', position: 'relative',
-                background: 'linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.02))',
+                background: open[id] ? 'rgba(124,108,255,.22)' : 'var(--glass)',
                 border: `1px solid ${open[id] ? 'rgba(124,108,255,.5)' : 'var(--stroke)'}`,
                 transition: 'transform .16s cubic-bezier(.2,.9,.3,1.3)', transformOrigin: 'bottom center' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.32) translateY(-8px)'; }}
