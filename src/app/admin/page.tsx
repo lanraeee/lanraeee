@@ -155,12 +155,84 @@ function ProductForm({ product, onSave, onCancel }: {
   );
 }
 
+const CONTENT_KEYS = [
+  { section: 'Apps', fields: [
+    { key: 'app.store.icon', label: 'Store icon', type: 'emoji' },   { key: 'app.store.label', label: 'Store label' },
+    { key: 'app.members.icon', label: 'Members icon', type: 'emoji' }, { key: 'app.members.label', label: 'Members label' },
+    { key: 'app.fans.icon', label: 'Fans icon', type: 'emoji' },     { key: 'app.fans.label', label: 'Fans label' },
+    { key: 'app.request.icon', label: 'Request icon', type: 'emoji' }, { key: 'app.request.label', label: 'Request label' },
+    { key: 'app.donate.icon', label: 'Support icon', type: 'emoji' }, { key: 'app.donate.label', label: 'Support label' },
+    { key: 'app.about.icon', label: 'About icon', type: 'emoji' },   { key: 'app.about.label', label: 'About label' },
+  ]},
+  { section: 'Store', fields: [
+    { key: 'store.label', label: 'Section tag' },
+    { key: 'store.heading', label: 'Heading' },
+    { key: 'store.subheading', label: 'Subheading', type: 'textarea' },
+  ]},
+  { section: 'Top Fans', fields: [
+    { key: 'fans.label', label: 'Section tag' },
+    { key: 'fans.heading', label: 'Heading' },
+    { key: 'fans.subheading', label: 'Subheading' },
+  ]},
+  { section: 'Members', fields: [
+    { key: 'members.label', label: 'Section tag' },
+    { key: 'members.heading', label: 'Heading' },
+    { key: 'members.subheading', label: 'Subheading', type: 'textarea' },
+  ]},
+  { section: 'Request', fields: [
+    { key: 'request.label', label: 'Section tag' },
+    { key: 'request.heading', label: 'Heading' },
+    { key: 'request.subheading', label: 'Subheading', type: 'textarea' },
+  ]},
+  { section: 'Support', fields: [
+    { key: 'donate.label', label: 'Section tag' },
+    { key: 'donate.heading', label: 'Heading' },
+    { key: 'donate.subheading', label: 'Subheading' },
+  ]},
+  { section: 'About', fields: [
+    { key: 'about.heading', label: 'Heading' },
+    { key: 'about.body', label: 'Body text', type: 'textarea' },
+  ]},
+];
+
+const CONTENT_DEFAULTS: Record<string, string> = {
+  'app.store.icon': '🛍️',   'app.store.label': 'Store',
+  'app.members.icon': '🪪', 'app.members.label': 'Members',
+  'app.fans.icon': '🏆',    'app.fans.label': 'Fans',
+  'app.request.icon': '💡', 'app.request.label': 'Request',
+  'app.donate.icon': '💛',  'app.donate.label': 'Support',
+  'app.about.icon': 'ℹ️',   'app.about.label': 'About',
+  'store.label': 'Featured · Built with AI',
+  'store.heading': 'Ship-ready AI products',
+  'store.subheading': 'Own them outright, or unlock the full shelf with an Insider membership.',
+  'fans.label': 'Hall of fame',
+  'fans.heading': 'The people funding the future',
+  'fans.subheading': 'Ranked by total support. Resets monthly.',
+  'members.label': 'Join the studio',
+  'members.heading': 'Back the build. Get the perks.',
+  'members.subheading': 'Members fund what gets built next and top supporters get their name on the wall.',
+  'request.label': 'Build with me',
+  'request.heading': 'Request a project',
+  'request.subheading': 'Got an idea? Tell me what you want built — top-voted requests shape the roadmap.',
+  'donate.label': 'One-off tip',
+  'donate.heading': 'Buy me a GPU hour ☕',
+  'donate.subheading': 'Every tip goes straight into building the next product.',
+  'about.heading': 'lanrae · AI Product Engineer',
+  'about.body': 'I design, build, and ship AI-powered products end to end — then launch them here, on a desktop you can actually drive. lanrae.co.uk is the studio, the storefront, and the changelog, all in one.',
+};
+
 export default function AdminPage() {
-  const [tab, setTab] = useState<'products' | 'memberships' | 'fans' | 'requests'>('products');
+  const [tab, setTab] = useState<'products' | 'memberships' | 'fans' | 'requests' | 'content' | 'analytics'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [fans, setFans] = useState<any[]>([]);
   const [requests, setRequests] = useState<ProjectRequest[]>([]);
+  const [siteContent, setSiteContent] = useState<Record<string, string>>({});
+  const [contentEdits, setContentEdits] = useState<Record<string, string>>({});
+  const [contentSaving, setContentSaving] = useState(false);
+  const [contentSaved, setContentSaved] = useState(false);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null | 'new'>(null);
   const [loading, setLoading] = useState(true);
 
@@ -212,6 +284,38 @@ export default function AdminPage() {
     fetchAll();
   };
 
+  const fetchContent = async () => {
+    const data = await fetch('/api/content').then(r => r.json()).catch(() => ({}));
+    setSiteContent(data);
+    setContentEdits({});
+  };
+
+  const saveContent = async () => {
+    setContentSaving(true);
+    await fetch('/api/content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(contentEdits),
+    });
+    await fetchContent();
+    setContentSaving(false);
+    setContentSaved(true);
+    setTimeout(() => setContentSaved(false), 2500);
+  };
+
+  const fetchAnalytics = async () => {
+    setAnalyticsLoading(true);
+    const data = await fetch('/api/analytics').then(r => r.json()).catch(() => null);
+    setAnalytics(data);
+    setAnalyticsLoading(false);
+  };
+
+  useEffect(() => {
+    if (tab === 'content') fetchContent();
+    if (tab === 'analytics') fetchAnalytics();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
+
   const navItem = (id: typeof tab, label: string) => (
     <button key={id} onClick={() => setTab(id)}
       style={{ background: tab === id ? 'linear-gradient(180deg,#9d90ff,#7c6cff)' : 'none',
@@ -236,6 +340,8 @@ export default function AdminPage() {
           {navItem('memberships', '🪪 Memberships')}
           {navItem('fans', '🏆 Top Fans')}
           {navItem('requests', '💡 Requests')}
+          {navItem('content', '✏️ Content')}
+          {navItem('analytics', '📊 Analytics')}
         </nav>
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ padding: '12px', background: 'rgba(53,214,199,.08)', border: '1px solid rgba(53,214,199,.2)',
@@ -450,6 +556,148 @@ export default function AdminPage() {
                   );
                 })}
               </div>
+            )}
+          </>
+        )}
+
+        {tab === 'content' && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+              <h2 style={{ fontSize: 26, fontWeight: 700 }}>Content</h2>
+              <button onClick={saveContent} disabled={contentSaving || Object.keys(contentEdits).length === 0}
+                style={{ background: contentSaved ? 'linear-gradient(180deg,#3ddc97,#16a06a)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)',
+                  color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 9,
+                  fontSize: 13, fontWeight: 650, cursor: 'pointer',
+                  opacity: Object.keys(contentEdits).length === 0 ? .4 : 1 }}>
+                {contentSaved ? '✓ Saved' : contentSaving ? 'Saving…' : `Save ${Object.keys(contentEdits).length > 0 ? `(${Object.keys(contentEdits).length} edits)` : 'changes'}`}
+              </button>
+            </div>
+            {CONTENT_KEYS.map(group => {
+              const fieldStyle: React.CSSProperties = {
+                background: 'rgba(255,255,255,.04)', border: '1px solid var(--stroke)',
+                borderRadius: 8, padding: '9px 11px', fontSize: 13, color: '#eef1fb',
+                fontFamily: 'inherit', width: '100%', boxSizing: 'border-box', outline: 'none',
+              };
+              return (
+                <div key={group.section} style={{ marginBottom: 28 }}>
+                  <h3 style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px',
+                    color: '#9d90ff', marginBottom: 14, paddingBottom: 8, borderBottom: '1px solid var(--stroke-2)' }}>{group.section}</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 12 }}>
+                    {group.fields.map((field: any) => {
+                      const current = contentEdits[field.key] ?? siteContent[field.key] ?? CONTENT_DEFAULTS[field.key] ?? '';
+                      const isDirty = field.key in contentEdits;
+                      return (
+                        <div key={field.key} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                          <label style={{ fontSize: 11, color: isDirty ? '#9d90ff' : '#a7aecb',
+                            textTransform: 'uppercase', letterSpacing: '.5px', display: 'flex', gap: 6, alignItems: 'center' }}>
+                            {field.label}
+                            {isDirty && <span style={{ fontSize: 10, background: 'rgba(124,108,255,.2)', color: '#9d90ff',
+                              padding: '1px 6px', borderRadius: 4 }}>edited</span>}
+                          </label>
+                          {field.type === 'textarea' ? (
+                            <textarea rows={2} value={current}
+                              onChange={e => setContentEdits(prev => ({ ...prev, [field.key]: e.target.value }))}
+                              style={{ ...fieldStyle, resize: 'vertical' as const }} />
+                          ) : (
+                            <input value={current}
+                              onChange={e => setContentEdits(prev => ({ ...prev, [field.key]: e.target.value }))}
+                              style={{ ...fieldStyle, fontSize: field.type === 'emoji' ? 20 : 13 }} />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {tab === 'analytics' && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+              <h2 style={{ fontSize: 26, fontWeight: 700 }}>Analytics</h2>
+              <button onClick={fetchAnalytics}
+                style={{ background: 'rgba(255,255,255,.08)', color: '#cdd3ef', border: '1px solid var(--stroke)',
+                  padding: '8px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>
+                ↻ Refresh
+              </button>
+            </div>
+            {analyticsLoading ? (
+              <p style={{ color: '#7d84a6' }}>Loading…</p>
+            ) : !analytics ? (
+              <p style={{ color: '#7d84a6' }}>No data yet — visitors appear here once DATABASE_URL is configured.</p>
+            ) : (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(170px,1fr))', gap: 16, marginBottom: 32 }}>
+                  {[
+                    { label: 'Total views', value: analytics.total, color: '#9d90ff' },
+                    { label: 'Today', value: analytics.today, color: '#3ddc97' },
+                    { label: 'This week', value: analytics.thisWeek, color: '#35d6c7' },
+                    { label: 'Live (5 min)', value: analytics.newAlerts, color: analytics.newAlerts > 0 ? '#f5c451' : '#7d84a6', alert: analytics.newAlerts > 0 },
+                  ].map((s: any) => (
+                    <div key={s.label} style={{ background: 'var(--glass)', border: `1px solid ${s.alert ? 'rgba(245,196,81,.35)' : 'var(--stroke)'}`,
+                      borderRadius: 14, padding: '20px 18px',
+                      boxShadow: s.alert ? '0 0 0 1px rgba(245,196,81,.15),0 8px 24px rgba(245,196,81,.08)' : undefined }}>
+                      <div style={{ fontSize: 32, fontWeight: 800, color: s.color, fontVariantNumeric: 'tabular-nums' }}>
+                        {s.alert && '🔔 '}{s.value}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#7d84a6', marginTop: 4 }}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {analytics.topCountries?.length > 0 && (
+                  <div style={{ marginBottom: 28 }}>
+                    <h3 style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px',
+                      color: '#a7aecb', marginBottom: 12 }}>Top Countries</h3>
+                    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                      {analytics.topCountries.map((ct: any) => {
+                        const flag = ct.country?.length === 2
+                          ? ct.country.toUpperCase().replace(/./g, (ch: string) => String.fromCodePoint(ch.charCodeAt(0) + 127397))
+                          : '🌍';
+                        return (
+                          <div key={ct.country} style={{ background: 'var(--glass-2)', border: '1px solid var(--stroke-2)',
+                            borderRadius: 10, padding: '8px 14px', fontSize: 13, display: 'flex', gap: 8, alignItems: 'center' }}>
+                            <span style={{ fontSize: 18 }}>{flag}</span>
+                            <span style={{ fontWeight: 600 }}>{ct.country}</span>
+                            <span style={{ color: '#7d84a6' }}>{ct.count}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <h3 style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px',
+                  color: '#a7aecb', marginBottom: 12 }}>Recent Visitors</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {(analytics.recent ?? []).slice(0, 50).map((v: any) => {
+                    const flag = v.country?.length === 2
+                      ? v.country.toUpperCase().replace(/./g, (ch: string) => String.fromCodePoint(ch.charCodeAt(0) + 127397))
+                      : '🌍';
+                    const age = Math.floor((Date.now() - new Date(v.createdAt).getTime()) / 60000);
+                    return (
+                      <div key={v.id} style={{ display: 'grid', gridTemplateColumns: '26px 1fr auto auto',
+                        alignItems: 'center', gap: 12, padding: '10px 14px',
+                        background: age < 5 ? 'rgba(245,196,81,.05)' : 'var(--glass)',
+                        border: `1px solid ${age < 5 ? 'rgba(245,196,81,.2)' : 'var(--stroke)'}`,
+                        borderRadius: 10, fontSize: 13 }}>
+                        <span style={{ fontSize: 18 }}>{flag}</span>
+                        <div>
+                          <span style={{ fontWeight: 600 }}>{v.city ? `${v.city}, ` : ''}{v.country || 'Unknown'}</span>
+                          <span style={{ color: '#7d84a6', marginLeft: 8 }}>{v.browser} · {v.device}</span>
+                        </div>
+                        {age < 5 && <span style={{ fontSize: 10, background: 'rgba(245,196,81,.2)', color: '#f5c451',
+                          padding: '2px 7px', borderRadius: 20, fontWeight: 650, whiteSpace: 'nowrap' }}>LIVE</span>}
+                        <span style={{ color: '#7d84a6', fontSize: 12, whiteSpace: 'nowrap' }}>
+                          {age < 1 ? 'just now' : age < 60 ? `${age}m ago` : `${Math.floor(age / 60)}h ago`}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </>
         )}

@@ -89,3 +89,20 @@ model ProjectRequest {
   status      String   @default("pending")
   createdAt   DateTime @default(now())
 }
+
+model SiteContent {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  path      String   @default("/")
+  country   String?
+  city      String?
+  browser   String?
+  device    String?
+  createdAt DateTime @default(now())
+}

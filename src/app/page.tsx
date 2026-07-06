@@ -2,6 +2,33 @@
 
 import { useEffect, useRef, useState } from 'react';
 
+/* ── CMS defaults ───────────────────────────────────────────── */
+const CONTENT_DEFAULTS: Record<string, string> = {
+  'app.store.icon': '🛍️',   'app.store.label': 'Store',
+  'app.members.icon': '🪪', 'app.members.label': 'Members',
+  'app.fans.icon': '🏆',    'app.fans.label': 'Fans',
+  'app.request.icon': '💡', 'app.request.label': 'Request',
+  'app.donate.icon': '💛',  'app.donate.label': 'Support',
+  'app.about.icon': 'ℹ️',   'app.about.label': 'About',
+  'store.label': 'Featured · Built with AI',
+  'store.heading': 'Ship-ready AI products',
+  'store.subheading': 'Own them outright, or unlock the full shelf with an Insider membership.',
+  'fans.label': 'Hall of fame',
+  'fans.heading': 'The people funding the future',
+  'fans.subheading': 'Ranked by total support. Resets monthly.',
+  'members.label': 'Join the studio',
+  'members.heading': 'Back the build. Get the perks.',
+  'members.subheading': 'Members fund what gets built next and top supporters get their name on the wall.',
+  'request.label': 'Build with me',
+  'request.heading': 'Request a project',
+  'request.subheading': 'Got an idea? Tell me what you want built — top-voted requests shape the roadmap.',
+  'donate.label': 'One-off tip',
+  'donate.heading': 'Buy me a GPU hour ☕',
+  'donate.subheading': 'Every tip goes straight into building the next product.',
+  'about.heading': 'lanrae · AI Product Engineer',
+  'about.body': 'I design, build, and ship AI-powered products end to end — then launch them here, on a desktop you can actually drive. lanrae.co.uk is the studio, the storefront, and the changelog, all in one.',
+};
+
 /* ── types ─────────────────────────────────────────────────── */
 type Product = {
   id: string; name: string; description: string; icon: string | null;
@@ -265,6 +292,9 @@ export default function Desktop() {
   const [activeTab, setActiveTab] = useState('store'); // android bottom nav
   const [reqForm, setReqForm] = useState({ name: '', email: '', title: '', description: '' });
   const [reqStatus, setReqStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [content, setContent] = useState<Record<string, string>>({});
+  const [toasts, setToasts] = useState<{ id: string; city: string | null; country: string | null; browser: string | null; device: string | null }[]>([]);
+  const lastPoll = useRef(new Date().toISOString());
 
   useEffect(() => {
     const detected = detectOS();
@@ -283,6 +313,26 @@ export default function Desktop() {
       setClock(`${days[d.getDay()]} ${h}:${m < 10 ? '0' : ''}${m} ${ap}`);
     };
     tick(); const t = setInterval(tick, 10000); return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/content').then(r => r.json()).then(setContent).catch(() => {});
+    fetch('/api/analytics/track', { method: 'POST' }).catch(() => {});
+    const pollVisitors = async () => {
+      try {
+        const res = await fetch(`/api/analytics/visitors?since=${lastPoll.current}`);
+        const views = await res.json();
+        lastPoll.current = new Date().toISOString();
+        if (Array.isArray(views) && views.length > 0) {
+          const v = views[0];
+          const id = v.id;
+          setToasts(prev => [...prev.slice(-2), { id, city: v.city, country: v.country, browser: v.browser, device: v.device }]);
+          setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 6000);
+        }
+      } catch {}
+    };
+    const timer = setInterval(pollVisitors, 15000);
+    return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -306,6 +356,8 @@ export default function Desktop() {
   const openWin = (id: string) => { focusWin(id); setOpen(m => ({ ...m, [id]: true })); };
   const closeWin = (id: string) => setOpen(m => ({ ...m, [id]: false }));
 
+  const c = (key: string) => content[key] ?? CONTENT_DEFAULTS[key] ?? '';
+
   const submitRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setReqStatus('sending');
@@ -321,12 +373,12 @@ export default function Desktop() {
   };
 
   const appsMeta = [
-    { id: 'store', icon: '🛍️', label: 'Store', gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' },
-    { id: 'members', icon: '🪪', label: 'Members', gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
-    { id: 'fans', icon: '🏆', label: 'Fans', gradient: 'linear-gradient(160deg,#f5c451,#9a6a00)' },
-    { id: 'request', icon: '💡', label: 'Request', gradient: 'linear-gradient(160deg,#ff9d4d,#7a3a00)' },
-    { id: 'donate', icon: '💛', label: 'Support', gradient: 'linear-gradient(160deg,#ff6ba8,#7a1d47)' },
-    { id: 'about', icon: 'ℹ️', label: 'About', gradient: 'linear-gradient(160deg,#35d6c7,#0e5a52)' },
+    { id: 'store',   icon: c('app.store.icon'),   label: c('app.store.label'),   gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' },
+    { id: 'members', icon: c('app.members.icon'), label: c('app.members.label'), gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
+    { id: 'fans',    icon: c('app.fans.icon'),    label: c('app.fans.label'),    gradient: 'linear-gradient(160deg,#f5c451,#9a6a00)' },
+    { id: 'request', icon: c('app.request.icon'), label: c('app.request.label'), gradient: 'linear-gradient(160deg,#ff9d4d,#7a3a00)' },
+    { id: 'donate',  icon: c('app.donate.icon'),  label: c('app.donate.label'),  gradient: 'linear-gradient(160deg,#ff6ba8,#7a1d47)' },
+    { id: 'about',   icon: c('app.about.icon'),   label: c('app.about.label'),   gradient: 'linear-gradient(160deg,#35d6c7,#0e5a52)' },
   ];
 
   const wins = [
@@ -351,9 +403,9 @@ export default function Desktop() {
   const renderContent = (id: string) => {
     if (id === 'store') return (
       <>
-        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>Featured · Built with AI</p>
-        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>Ship-ready AI products</h2>
-        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>Own them outright, or unlock the full shelf with an Insider membership.</p>
+        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>{c('store.label')}</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>{c('store.heading')}</h2>
+        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>{c('store.subheading')}</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 14 }}>
           {products.length === 0 ? (
             <p style={{ color: '#7d84a6', fontSize: 13, gridColumn: '1/-1', padding: '20px 0' }}>
@@ -405,9 +457,9 @@ export default function Desktop() {
 
     if (id === 'fans') return (
       <>
-        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>Hall of fame</p>
-        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>The people funding the future</h2>
-        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>Ranked by total support. Resets monthly.</p>
+        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>{c('fans.label')}</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>{c('fans.heading')}</h2>
+        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>{c('fans.subheading')}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           {fans.length === 0 ? (
             <p style={{ color: '#7d84a6', fontSize: 13, padding: '20px 0' }}>No fans yet — be the first to support!</p>
@@ -440,9 +492,9 @@ export default function Desktop() {
 
     if (id === 'members') return (
       <>
-        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>Join the studio</p>
-        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>Back the build. Get the perks.</h2>
-        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>Members fund what gets built next and top supporters get their name on the wall.</p>
+        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>{c('members.label')}</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>{c('members.heading')}</h2>
+        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>{c('members.subheading')}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {[
             { name: 'Explorer', price: 0, feat: false, features: ['Browse every launch', 'Free product: PromptDeck', 'Community changelog'] },
@@ -493,9 +545,9 @@ export default function Desktop() {
 
     if (id === 'request') return (
       <>
-        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#ff9d4d', fontWeight: 700, marginBottom: 8 }}>Build with me</p>
-        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>Request a project</h2>
-        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 20 }}>Got an idea? Tell me what you want built — top-voted requests shape the roadmap.</p>
+        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#ff9d4d', fontWeight: 700, marginBottom: 8 }}>{c('request.label')}</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>{c('request.heading')}</h2>
+        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 20 }}>{c('request.subheading')}</p>
 
         {reqStatus === 'sent' ? (
           <div style={{ background: 'rgba(61,220,151,.08)', border: '1px solid rgba(61,220,151,.25)',
@@ -550,9 +602,9 @@ export default function Desktop() {
 
     if (id === 'donate') return (
       <>
-        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>One-off tip</p>
-        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>Buy me a GPU hour ☕</h2>
-        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>Every tip goes straight into building the next product.</p>
+        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>{c('donate.label')}</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>{c('donate.heading')}</h2>
+        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>{c('donate.subheading')}</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 18 }}>
           {[3, 7, 15, 30, 50].map(a => (
             <span key={a} onClick={() => setDonateAmt(a)} style={{
@@ -580,10 +632,9 @@ export default function Desktop() {
         <div style={{ width: 88, height: 88, borderRadius: 24, margin: '6px auto 18px', display: 'grid',
           placeItems: 'center', fontSize: 38, background: 'linear-gradient(160deg,#35d6c7,#9d90ff)',
           color: '#0a0d1c', fontWeight: 800 }}>L</div>
-        <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>lanrae · AI Product Engineer</h2>
+        <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{c('about.heading')}</h2>
         <p style={{ fontSize: 14, color: '#a7aecb', maxWidth: '36ch', margin: '0 auto 20px', lineHeight: 1.6 }}>
-          I design, build, and ship AI-powered products end to end — then launch them here,
-          on a desktop you can actually drive. lanrae.co.uk is the studio, the storefront, and the changelog, all in one.
+          {c('about.body')}
         </p>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button onClick={() => { closeWin('about'); openWin('store'); }}
@@ -599,6 +650,37 @@ export default function Desktop() {
     );
     return null;
   };
+
+  const countryFlag = (code: string | null) => {
+    if (!code || code.length !== 2) return '🌍';
+    return code.toUpperCase().replace(/./g, ch => String.fromCodePoint(ch.charCodeAt(0) + 127397));
+  };
+
+  const visitorToasts = toasts.length > 0 && (
+    <div style={{ position: 'fixed', bottom: 88, left: 16, zIndex: 1500,
+      display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
+      {toasts.map(t => (
+        <div key={t.id} style={{
+          background: 'rgba(14,18,40,.88)', backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,.12)', borderRadius: 12,
+          padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10,
+          fontSize: 13, color: '#eef1fb', boxShadow: '0 8px 24px rgba(0,0,0,.5)',
+          animation: 'rise .35s cubic-bezier(.2,.9,.3,1.1)',
+          fontFamily: '-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif',
+        }}>
+          <span style={{ fontSize: 18 }}>{countryFlag(t.country)}</span>
+          <div>
+            <div style={{ fontWeight: 600, fontSize: 12 }}>
+              {t.city && t.country ? `${t.city}, ${t.country}` : t.country || 'Unknown location'}
+            </div>
+            <div style={{ fontSize: 11, color: '#7d84a6', marginTop: 1 }}>
+              {[t.browser, t.device].filter(Boolean).join(' · ')}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   const wallpaper = `
     radial-gradient(120% 90% at 12% -8%,#3a1d6e 0%,transparent 48%),
@@ -705,6 +787,7 @@ export default function Desktop() {
             </Sheet>
           ))}
         </div>
+        {visitorToasts}
         {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
       </>
     );
@@ -807,6 +890,7 @@ export default function Desktop() {
             </Sheet>
           ))}
         </div>
+        {visitorToasts}
         {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
       </>
     );
@@ -913,6 +997,7 @@ export default function Desktop() {
           </div>
         </div>
 
+        {visitorToasts}
         {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
       </>
     );
@@ -996,6 +1081,7 @@ export default function Desktop() {
         </a>
       </div>
 
+      {visitorToasts}
       {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
     </>
   );
