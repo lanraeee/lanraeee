@@ -257,6 +257,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<{ id: string; userId: string; userEmail: string; content: string; fromAdmin: boolean; createdAt: string }[]>([]);
   const [chatReply, setChatReply] = useState<Record<string, string>>({});
+  const [activeThread, setActiveThread] = useState<string | null>(null);
   const [emailTemplates, setEmailTemplates] = useState<{ id: string; name: string; subject: string; html: string; enabled: boolean }[]>([]);
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
   const [templateEdits, setTemplateEdits] = useState<{ subject: string; html: string; enabled: boolean }>({ subject: '', html: '', enabled: true });
@@ -945,68 +946,115 @@ export default function AdminPage() {
             threads[m.userId].msgs.push(m);
           });
           const threadList = Object.entries(threads).sort((a, b) => {
-            const la = a[1].msgs[0]?.createdAt ?? '';
-            const lb = b[1].msgs[0]?.createdAt ?? '';
+            const la = [...a[1].msgs].sort((x, y) => y.createdAt.localeCompare(x.createdAt))[0]?.createdAt ?? '';
+            const lb = [...b[1].msgs].sort((x, y) => y.createdAt.localeCompare(x.createdAt))[0]?.createdAt ?? '';
             return lb.localeCompare(la);
           });
+          const active = activeThread && threads[activeThread] ? activeThread : (threadList[0]?.[0] ?? null);
+          const activeData = active ? threads[active] : null;
+          const sendReply = async (userId: string) => {
+            if (!chatReply[userId]?.trim()) return;
+            const content = chatReply[userId].trim();
+            setChatReply(r => ({ ...r, [userId]: '' }));
+            await fetch('/api/member/chat/admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, content }) });
+            fetchMessages();
+          };
           return (
-            <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-                <h2 style={{ fontSize: 26, fontWeight: 700 }}>Member Messages</h2>
-                <button onClick={fetchMessages}
-                  style={{ background: 'rgba(255,255,255,.08)', color: '#cdd3ef', border: '1px solid var(--stroke)',
-                    padding: '8px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer' }}>
-                  ↻ Refresh
-                </button>
-              </div>
-              {threadList.length === 0 ? (
-                <div style={{ padding: '40px 20px', textAlign: 'center', border: '1px dashed var(--stroke)', borderRadius: 12, color: '#7d84a6', fontSize: 14 }}>
-                  No member messages yet.
+            <div style={{ display: 'flex', height: 'calc(100vh - 120px)', gap: 0, overflow: 'hidden' }}>
+              {/* Sidebar */}
+              <div style={{ width: 280, flexShrink: 0, borderRight: '1px solid var(--stroke)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid var(--stroke)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#cdd3ef' }}>Conversations</span>
+                  <button onClick={fetchMessages} style={{ background: 'none', border: 'none', color: '#7d84a6', fontSize: 16, cursor: 'pointer', lineHeight: 1 }}>↻</button>
                 </div>
-              ) : threadList.map(([userId, thread]) => (
-                <div key={userId} style={{ background: 'var(--glass)', border: '1px solid var(--stroke)', borderRadius: 14, padding: 20, marginBottom: 16 }}>
-                  <div style={{ fontSize: 13, fontWeight: 650, color: '#9d90ff', marginBottom: 12 }}>{thread.userEmail}</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12, maxHeight: 300, overflowY: 'auto' }}>
-                    {[...thread.msgs].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map(msg => (
-                      <div key={msg.id} style={{ display: 'flex', justifyContent: msg.fromAdmin ? 'flex-end' : 'flex-start' }}>
-                        <div style={{ maxWidth: '72%', background: msg.fromAdmin ? 'linear-gradient(160deg,#9d90ff,#7c6cff)' : 'rgba(255,255,255,.07)',
-                          borderRadius: msg.fromAdmin ? '14px 4px 14px 14px' : '4px 14px 14px 14px',
-                          padding: '9px 13px', fontSize: 13 }}>
-                          {msg.fromAdmin && <div style={{ fontSize: 10, color: 'rgba(255,255,255,.6)', fontWeight: 700, marginBottom: 3 }}>You (lanrae)</div>}
-                          {msg.content}
-                          <div style={{ fontSize: 10, color: 'rgba(255,255,255,.35)', marginTop: 3, textAlign: 'right' }}>
+                <div style={{ flex: 1, overflowY: 'auto' }}>
+                  {threadList.length === 0 ? (
+                    <div style={{ padding: '32px 16px', textAlign: 'center', color: '#7d84a6', fontSize: 13 }}>No messages yet</div>
+                  ) : threadList.map(([userId, thread]) => {
+                    const sorted = [...thread.msgs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+                    const last = sorted[0];
+                    const unread = sorted.filter(m => !m.fromAdmin).length > 0;
+                    const isActive = userId === active;
+                    return (
+                      <button key={userId} onClick={() => setActiveThread(userId)}
+                        style={{ width: '100%', textAlign: 'left', background: isActive ? 'rgba(157,144,255,.1)' : 'none', border: 'none', borderBottom: '1px solid var(--stroke)', borderLeft: isActive ? '3px solid #9d90ff' : '3px solid transparent', padding: '14px 16px', cursor: 'pointer', fontFamily: 'inherit', display: 'block' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                          <span style={{ fontSize: 13, fontWeight: 650, color: isActive ? '#9d90ff' : '#cdd3ef', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>
+                            {thread.userEmail.split('@')[0]}
+                          </span>
+                          <span style={{ fontSize: 11, color: '#7d84a6', whiteSpace: 'nowrap', marginLeft: 8 }}>
+                            {last ? new Date(last.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontSize: 12, color: '#7d84a6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                            {last ? (last.fromAdmin ? 'You: ' : '') + last.content : ''}
+                          </span>
+                          {unread && !isActive && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#9d90ff', flexShrink: 0 }} />}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Thread panel */}
+              {activeData && active ? (
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  {/* Thread header */}
+                  <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--stroke)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(160deg,#9d90ff,#7c6cff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                      {activeData.userEmail[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#eef1fb' }}>{activeData.userEmail.split('@')[0]}</div>
+                      <div style={{ fontSize: 12, color: '#7d84a6' }}>{activeData.userEmail}</div>
+                    </div>
+                    <div style={{ marginLeft: 'auto', fontSize: 12, color: '#7d84a6' }}>{activeData.msgs.length} message{activeData.msgs.length !== 1 ? 's' : ''}</div>
+                  </div>
+
+                  {/* Messages */}
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {[...activeData.msgs].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map(msg => (
+                      <div key={msg.id} style={{ display: 'flex', justifyContent: msg.fromAdmin ? 'flex-end' : 'flex-start', gap: 8, alignItems: 'flex-end' }}>
+                        {!msg.fromAdmin && (
+                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(157,144,255,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#9d90ff', flexShrink: 0 }}>
+                            {activeData.userEmail[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div style={{ maxWidth: '65%' }}>
+                          <div style={{ background: msg.fromAdmin ? 'linear-gradient(160deg,#9d90ff,#7c6cff)' : 'rgba(255,255,255,.07)', borderRadius: msg.fromAdmin ? '16px 4px 16px 16px' : '4px 16px 16px 16px', padding: '10px 14px', fontSize: 13, lineHeight: 1.55 }}>
+                            {msg.content}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#7d84a6', marginTop: 4, textAlign: msg.fromAdmin ? 'right' : 'left' }}>
                             {new Date(msg.createdAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                           </div>
                         </div>
+                        {msg.fromAdmin && (
+                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(160deg,#9d90ff,#7c6cff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>L</div>
+                        )}
                       </div>
                     ))}
                   </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input value={chatReply[userId] || ''} onChange={e => setChatReply(r => ({ ...r, [userId]: e.target.value }))}
-                      placeholder="Reply…"
-                      onKeyDown={async e => {
-                        if (e.key === 'Enter' && chatReply[userId]?.trim()) {
-                          const content = chatReply[userId].trim();
-                          setChatReply(r => ({ ...r, [userId]: '' }));
-                          await fetch('/api/member/chat/admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, content }) });
-                          fetchMessages();
-                        }
-                      }}
-                      style={{ flex: 1, background: 'rgba(255,255,255,.04)', border: '1px solid var(--stroke)', borderRadius: 9, padding: '10px 13px', fontSize: 13, color: '#eef1fb', fontFamily: 'inherit', outline: 'none' }} />
-                    <button onClick={async () => {
-                      if (!chatReply[userId]?.trim()) return;
-                      const content = chatReply[userId].trim();
-                      setChatReply(r => ({ ...r, [userId]: '' }));
-                      await fetch('/api/member/chat/admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, content }) });
-                      fetchMessages();
-                    }}
-                      style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none', borderRadius: 9, padding: '10px 18px', fontSize: 13, fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
-                      Reply
+
+                  {/* Reply box */}
+                  <div style={{ padding: '14px 20px', borderTop: '1px solid var(--stroke)', display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
+                    <input value={chatReply[active] || ''} onChange={e => setChatReply(r => ({ ...r, [active]: e.target.value }))}
+                      placeholder={`Reply to ${activeData.userEmail.split('@')[0]}…`}
+                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply(active); } }}
+                      style={{ flex: 1, background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)', borderRadius: 22, padding: '10px 18px', fontSize: 13, color: '#eef1fb', fontFamily: 'inherit', outline: 'none' }} />
+                    <button onClick={() => sendReply(active)}
+                      style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none', borderRadius: '50%', width: 38, height: 38, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      ➤
                     </button>
                   </div>
                 </div>
-              ))}
-            </>
+              ) : (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7d84a6', fontSize: 14 }}>
+                  Select a conversation
+                </div>
+              )}
+            </div>
           );
         })()}
       </div>
