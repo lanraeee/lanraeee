@@ -875,7 +875,7 @@ export default function AdminPage() {
                       style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none', borderRadius: 9, padding: '10px 22px', fontSize: 13, fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit' }}>
                       {templateSaving ? 'Saving…' : templateSaved ? '✓ Saved' : 'Save Template'}
                     </button>
-                    <button onClick={() => sendTestEmail(editingTemplate)} disabled={testSending}
+                    <button onClick={() => sendTestEmail()} disabled={testSending}
                       style={{ background: 'rgba(255,255,255,.07)', color: '#cdd3ef', border: '1px solid var(--stroke)', borderRadius: 9, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
                       {testSending ? 'Sending…' : '📨 Send Test to Admin'}
                     </button>
