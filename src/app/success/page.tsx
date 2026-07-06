@@ -118,7 +118,7 @@ function HomeLink() {
     <Link href="/" style={{
       color: '#9d90ff', fontSize: 14, textDecoration: 'none', fontWeight: 600, marginTop: 4,
     }}>
-      ← Back to lanraeOS
+      ← Back to lanraeAi
     </Link>
   );
 }

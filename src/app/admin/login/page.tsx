@@ -42,7 +42,7 @@ export default function AdminLogin() {
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 36, marginBottom: 8 }}>🔐</div>
           <h1 style={{ color: '#eef1fb', fontSize: 20, fontWeight: 800, margin: 0 }}>
-            lanrae<span style={{ color: '#9d90ff' }}>OS</span> Admin
+            lanrae<span style={{ color: '#9d90ff' }}>Ai</span> Admin
           </h1>
           <p style={{ color: '#7d84a6', fontSize: 13, marginTop: 6 }}>Enter your admin password to continue</p>
         </div>

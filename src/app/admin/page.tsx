@@ -435,7 +435,7 @@ export default function AdminPage() {
       <div style={{ borderRight: '1px solid var(--stroke)', padding: '24px 18px',
         display: 'flex', flexDirection: 'column', gap: 32, background: 'var(--glass)',
         backdropFilter: 'blur(20px)' }}>
-        <h1 style={{ fontSize: 18, fontWeight: 800 }}>lanrae<span style={{ color: '#9d90ff' }}>OS</span> Admin</h1>
+        <h1 style={{ fontSize: 18, fontWeight: 800 }}>lanrae<span style={{ color: '#9d90ff' }}>Ai</span> Admin</h1>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {navItem('products', '📦 Products')}
           {navItem('memberships', '🪪 Memberships')}
@@ -701,6 +701,46 @@ export default function AdminPage() {
                 {contentSaved ? '✓ Saved' : contentSaving ? 'Saving…' : `Save ${Object.keys(contentEdits).length > 0 ? `(${Object.keys(contentEdits).length} edits)` : 'changes'}`}
               </button>
             </div>
+            {/* Site Settings */}
+            {(() => {
+              const fieldStyle: React.CSSProperties = {
+                background: 'rgba(255,255,255,.04)', border: '1px solid var(--stroke)',
+                borderRadius: 8, padding: '9px 11px', fontSize: 13, color: '#eef1fb',
+                fontFamily: 'inherit', width: '100%', boxSizing: 'border-box', outline: 'none',
+              };
+              const siteFields = [
+                { key: 'site.name', label: 'Brand name', placeholder: 'lanraeAi' },
+                { key: 'site.logoUrl', label: 'Logo URL (leave blank to use default)', placeholder: 'https://...' },
+                { key: 'site.fromName', label: 'Email from name', placeholder: 'lanraeAi' },
+                { key: 'seo.title', label: 'SEO page title', placeholder: 'lanraeAi — AI Products Studio' },
+                { key: 'seo.description', label: 'SEO meta description', placeholder: 'Browse and buy AI-powered products built by lanrae.' },
+                { key: 'seo.keywords', label: 'SEO keywords (comma-separated)', placeholder: 'AI, products, studio, lanrae' },
+                { key: 'seo.ogImage', label: 'OG / social share image URL', placeholder: 'https://lanrae.co.uk/logo.png' },
+              ];
+              return (
+                <div style={{ marginBottom: 28 }}>
+                  <h3 style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.2px', color: '#9d90ff', marginBottom: 14, paddingBottom: 8, borderBottom: '1px solid var(--stroke-2)' }}>Site Settings & SEO</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 12 }}>
+                    {siteFields.map(f => {
+                      const current = contentEdits[f.key] ?? siteContent[f.key] ?? '';
+                      const isDirty = f.key in contentEdits;
+                      return (
+                        <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                          <label style={{ fontSize: 11, color: isDirty ? '#9d90ff' : '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px', display: 'flex', gap: 6, alignItems: 'center' }}>
+                            {f.label}
+                            {isDirty && <span style={{ fontSize: 10, background: 'rgba(124,108,255,.2)', color: '#9d90ff', padding: '1px 6px', borderRadius: 4 }}>edited</span>}
+                          </label>
+                          <input value={current} placeholder={f.placeholder}
+                            onChange={e => setContentEdits(prev => ({ ...prev, [f.key]: e.target.value }))}
+                            style={fieldStyle} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
             {CONTENT_KEYS.map(group => {
               const fieldStyle: React.CSSProperties = {
                 background: 'rgba(255,255,255,.04)', border: '1px solid var(--stroke)',

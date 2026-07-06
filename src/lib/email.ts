@@ -61,9 +61,12 @@ export async function sendEmail(templateName: string, to: string, vars: Vars = {
       return;
     }
 
+    const fromNameRow = await prisma.siteContent.findUnique({ where: { key: 'site.fromName' } }).catch(() => null);
+    const fromName = fromNameRow?.value || process.env.FROM_NAME || 'lanraeAi';
+    const fromAddr = process.env.FROM_EMAIL || `hello@lanrae.co.uk`;
     const transporter = createTransport();
     await transporter.sendMail({
-      from: process.env.FROM_EMAIL || 'lanrae <hello@lanrae.co.uk>',
+      from: `${fromName} <${fromAddr}>`,
       to,
       subject,
       html,
@@ -113,7 +116,7 @@ function simple(inner: string): string {
 const DEFAULT_TEMPLATES: { name: string; subject: string; html: string }[] = [
   {
     name: 'member_welcome',
-    subject: 'Welcome to lanraeOS 👋',
+    subject: 'Welcome to lanraeAi 👋',
     html: shell(`
       <h1 style="font-size:20px;margin:0 0 14px;">Welcome {{displayName}}! 🎉</h1>
       <p style="font-size:15px;line-height:1.6;color:#d7dcf1;margin:0 0 22px;">Your membership is active. Set a password to secure your account and jump straight in.</p>
@@ -123,7 +126,7 @@ const DEFAULT_TEMPLATES: { name: string; subject: string; html: string }[] = [
   },
   {
     name: 'member_login_alert',
-    subject: 'New sign-in to your lanraeOS account',
+    subject: 'New sign-in to your lanraeAi account',
     html: shell(`
       <h1 style="font-size:20px;margin:0 0 14px;">Hi {{displayName}},</h1>
       <p style="font-size:15px;line-height:1.6;color:#d7dcf1;margin:0 0 18px;">We noticed a new sign-in to your account.</p>
@@ -156,7 +159,7 @@ const DEFAULT_TEMPLATES: { name: string; subject: string; html: string }[] = [
   },
   {
     name: 'member_set_password',
-    subject: 'Set your lanraeOS password',
+    subject: 'Set your lanraeAi password',
     html: shell(`
       <h1 style="font-size:20px;margin:0 0 14px;">Hi {{displayName}},</h1>
       <p style="font-size:15px;line-height:1.6;color:#d7dcf1;margin:0 0 22px;">Use the link below to set your password.</p>

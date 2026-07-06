@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 
 /* ── CMS defaults ───────────────────────────────────────────── */
 const CONTENT_DEFAULTS: Record<string, string> = {
+  'site.logoUrl': '/logo.png',
+  'site.name': 'lanraeAi',
   'app.store.icon': '🛍️',   'app.store.label': 'Store',
   'app.members.icon': '🪪', 'app.members.label': 'Members',
   'app.fans.icon': '🏆',    'app.fans.label': 'Fans',
@@ -816,7 +818,7 @@ export default function Desktop() {
             <>
               <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#1a8a6a', fontWeight: 700, marginBottom: 8 }}>Set Password</p>
               <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>Secure your account</h2>
-              <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 20 }}>Create a password to protect your lanraeOS account.</p>
+              <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 20 }}>Create a password to protect your lanraeAi account.</p>
               <form onSubmit={async e => {
                 e.preventDefault();
                 if (setPasswordInput !== setPasswordConfirm) { setSetPasswordError('Passwords do not match'); return; }
@@ -1034,8 +1036,8 @@ export default function Desktop() {
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 26,
       transition: 'opacity .7s ease', opacity: booted ? 0 : 1, pointerEvents: booted ? 'none' : 'auto' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <img src="/logo.png" alt="lanrae" style={{ width: 40, height: 40, borderRadius: 8 }} />
-        <span style={{ fontSize: 30, fontWeight: 800 }}>lanrae<span style={{ color: '#9d90ff' }}>OS</span></span>
+        <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 40, height: 40, borderRadius: 8 }} />
+        <span style={{ fontSize: 30, fontWeight: 800 }}>lanrae<span style={{ color: '#9d90ff' }}>Ai</span></span>
       </div>
       <div style={{ width: 200, height: 5, borderRadius: 5, background: 'rgba(255,255,255,.12)', overflow: 'hidden' }}>
         <div style={{ height: '100%', background: 'linear-gradient(90deg,#9d90ff,#35d6c7)',
@@ -1163,8 +1165,8 @@ export default function Desktop() {
             <div>
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', fontWeight: 400 }}>Welcome to</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <img src="/logo.png" alt="lanrae" style={{ width: 28, height: 28, borderRadius: 6 }} />
-                <span style={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>lanrae<span style={{ color: '#b8b0ff' }}>OS</span></span>
+                <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 28, height: 28, borderRadius: 6 }} />
+                <span style={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>lanrae<span style={{ color: '#b8b0ff' }}>Ai</span></span>
               </div>
             </div>
             <button onClick={() => openWin('profile')} style={{ width: 44, height: 44, borderRadius: '50%', display: 'grid', placeItems: 'center',
@@ -1263,8 +1265,8 @@ export default function Desktop() {
             background: 'rgba(9,11,24,.65)', backdropFilter: 'blur(28px)',
             borderBottom: '1px solid rgba(255,255,255,.07)', fontSize: 13 }}>
             <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: -.2 }}>
-              <img src="/logo.png" alt="lanrae" style={{ width: 20, height: 20, borderRadius: 4, marginRight: 6, verticalAlign: 'middle' }} />
-              lanrae<span style={{ color: '#9d90ff' }}>OS</span>
+              <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 20, height: 20, borderRadius: 4, marginRight: 6, verticalAlign: 'middle' }} />
+              lanrae<span style={{ color: '#9d90ff' }}>Ai</span>
             </span>
             {['store', 'members', 'fans', 'donate', 'about'].map(id => (
               <span key={id} onClick={() => openWin(id)}
@@ -1353,8 +1355,8 @@ export default function Desktop() {
           background: 'rgba(9,11,24,.55)', backdropFilter: 'blur(22px) saturate(160%)',
           borderBottom: '1px solid var(--stroke-2)', fontSize: 13 }}>
           <span style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
-            <img src="/logo.png" alt="lanrae" style={{ width: 18, height: 18, borderRadius: 4 }} />
-            lanrae<span style={{ color: '#9d90ff' }}>OS</span>
+            <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 18, height: 18, borderRadius: 4 }} />
+            lanrae<span style={{ color: '#9d90ff' }}>Ai</span>
           </span>
           {['store', 'members', 'fans', 'donate', 'about'].map(id => (
             <span key={id} onClick={() => openWin(id)}
