@@ -221,10 +221,48 @@ function Sheet({ open, onClose, title, os, children }: {
 
 /* ── checkout ───────────────────────────────────────────────── */
 function Checkout({ product, onClose }: { product: Product | null; onClose: () => void }) {
-  const [paid, setPaid] = useState(false);
-  useEffect(() => { setPaid(false); }, [product]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => { setLoading(false); setError(null); }, [product]);
   if (!product) return null;
   const price = product.isFree ? 0 : product.price / 100;
+
+  const handlePay = async () => {
+    if (product.isFree) {
+      if (product.artifactUrl) window.open(product.artifactUrl, '_blank');
+      onClose();
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const MEMBERSHIP_TIERS = ['explorer', 'supporter', 'insider'];
+      let body: Record<string, unknown>;
+      if (product.id === 'donate') {
+        body = { type: 'donate', amount: price };
+      } else if (MEMBERSHIP_TIERS.includes(product.id.toLowerCase())) {
+        body = { type: 'membership', membershipTier: product.id.toLowerCase() };
+      } else {
+        body = { type: 'product', productId: product.id };
+      }
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error || 'Something went wrong');
+        setLoading(false);
+      }
+    } catch {
+      setError('Failed to start checkout');
+      setLoading(false);
+    }
+  };
+
   return (
     <div onClick={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: 'fixed', inset: 0, zIndex: 2000, display: 'flex',
@@ -234,54 +272,33 @@ function Checkout({ product, onClose }: { product: Product | null; onClose: () =
         border: '1px solid var(--stroke)', borderRadius: 20,
         boxShadow: '0 40px 90px rgba(0,0,0,.6)', overflow: 'hidden',
         animation: 'rise .3s cubic-bezier(.2,.9,.3,1.15)' }}>
-        {paid ? (
-          <div style={{ padding: '40px 24px', textAlign: 'center', display: 'flex',
-            flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 64, height: 64, borderRadius: '50%', display: 'grid', placeItems: 'center',
-              fontSize: 30, background: 'radial-gradient(circle at 40% 35%,#4ff2b0,#16a06a)',
-              boxShadow: '0 10px 30px rgba(61,220,151,.4)' }}>✓</div>
-            <h3 style={{ fontSize: 17, fontWeight: 750 }}>Payment complete 🎉</h3>
-            <p style={{ fontSize: 13, color: '#a7aecb', maxWidth: '34ch' }}>Your purchase is unlocking now. Thank you for the support.</p>
-            <button onClick={onClose} style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)',
-              color: '#fff', border: 'none', padding: '10px 24px', borderRadius: 9,
-              fontSize: 13, fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit' }}>Done</button>
+        <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--stroke-2)',
+          display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 11, display: 'grid', placeItems: 'center',
+            fontSize: 22, background: product.gradient, border: '1px solid var(--stroke)' }}>{product.icon}</div>
+          <div>
+            <h3 style={{ fontSize: 15, fontWeight: 700 }}>{product.name}</h3>
+            <p style={{ fontSize: 12, color: '#a7aecb' }}>lanrae.co.uk · secure checkout</p>
           </div>
-        ) : (
-          <>
-            <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--stroke-2)',
-              display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 44, height: 44, borderRadius: 11, display: 'grid', placeItems: 'center',
-                fontSize: 22, background: product.gradient, border: '1px solid var(--stroke)' }}>{product.icon}</div>
-              <div>
-                <h3 style={{ fontSize: 15, fontWeight: 700 }}>{product.name}</h3>
-                <p style={{ fontSize: 12, color: '#a7aecb' }}>lanrae.co.uk · secure checkout</p>
-              </div>
-            </div>
-            <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {[['Email', 'you@email.com'], ['Card', '4242 4242 4242 4242'], ['Expiry / CVC', '04 / 27   123']].map(([label, val]) => (
-                <div key={label} style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)',
-                  borderRadius: 9, padding: '11px 13px', fontSize: 13, color: '#a7aecb',
-                  display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{label}</span><span style={{ fontFamily: 'monospace', color: '#7d84a6' }}>{val}▏</span>
-                </div>
-              ))}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 4 }}>
-                <span style={{ color: '#a7aecb', fontSize: 13 }}>Total</span>
-                <span style={{ fontSize: 22, fontWeight: 800 }}>£{price.toFixed(2)}</span>
-              </div>
-              <button onClick={() => setPaid(true)}
-                style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
-                  border: 'none', padding: '12px', borderRadius: 9, fontSize: 13,
-                  fontWeight: 650, cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}>
-                Pay £{price.toFixed(2)}
-              </button>
-            </div>
-            <div style={{ padding: '12px', borderTop: '1px solid var(--stroke-2)',
-              textAlign: 'center', fontSize: 11, color: '#7d84a6' }}>
-              🔒 Powered by <b style={{ color: '#a99dff' }}>stripe</b> · demo — no real charge
-            </div>
-          </>
-        )}
+        </div>
+        <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span style={{ color: '#a7aecb', fontSize: 13 }}>Total</span>
+            <span style={{ fontSize: 26, fontWeight: 800 }}>£{price.toFixed(2)}</span>
+          </div>
+          {error && <p style={{ fontSize: 13, color: '#ff6b6b', margin: 0 }}>{error}</p>}
+          <button onClick={handlePay} disabled={loading}
+            style={{ background: loading ? 'rgba(157,144,255,.5)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)',
+              color: '#fff', border: 'none', padding: '14px', borderRadius: 12, fontSize: 14,
+              fontWeight: 650, cursor: loading ? 'not-allowed' : 'pointer',
+              width: '100%', fontFamily: 'inherit', transition: 'opacity .2s' }}>
+            {loading ? 'Redirecting…' : `Pay £${price.toFixed(2)} with Stripe`}
+          </button>
+        </div>
+        <div style={{ padding: '12px', borderTop: '1px solid var(--stroke-2)',
+          textAlign: 'center', fontSize: 11, color: '#7d84a6' }}>
+          🔒 Secure payment powered by <b style={{ color: '#a99dff' }}>Stripe</b>
+        </div>
       </div>
       <style>{`@keyframes rise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}} @keyframes load{to{width:100%}}`}</style>
     </div>
