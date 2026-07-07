@@ -242,7 +242,7 @@ const CONTENT_DEFAULTS: Record<string, string> = {
 };
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'products' | 'memberships' | 'fans' | 'requests' | 'content' | 'analytics' | 'messages' | 'email'>('products');
+  const [tab, setTab] = useState<'products' | 'memberships' | 'fans' | 'requests' | 'content' | 'analytics' | 'messages' | 'email' | 'security'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [fans, setFans] = useState<any[]>([]);
@@ -270,6 +270,22 @@ export default function AdminPage() {
   const [adminEmailSetting, setAdminEmailSetting] = useState('');
   const [adminEmailSaving, setAdminEmailSaving] = useState(false);
   const [adminEmailSaved, setAdminEmailSaved] = useState(false);
+
+  type SecurityTool = {
+    id: string; name: string; icon: string; category: string; language: string;
+    stars: string; description: string; githubUrl: string; demoUrl: string | null;
+    gradient: string; order: number; enabled: boolean;
+  };
+  const [securityTools, setSecurityTools] = useState<SecurityTool[]>([]);
+  const [editingTool, setEditingTool] = useState<SecurityTool | 'new' | null>(null);
+  const [toolSaving, setToolSaving] = useState(false);
+  const [seedingTools, setSeedingTools] = useState(false);
+  const blankTool = (): Omit<SecurityTool, 'id'> => ({
+    name: '', icon: '🛡️', category: '', language: '', stars: '',
+    description: '', githubUrl: '', demoUrl: null, gradient: 'linear-gradient(135deg,#1e3a8a,#1a3270)',
+    order: securityTools.length, enabled: true,
+  });
+  const [toolForm, setToolForm] = useState<Omit<SecurityTool, 'id'>>(blankTool());
 
   const fetchAll = async () => {
     try {
@@ -414,8 +430,45 @@ export default function AdminPage() {
     if (tab === 'analytics') fetchAnalytics();
     if (tab === 'messages') fetchMessages();
     if (tab === 'email') fetchEmailTemplates();
+    if (tab === 'security') fetchSecurityTools();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
+
+  const fetchSecurityTools = async () => {
+    const data = await fetch('/api/security-tools').then(r => r.json()).catch(() => []);
+    setSecurityTools(Array.isArray(data) ? data : []);
+  };
+
+  const saveTool = async () => {
+    setToolSaving(true);
+    if (editingTool === 'new') {
+      await fetch('/api/security-tools', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(toolForm),
+      });
+    } else if (editingTool) {
+      await fetch(`/api/security-tools/${editingTool.id}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(toolForm),
+      });
+    }
+    setEditingTool(null);
+    await fetchSecurityTools();
+    setToolSaving(false);
+  };
+
+  const deleteTool = async (id: string) => {
+    if (!confirm('Delete this security tool?')) return;
+    await fetch(`/api/security-tools/${id}`, { method: 'DELETE' });
+    fetchSecurityTools();
+  };
+
+  const seedTools = async () => {
+    setSeedingTools(true);
+    await fetch('/api/security-tools/seed', { method: 'POST' });
+    await fetchSecurityTools();
+    setSeedingTools(false);
+  };
 
   const navItem = (id: typeof tab, label: string) => (
     <button key={id} onClick={() => setTab(id)}
@@ -445,6 +498,7 @@ export default function AdminPage() {
           {navItem('analytics', '📊 Analytics')}
           {navItem('messages', '💬 Messages')}
           {navItem('email', '📧 Email')}
+          {navItem('security', '🛡️ Security Tools')}
         </nav>
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ padding: '12px', background: 'rgba(53,214,199,.08)', border: '1px solid rgba(53,214,199,.2)',
@@ -1095,6 +1149,157 @@ export default function AdminPage() {
                 </div>
               )}
             </div>
+          );
+        })()}
+
+        {tab === 'security' && (() => {
+          const si: React.CSSProperties = {
+            background: 'rgba(255,255,255,.04)', border: '1px solid var(--stroke)',
+            borderRadius: 9, padding: '10px 12px', fontSize: 13, color: '#eef1fb',
+            fontFamily: 'inherit', width: '100%',
+          };
+          return (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+                <h2 style={{ fontSize: 26, fontWeight: 700 }}>Security Tools</h2>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={seedTools} disabled={seedingTools}
+                    style={{ background: 'rgba(53,214,199,.15)', color: '#35d6c7', border: '1px solid rgba(53,214,199,.3)',
+                      padding: '10px 16px', borderRadius: 9, fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
+                    {seedingTools ? 'Seeding…' : '🌱 Seed 25 tools'}
+                  </button>
+                  <button onClick={() => { setToolForm(blankTool()); setEditingTool('new'); }}
+                    style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none',
+                      padding: '10px 18px', borderRadius: 9, fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
+                    + Add Tool
+                  </button>
+                </div>
+              </div>
+
+              {editingTool && (
+                <div style={{ background: 'var(--glass)', border: '1px solid var(--stroke)', borderRadius: 14, padding: 24, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700 }}>{editingTool === 'new' ? 'New Tool' : 'Edit Tool'}</h3>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    {[
+                      { key: 'name', label: 'Name *', placeholder: 'Nmap' },
+                      { key: 'icon', label: 'Icon emoji', placeholder: '🔍' },
+                    ].map(({ key, label, placeholder }) => (
+                      <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>{label}</label>
+                        <input style={si} value={(toolForm as any)[key]} placeholder={placeholder}
+                          onChange={e => setToolForm(f => ({ ...f, [key]: e.target.value }))} />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Description *</label>
+                    <textarea style={{ ...si, resize: 'vertical', minHeight: 72 }} value={toolForm.description}
+                      placeholder="What does this tool do?" onChange={e => setToolForm(f => ({ ...f, description: e.target.value }))} />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                    {[
+                      { key: 'category', label: 'Category', placeholder: 'Reconnaissance' },
+                      { key: 'language', label: 'Language', placeholder: 'Go' },
+                      { key: 'stars', label: 'Stars', placeholder: '10.2k' },
+                    ].map(({ key, label, placeholder }) => (
+                      <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>{label}</label>
+                        <input style={si} value={(toolForm as any)[key]} placeholder={placeholder}
+                          onChange={e => setToolForm(f => ({ ...f, [key]: e.target.value }))} />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>GitHub URL *</label>
+                    <input style={si} type="url" value={toolForm.githubUrl} placeholder="https://github.com/..."
+                      onChange={e => setToolForm(f => ({ ...f, githubUrl: e.target.value }))} />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Demo / Docs URL</label>
+                    <input style={si} type="url" value={toolForm.demoUrl || ''} placeholder="https://..."
+                      onChange={e => setToolForm(f => ({ ...f, demoUrl: e.target.value || null }))} />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Gradient CSS</label>
+                    <input style={si} value={toolForm.gradient} placeholder="linear-gradient(135deg,#1e3a8a,#1a3270)"
+                      onChange={e => setToolForm(f => ({ ...f, gradient: e.target.value }))} />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: 12, alignItems: 'center' }}>
+                    <div style={{ width: 56, height: 56, borderRadius: 12, display: 'grid', placeItems: 'center',
+                      fontSize: 26, background: toolForm.gradient, border: '1px solid var(--stroke)' }}>
+                      {toolForm.icon}
+                    </div>
+                    <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', fontSize: 13 }}>
+                      <input type="checkbox" checked={toolForm.enabled}
+                        onChange={e => setToolForm(f => ({ ...f, enabled: e.target.checked }))} />
+                      Visible on site
+                    </label>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button onClick={saveTool} disabled={toolSaving}
+                      style={{ flex: 1, background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
+                        border: 'none', borderRadius: 9, padding: '11px', fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
+                      {toolSaving ? 'Saving…' : editingTool === 'new' ? 'Create tool' : 'Save changes'}
+                    </button>
+                    <button onClick={() => setEditingTool(null)}
+                      style={{ flex: 1, background: 'rgba(255,255,255,.06)', color: '#a7aecb',
+                        border: '1px solid var(--stroke)', borderRadius: 9, padding: '11px', fontSize: 13, cursor: 'pointer' }}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {securityTools.length === 0 ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', border: '1px dashed var(--stroke)',
+                  borderRadius: 12, color: '#7d84a6' }}>
+                  <p style={{ fontSize: 14, marginBottom: 12 }}>No security tools yet. Click "Seed 25 tools" to populate the database.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {securityTools.map(t => (
+                    <div key={t.id} style={{ background: 'var(--glass)', border: '1px solid var(--stroke)',
+                      borderRadius: 12, padding: '12px 16px', display: 'grid',
+                      gridTemplateColumns: '44px 1fr auto auto', alignItems: 'center', gap: 14 }}>
+                      <div style={{ width: 44, height: 44, borderRadius: 10, display: 'grid', placeItems: 'center',
+                        fontSize: 20, background: t.gradient, border: '1px solid var(--stroke-2)', flexShrink: 0 }}>{t.icon}</div>
+                      <div>
+                        <div style={{ fontWeight: 650, display: 'flex', gap: 8, alignItems: 'center' }}>
+                          {t.name}
+                          <span style={{ fontSize: 10, color: '#a7aecb', background: 'rgba(255,255,255,.06)',
+                            borderRadius: 5, padding: '2px 7px', fontWeight: 500 }}>{t.category}</span>
+                          {!t.enabled && <span style={{ fontSize: 10, color: '#ff7c78', background: 'rgba(255,95,87,.1)',
+                            borderRadius: 5, padding: '2px 7px' }}>hidden</span>}
+                        </div>
+                        <div style={{ fontSize: 12, color: '#7d84a6', marginTop: 2 }}>{t.language} · ⭐ {t.stars}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {t.githubUrl && <a href={t.githubUrl} target="_blank" rel="noopener noreferrer" title="GitHub"
+                          style={{ fontSize: 14, opacity: .7, textDecoration: 'none' }}>💻</a>}
+                        {t.demoUrl && <a href={t.demoUrl} target="_blank" rel="noopener noreferrer" title="Demo"
+                          style={{ fontSize: 14, opacity: .7, textDecoration: 'none' }}>🔗</a>}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button onClick={() => { setToolForm({ name: t.name, icon: t.icon, category: t.category, language: t.language, stars: t.stars, description: t.description, githubUrl: t.githubUrl, demoUrl: t.demoUrl, gradient: t.gradient, order: t.order, enabled: t.enabled }); setEditingTool(t); }}
+                          style={{ background: 'rgba(124,108,255,.2)', color: '#9d90ff', border: 'none',
+                            borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 650, cursor: 'pointer' }}>Edit</button>
+                        <button onClick={() => deleteTool(t.id)}
+                          style={{ background: 'rgba(255,95,87,.15)', color: '#ff7c78', border: 'none',
+                            borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 650, cursor: 'pointer' }}>Delete</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           );
         })()}
       </div>

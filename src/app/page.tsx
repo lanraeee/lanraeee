@@ -45,36 +45,42 @@ const CONTENT_DEFAULTS: Record<string, string> = {
   'win.profile.title': 'Member Profile', 'win.profile.subtitle': '',
 };
 
-/* ── security toolkit static data ──────────────────────────── */
-const SECURITY_TOOLS = [
-  { name:'Metasploit',     icon:'🛡️', cat:'Exploitation',        lang:'Ruby',       stars:'34.2k', desc:'The world\'s most-used penetration testing framework — 2,300+ exploits across every major platform.',      github:'https://github.com/rapid7/metasploit-framework',          demo:null,                                              grad:'linear-gradient(135deg,#7f1d1d,#5a1313)' },
-  { name:'Nmap',           icon:'🔍', cat:'Reconnaissance',       lang:'C / Lua',    stars:'10.1k', desc:'The iconic "Network Mapper" — port scanning, OS detection, and scripting engine used by every pentester.', github:'https://github.com/nmap/nmap',                            demo:'https://nmap.org',                                grad:'linear-gradient(135deg,#1e3a8a,#1a3270)' },
-  { name:'SQLMap',         icon:'💉', cat:'Exploitation',        lang:'Python',     stars:'32.8k', desc:'Automatic SQL injection and database takeover tool. Supports MySQL, Oracle, PostgreSQL, MSSQL, and more.',  github:'https://github.com/sqlmapproject/sqlmap',                 demo:null,                                              grad:'linear-gradient(135deg,#7c2d12,#5e2209)' },
-  { name:'Burp Suite',     icon:'🕷️', cat:'Web Security',        lang:'Java',       stars:'4.2k',  desc:'Industry-standard web application security platform — intercept proxy, scanner, intruder, and repeater.',   github:'https://github.com/PortSwigger/burp-extensions-montoya-api', demo:'https://portswigger.net/burp/communitydownload', grad:'linear-gradient(135deg,#431407,#321005)' },
-  { name:'OWASP ZAP',      icon:'🕸️', cat:'Web Security',        lang:'Java',       stars:'12.5k', desc:'Free, open-source web app scanner. Best for beginners and CI/CD pipeline integration.',                     github:'https://github.com/zaproxy/zaproxy',                      demo:'https://www.zaproxy.org',                         grad:'linear-gradient(135deg,#0f3460,#0b2a52)' },
-  { name:'Aircrack-ng',    icon:'📡', cat:'Wireless',             lang:'C',          stars:'4.9k',  desc:'Complete WiFi security auditing suite — WEP and WPA/WPA2-PSK cracking, packet capture, and injection.',     github:'https://github.com/aircrack-ng/aircrack-ng',              demo:'https://aircrack-ng.org',                         grad:'linear-gradient(135deg,#3b0764,#2e0550)' },
-  { name:'Hashcat',        icon:'🔐', cat:'Password',             lang:'C',          stars:'21.7k', desc:'World\'s fastest password recovery. 300+ hash types, GPU-accelerated — MD5, SHA, bcrypt, and WPA2.',        github:'https://github.com/hashcat/hashcat',                      demo:'https://hashcat.net',                             grad:'linear-gradient(135deg,#292524,#1c1917)' },
-  { name:'John the Ripper',icon:'🔓', cat:'Password',             lang:'C',          stars:'9.8k',  desc:'Fast, flexible password cracker that auto-detects hash types. Supports 100+ formats out of the box.',        github:'https://github.com/openwall/john',                        demo:null,                                              grad:'linear-gradient(135deg,#422006,#321805)' },
-  { name:'THC Hydra',      icon:'🐍', cat:'Brute Force',          lang:'C',          stars:'10.5k', desc:'Fastest network logon cracker — 50+ protocols: FTP, HTTP, HTTPS, SMB, SSH, MySQL, and more.',              github:'https://github.com/vanhauser-thc/thc-hydra',              demo:null,                                              grad:'linear-gradient(135deg,#14532d,#0f3d21)' },
-  { name:'Nikto',          icon:'🎯', cat:'Web Security',        lang:'Perl',       stars:'8.9k',  desc:'Open-source web server scanner — tests for 6,700+ dangerous files, outdated software, and misconfigs.',     github:'https://github.com/sullo/nikto',                          demo:null,                                              grad:'linear-gradient(135deg,#7f1d1d,#5a1313)' },
-  { name:'Gobuster',       icon:'🚀', cat:'Reconnaissance',       lang:'Go',         stars:'10.2k', desc:'Blazing-fast directory, DNS, vhost, and S3 bucket enumeration tool written in Go.',                          github:'https://github.com/OJ/gobuster',                          demo:null,                                              grad:'linear-gradient(135deg,#065f46,#044f3a)' },
-  { name:'Nuclei',         icon:'⚡', cat:'Vuln Scanner',         lang:'Go',         stars:'21.3k', desc:'Template-based vulnerability scanner with 9,000+ community templates covering CVEs, misconfigs, and more.',  github:'https://github.com/projectdiscovery/nuclei',              demo:'https://nuclei.projectdiscovery.io',               grad:'linear-gradient(135deg,#713f12,#5a320e)' },
-  { name:'Subfinder',      icon:'🌐', cat:'Reconnaissance',       lang:'Go',         stars:'10.4k', desc:'Passive subdomain discovery using 40+ sources — Shodan, VirusTotal, Censys, SecurityTrails, and more.',     github:'https://github.com/projectdiscovery/subfinder',          demo:null,                                              grad:'linear-gradient(135deg,#1e3a8a,#1a3270)' },
-  { name:'Amass',          icon:'🗺️', cat:'Reconnaissance',       lang:'Go',         stars:'12.1k', desc:'OWASP attack surface mapping — DNS enumeration, scraping, certificate transparency, and graph analysis.',    github:'https://github.com/owasp-amass/amass',                   demo:null,                                              grad:'linear-gradient(135deg,#3b0764,#2e0550)' },
-  { name:'BloodHound',     icon:'🩸', cat:'Active Directory',     lang:'TypeScript', stars:'10.7k', desc:'Reveal hidden AD attack paths using graph theory. Find the shortest route to Domain Admin.',                 github:'https://github.com/BloodHoundAD/BloodHound',             demo:null,                                              grad:'linear-gradient(135deg,#7f1d1d,#5a1313)' },
-  { name:'Impacket',       icon:'📦', cat:'Exploitation',        lang:'Python',     stars:'14.2k', desc:'Python library for working with network protocols — DCE/RPC, SMB, LDAP. Essential for Windows pentesting.',  github:'https://github.com/fortra/impacket',                      demo:null,                                              grad:'linear-gradient(135deg,#1e3a8a,#1a3270)' },
-  { name:'Responder',      icon:'🎣', cat:'Network',              lang:'Python',     stars:'5.4k',  desc:'LLMNR, NBT-NS, and MDNS poisoner — captures NTLMv2 hashes transparently on local network segments.',        github:'https://github.com/lgandx/Responder',                     demo:null,                                              grad:'linear-gradient(135deg,#7c2d12,#5e2209)' },
-  { name:'Volatility 3',   icon:'🧠', cat:'Forensics',            lang:'Python',     stars:'2.9k',  desc:'Advanced memory forensics framework. Analyse RAM dumps from Windows, Linux, and macOS systems.',             github:'https://github.com/volatilityfoundation/volatility3',     demo:null,                                              grad:'linear-gradient(135deg,#3b0764,#2e0550)' },
-  { name:'Wireshark',      icon:'🦈', cat:'Network',              lang:'C',          stars:'7.3k',  desc:'World\'s leading network protocol analyser — capture, inspect, and dissect traffic in real-time.',           github:'https://github.com/wireshark/wireshark',                  demo:'https://www.wireshark.org',                       grad:'linear-gradient(135deg,#1e3a8a,#1a3270)' },
-  { name:'ffuf',           icon:'💨', cat:'Web Security',        lang:'Go',         stars:'13.4k', desc:'Fuzz Faster U Fool — blindingly fast web fuzzer for directory discovery, parameter fuzzing, and vhosts.',    github:'https://github.com/ffuf/ffuf',                            demo:null,                                              grad:'linear-gradient(135deg,#065f46,#044f3a)' },
-  { name:'PEASS-ng',       icon:'🐦', cat:'Priv Escalation',      lang:'Shell',      stars:'16.8k', desc:'linPEAS & winPEAS — automated scripts to find local privilege escalation vectors on Linux and Windows.',     github:'https://github.com/carlospolop/PEASS-ng',                 demo:null,                                              grad:'linear-gradient(135deg,#14532d,#0f3d21)' },
-  { name:'Sherlock',       icon:'🔎', cat:'OSINT',                lang:'Python',     stars:'18.9k', desc:'Hunt down social media accounts by username across 400+ sites in seconds.',                                  github:'https://github.com/sherlock-project/sherlock',           demo:null,                                              grad:'linear-gradient(135deg,#292524,#1c1917)' },
-  { name:'theHarvester',   icon:'🌾', cat:'OSINT',                lang:'Python',     stars:'11.0k', desc:'Gather emails, subdomains, hosts, and names from public sources. The go-to early-recon tool.',              github:'https://github.com/laramies/theHarvester',               demo:null,                                              grad:'linear-gradient(135deg,#14532d,#0f3d21)' },
-  { name:'WPScan',         icon:'🔒', cat:'Web Security',        lang:'Ruby',       stars:'8.5k',  desc:'WordPress vulnerability scanner — 36,000+ known vulnerabilities in WP core, plugins, and themes.',           github:'https://github.com/wpscanteam/wpscan',                    demo:'https://wpscan.com',                              grad:'linear-gradient(135deg,#7f1d1d,#5a1313)' },
-  { name:'Mimikatz',       icon:'🗝️', cat:'Credential Access',    lang:'C',          stars:'19.2k', desc:'Post-exploitation credential dumper — extracts plaintext passwords, hashes, and Kerberos tickets from LSASS.', github:'https://github.com/gentilkiwi/mimikatz',                demo:null,                                              grad:'linear-gradient(135deg,#292524,#1c1917)' },
+/* ── security toolkit fallback (replaced by DB at runtime) ─── */
+const SECURITY_TOOLS_FALLBACK = [
+  { id:'1',  name:'Metasploit',      icon:'🛡️', category:'Exploitation',       language:'Ruby',       stars:'34.2k', description:'The world\'s most-used penetration testing framework — 2,300+ exploits across every major platform.',       githubUrl:'https://github.com/rapid7/metasploit-framework',           demoUrl:null,                                              gradient:'linear-gradient(135deg,#7f1d1d,#5a1313)' },
+  { id:'2',  name:'Nmap',            icon:'🔍', category:'Reconnaissance',      language:'C / Lua',    stars:'10.1k', description:'The iconic "Network Mapper" — port scanning, OS detection, and scripting engine used by every pentester.', githubUrl:'https://github.com/nmap/nmap',                             demoUrl:'https://nmap.org',                                gradient:'linear-gradient(135deg,#1e3a8a,#1a3270)' },
+  { id:'3',  name:'SQLMap',          icon:'💉', category:'Exploitation',       language:'Python',     stars:'32.8k', description:'Automatic SQL injection and database takeover tool. Supports MySQL, Oracle, PostgreSQL, MSSQL, and more.',  githubUrl:'https://github.com/sqlmapproject/sqlmap',                  demoUrl:null,                                              gradient:'linear-gradient(135deg,#7c2d12,#5e2209)' },
+  { id:'4',  name:'Burp Suite',      icon:'🕷️', category:'Web Security',       language:'Java',       stars:'4.2k',  description:'Industry-standard web app security platform — intercept proxy, scanner, intruder, and repeater.',          githubUrl:'https://github.com/PortSwigger/burp-extensions-montoya-api', demoUrl:'https://portswigger.net/burp/communitydownload', gradient:'linear-gradient(135deg,#431407,#321005)' },
+  { id:'5',  name:'OWASP ZAP',       icon:'🕸️', category:'Web Security',       language:'Java',       stars:'12.5k', description:'Free, open-source web app scanner. Best for beginners and CI/CD pipeline integration.',                    githubUrl:'https://github.com/zaproxy/zaproxy',                      demoUrl:'https://www.zaproxy.org',                         gradient:'linear-gradient(135deg,#0f3460,#0b2a52)' },
+  { id:'6',  name:'Aircrack-ng',     icon:'📡', category:'Wireless',            language:'C',          stars:'4.9k',  description:'Complete WiFi security auditing suite — WEP and WPA/WPA2-PSK cracking, packet capture, and injection.',    githubUrl:'https://github.com/aircrack-ng/aircrack-ng',              demoUrl:'https://aircrack-ng.org',                         gradient:'linear-gradient(135deg,#3b0764,#2e0550)' },
+  { id:'7',  name:'Hashcat',         icon:'🔐', category:'Password',            language:'C',          stars:'21.7k', description:'World\'s fastest password recovery. 300+ hash types, GPU-accelerated — MD5, SHA, bcrypt, and WPA2.',       githubUrl:'https://github.com/hashcat/hashcat',                       demoUrl:'https://hashcat.net',                             gradient:'linear-gradient(135deg,#292524,#1c1917)' },
+  { id:'8',  name:'John the Ripper', icon:'🔓', category:'Password',            language:'C',          stars:'9.8k',  description:'Fast, flexible password cracker that auto-detects hash types. Supports 100+ formats out of the box.',       githubUrl:'https://github.com/openwall/john',                         demoUrl:null,                                              gradient:'linear-gradient(135deg,#422006,#321805)' },
+  { id:'9',  name:'THC Hydra',       icon:'🐍', category:'Brute Force',         language:'C',          stars:'10.5k', description:'Fastest network logon cracker — 50+ protocols: FTP, HTTP, HTTPS, SMB, SSH, MySQL, and more.',             githubUrl:'https://github.com/vanhauser-thc/thc-hydra',              demoUrl:null,                                              gradient:'linear-gradient(135deg,#14532d,#0f3d21)' },
+  { id:'10', name:'Nikto',           icon:'🎯', category:'Web Security',       language:'Perl',       stars:'8.9k',  description:'Open-source web server scanner — tests for 6,700+ dangerous files, outdated software, and misconfigs.',    githubUrl:'https://github.com/sullo/nikto',                           demoUrl:null,                                              gradient:'linear-gradient(135deg,#7f1d1d,#5a1313)' },
+  { id:'11', name:'Gobuster',        icon:'🚀', category:'Reconnaissance',      language:'Go',         stars:'10.2k', description:'Blazing-fast directory, DNS, vhost, and S3 bucket enumeration tool written in Go.',                        githubUrl:'https://github.com/OJ/gobuster',                           demoUrl:null,                                              gradient:'linear-gradient(135deg,#065f46,#044f3a)' },
+  { id:'12', name:'Nuclei',          icon:'⚡', category:'Vuln Scanner',        language:'Go',         stars:'21.3k', description:'Template-based vulnerability scanner with 9,000+ community templates covering CVEs, misconfigs, and more.', githubUrl:'https://github.com/projectdiscovery/nuclei',              demoUrl:'https://nuclei.projectdiscovery.io',              gradient:'linear-gradient(135deg,#713f12,#5a320e)' },
+  { id:'13', name:'Subfinder',       icon:'🌐', category:'Reconnaissance',      language:'Go',         stars:'10.4k', description:'Passive subdomain discovery using 40+ sources — Shodan, VirusTotal, Censys, SecurityTrails, and more.',    githubUrl:'https://github.com/projectdiscovery/subfinder',           demoUrl:null,                                              gradient:'linear-gradient(135deg,#1e3a8a,#1a3270)' },
+  { id:'14', name:'Amass',           icon:'🗺️', category:'Reconnaissance',      language:'Go',         stars:'12.1k', description:'OWASP attack surface mapping — DNS enumeration, scraping, certificate transparency, and graph analysis.',   githubUrl:'https://github.com/owasp-amass/amass',                    demoUrl:null,                                              gradient:'linear-gradient(135deg,#3b0764,#2e0550)' },
+  { id:'15', name:'BloodHound',      icon:'🩸', category:'Active Directory',    language:'TypeScript', stars:'10.7k', description:'Reveal hidden AD attack paths using graph theory. Find the shortest route to Domain Admin.',                githubUrl:'https://github.com/BloodHoundAD/BloodHound',              demoUrl:null,                                              gradient:'linear-gradient(135deg,#7f1d1d,#5a1313)' },
+  { id:'16', name:'Impacket',        icon:'📦', category:'Exploitation',       language:'Python',     stars:'14.2k', description:'Python library for working with network protocols — DCE/RPC, SMB, LDAP. Essential for Windows pentesting.', githubUrl:'https://github.com/fortra/impacket',                       demoUrl:null,                                              gradient:'linear-gradient(135deg,#1e3a8a,#1a3270)' },
+  { id:'17', name:'Responder',       icon:'🎣', category:'Network',             language:'Python',     stars:'5.4k',  description:'LLMNR, NBT-NS, and MDNS poisoner — captures NTLMv2 hashes transparently on local network segments.',       githubUrl:'https://github.com/lgandx/Responder',                      demoUrl:null,                                              gradient:'linear-gradient(135deg,#7c2d12,#5e2209)' },
+  { id:'18', name:'Volatility 3',    icon:'🧠', category:'Forensics',           language:'Python',     stars:'2.9k',  description:'Advanced memory forensics framework. Analyse RAM dumps from Windows, Linux, and macOS systems.',             githubUrl:'https://github.com/volatilityfoundation/volatility3',      demoUrl:null,                                              gradient:'linear-gradient(135deg,#3b0764,#2e0550)' },
+  { id:'19', name:'Wireshark',       icon:'🦈', category:'Network',             language:'C',          stars:'7.3k',  description:'World\'s leading network protocol analyser — capture, inspect, and dissect traffic in real-time.',           githubUrl:'https://github.com/wireshark/wireshark',                   demoUrl:'https://www.wireshark.org',                       gradient:'linear-gradient(135deg,#1e3a8a,#1a3270)' },
+  { id:'20', name:'ffuf',            icon:'💨', category:'Web Security',       language:'Go',         stars:'13.4k', description:'Fuzz Faster U Fool — blindingly fast web fuzzer for directory discovery, parameter fuzzing, and vhosts.',   githubUrl:'https://github.com/ffuf/ffuf',                             demoUrl:null,                                              gradient:'linear-gradient(135deg,#065f46,#044f3a)' },
+  { id:'21', name:'PEASS-ng',        icon:'🐦', category:'Priv Escalation',     language:'Shell',      stars:'16.8k', description:'linPEAS & winPEAS — automated scripts to find local privilege escalation vectors on Linux and Windows.',    githubUrl:'https://github.com/carlospolop/PEASS-ng',                  demoUrl:null,                                              gradient:'linear-gradient(135deg,#14532d,#0f3d21)' },
+  { id:'22', name:'Sherlock',        icon:'🔎', category:'OSINT',               language:'Python',     stars:'18.9k', description:'Hunt down social media accounts by username across 400+ sites in seconds.',                               githubUrl:'https://github.com/sherlock-project/sherlock',            demoUrl:null,                                              gradient:'linear-gradient(135deg,#292524,#1c1917)' },
+  { id:'23', name:'theHarvester',    icon:'🌾', category:'OSINT',               language:'Python',     stars:'11.0k', description:'Gather emails, subdomains, hosts, and names from public sources. The go-to early-recon tool.',             githubUrl:'https://github.com/laramies/theHarvester',                demoUrl:null,                                              gradient:'linear-gradient(135deg,#14532d,#0f3d21)' },
+  { id:'24', name:'WPScan',          icon:'🔒', category:'Web Security',       language:'Ruby',       stars:'8.5k',  description:'WordPress vulnerability scanner — 36,000+ known vulnerabilities in WP core, plugins, and themes.',          githubUrl:'https://github.com/wpscanteam/wpscan',                     demoUrl:'https://wpscan.com',                              gradient:'linear-gradient(135deg,#7f1d1d,#5a1313)' },
+  { id:'25', name:'Mimikatz',        icon:'🗝️', category:'Credential Access',   language:'C',          stars:'19.2k', description:'Post-exploitation credential dumper — extracts plaintext passwords, hashes, and Kerberos tickets from LSASS.', githubUrl:'https://github.com/gentilkiwi/mimikatz',               demoUrl:null,                                              gradient:'linear-gradient(135deg,#292524,#1c1917)' },
 ];
 
 /* ── types ─────────────────────────────────────────────────── */
+type SecurityTool = {
+  id: string; name: string; icon: string; category: string; language: string;
+  stars: string; description: string; githubUrl: string; demoUrl: string | null;
+  gradient: string;
+};
+
 type Product = {
   id: string; name: string; description: string; icon: string | null;
   price: number; isFree: boolean; isNew: boolean;
@@ -341,6 +347,7 @@ function Checkout({ product, onClose }: { product: Product | null; onClose: () =
 /* ── main ───────────────────────────────────────────────────── */
 export default function Desktop() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [securityTools, setSecurityTools] = useState<SecurityTool[]>(SECURITY_TOOLS_FALLBACK as SecurityTool[]);
   const [fans, setFans] = useState<Fan[]>([]);
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [zMap, setZMap] = useState<Record<string, number>>({});
@@ -436,6 +443,7 @@ export default function Desktop() {
   }, []);
 
   useEffect(() => {
+    fetch('/api/security-tools').then(r => r.json()).then(d => { if (Array.isArray(d)) setSecurityTools(d); }).catch(() => {});
     Promise.all([fetch('/api/products'), fetch('/api/fans')])
       .then(([p, f]) => Promise.all([p.json(), f.json()]))
       .then(([p, f]) => { setProducts(p); setFans(f); })
@@ -616,13 +624,13 @@ export default function Desktop() {
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(168px,1fr))', gap: 12 }}>
-            {SECURITY_TOOLS.map(tool => (
+            {securityTools.map(tool => (
               <div key={tool.name} style={{ background: 'var(--glass-2)', border: '1px solid var(--stroke-2)',
                 borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column',
                 transition: 'border-color .2s', cursor: 'default' }}>
 
                 {/* banner */}
-                <div style={{ height: 78, background: tool.grad, display: 'flex',
+                <div style={{ height: 78, background: tool.gradient, display: 'flex',
                   alignItems: 'center', justifyContent: 'center', fontSize: 32, position: 'relative' }}>
                   {tool.icon}
                   <span style={{ position: 'absolute', top: 7, right: 7, fontSize: 9, fontWeight: 700,
@@ -631,7 +639,7 @@ export default function Desktop() {
                     letterSpacing: '.04em' }}>⭐ {tool.stars}</span>
                   <span style={{ position: 'absolute', bottom: 7, left: 8, fontSize: 9, fontWeight: 700,
                     background: 'rgba(0,0,0,.4)', border: '1px solid rgba(255,255,255,.1)',
-                    borderRadius: 6, padding: '2px 6px', color: 'rgba(255,255,255,.7)' }}>{tool.lang}</span>
+                    borderRadius: 6, padding: '2px 6px', color: 'rgba(255,255,255,.7)' }}>{tool.language}</span>
                 </div>
 
                 {/* body */}
@@ -640,23 +648,23 @@ export default function Desktop() {
                   <span style={{ alignSelf: 'flex-start', fontSize: 9, fontWeight: 700, padding: '2px 7px',
                     borderRadius: 10, background: 'rgba(239,68,68,.1)',
                     border: '1px solid rgba(239,68,68,.22)', color: '#f87171', letterSpacing: '.05em',
-                    textTransform: 'uppercase' }}>{tool.cat}</span>
+                    textTransform: 'uppercase' }}>{tool.category}</span>
                   <p style={{ fontSize: 11, color: '#a7aecb', lineHeight: 1.55, margin: 0, flex: 1 }}>
-                    {tool.desc}
+                    {tool.description}
                   </p>
                 </div>
 
                 {/* actions */}
                 <div style={{ padding: '8px 12px 12px', display: 'flex', gap: 6 }}>
-                  <a href={tool.github} target="_blank" rel="noopener noreferrer"
+                  <a href={tool.githubUrl} target="_blank" rel="noopener noreferrer"
                     style={{ flex: 1, display: 'grid', placeItems: 'center', padding: '7px 4px',
                       background: 'rgba(255,255,255,.06)', border: '1px solid var(--stroke)',
                       borderRadius: 8, fontSize: 11, fontWeight: 650, color: '#dfe3f4',
                       textDecoration: 'none' }}>
                     GitHub →
                   </a>
-                  {tool.demo && (
-                    <a href={tool.demo} target="_blank" rel="noopener noreferrer"
+                  {tool.demoUrl && (
+                    <a href={tool.demoUrl} target="_blank" rel="noopener noreferrer"
                       style={{ flex: 1, display: 'grid', placeItems: 'center', padding: '7px 4px',
                         background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', border: 'none',
                         borderRadius: 8, fontSize: 11, fontWeight: 650, color: '#fff',
