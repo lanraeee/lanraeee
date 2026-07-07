@@ -287,6 +287,8 @@ export default function AdminPage() {
   });
   const [toolForm, setToolForm] = useState<Omit<SecurityTool, 'id'>>(blankTool());
 
+  const [seedingFans, setSeedingFans] = useState(false);
+
   const fetchAll = async () => {
     try {
       const [p, m, f, r] = await Promise.all([
@@ -433,6 +435,19 @@ export default function AdminPage() {
     if (tab === 'security') fetchSecurityTools();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
+
+  const seedFans = async () => {
+    setSeedingFans(true);
+    await fetch('/api/fans/seed', { method: 'POST' });
+    await fetchAll();
+    setSeedingFans(false);
+  };
+
+  const deleteFan = async (id: string) => {
+    if (!confirm('Remove this fan from the leaderboard?')) return;
+    await fetch('/api/fans', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+    await fetchAll();
+  };
 
   const fetchSecurityTools = async () => {
     const data = await fetch('/api/security-tools').then(r => r.json()).catch(() => []);
@@ -641,36 +656,53 @@ export default function AdminPage() {
           </>
         )}
 
-        {tab === 'fans' && (
-          <>
-            <h2 style={{ fontSize: 26, fontWeight: 700, marginBottom: 28 }}>Top Supporters</h2>
-            {fans.length === 0 ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', border: '1px dashed var(--stroke)',
-                borderRadius: 12, color: '#7d84a6', fontSize: 14 }}>
-                No supporters yet — leaderboard will appear here once users purchase memberships.
+        {tab === 'fans' && (() => {
+          return (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+                <h2 style={{ fontSize: 26, fontWeight: 700 }}>Top Supporters</h2>
+                <button onClick={seedFans} disabled={seedingFans}
+                  style={{ background: 'rgba(53,214,199,.15)', color: '#35d6c7', border: '1px solid rgba(53,214,199,.3)',
+                    padding: '10px 16px', borderRadius: 9, fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
+                  {seedingFans ? 'Seeding…' : '🌱 Seed demo fans'}
+                </button>
               </div>
-            ) : fans.map(f => (
-              <div key={f.id} style={{ display: 'grid', gridTemplateColumns: '40px 44px 1fr auto',
-                alignItems: 'center', gap: 14, padding: '12px 16px', marginBottom: 8,
-                background: 'var(--glass)', border: '1px solid var(--stroke)', borderRadius: 10 }}>
-                <span style={{ fontSize: 18, fontWeight: 800, textAlign: 'center' }}>
-                  {f.rank === 1 ? '🥇' : f.rank === 2 ? '🥈' : f.rank === 3 ? '🥉' : `#${f.rank}`}
-                </span>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', display: 'grid',
-                  placeItems: 'center', fontWeight: 700, color: '#0a0d1c', background: f.avatarColor }}>
-                  {f.initials}
+              {fans.length === 0 ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', border: '1px dashed var(--stroke)',
+                  borderRadius: 12, color: '#7d84a6', fontSize: 14 }}>
+                  No supporters yet — leaderboard populates from purchases. Click "Seed demo fans" to add sample data.
                 </div>
-                <div>
-                  <div style={{ fontWeight: 650 }}>{f.displayName}</div>
-                  <div style={{ fontSize: 11, color: '#7d84a6' }}>{f.user?.email}</div>
+              ) : fans.map(f => (
+                <div key={f.id} style={{ display: 'grid', gridTemplateColumns: '40px 44px 1fr auto auto',
+                  alignItems: 'center', gap: 14, padding: '12px 16px', marginBottom: 8,
+                  background: 'var(--glass)', border: '1px solid var(--stroke)', borderRadius: 10 }}>
+                  <span style={{ fontSize: 18, fontWeight: 800, textAlign: 'center' }}>
+                    {f.rank === 1 ? '🥇' : f.rank === 2 ? '🥈' : f.rank === 3 ? '🥉' : `#${f.rank}`}
+                  </span>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', display: 'grid',
+                    placeItems: 'center', fontWeight: 700, color: '#0a0d1c', background: f.avatarColor }}>
+                    {f.initials}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 650 }}>{f.displayName}
+                      <span style={{ marginLeft: 8, fontSize: 11, color: '#9d90ff', background: 'rgba(157,144,255,.12)',
+                        borderRadius: 5, padding: '2px 7px', fontWeight: 500 }}>{f.membershipTier}</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: '#7d84a6' }}>{f.user?.email}</div>
+                  </div>
+                  <span style={{ fontWeight: 700, fontSize: 14, fontVariantNumeric: 'tabular-nums' }}>
+                    £{(f.totalSpent / 100).toFixed(2)}
+                  </span>
+                  <button onClick={() => deleteFan(f.id)}
+                    style={{ background: 'rgba(255,95,87,.15)', color: '#ff7c78', border: 'none',
+                      borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 650, cursor: 'pointer' }}>
+                    Remove
+                  </button>
                 </div>
-                <span style={{ fontWeight: 700, fontSize: 14, fontVariantNumeric: 'tabular-nums' }}>
-                  £{(f.totalSpent / 100).toFixed(2)}
-                </span>
-              </div>
-            ))}
-          </>
-        )}
+              ))}
+            </>
+          );
+        })()}
 
         {tab === 'requests' && (
           <>

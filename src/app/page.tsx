@@ -364,7 +364,7 @@ export default function Desktop() {
   const [content, setContent] = useState<Record<string, string>>({});
   const [toasts, setToasts] = useState<{ id: string; city: string | null; country: string | null; browser: string | null; device: string | null }[]>([]);
   const lastPoll = useRef(new Date().toISOString());
-  const [memberUser, setMemberUser] = useState<{ userId: string; email: string } | null>(null);
+  const [memberUser, setMemberUser] = useState<{ userId: string; email: string; tier?: string; tierName?: string } | null>(null);
   const [memberEmail, setMemberEmail] = useState('');
   const [memberLoginLoading, setMemberLoginLoading] = useState(false);
   const [memberLoginError, setMemberLoginError] = useState<string | null>(null);
@@ -715,58 +715,143 @@ export default function Desktop() {
       </>
     );
 
-    if (id === 'members') return (
-      <>
-        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>{c('members.label')}</p>
-        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>{c('members.heading')}</h2>
-        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>{c('members.subheading')}</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {[
-            { name: 'Explorer', price: 0, feat: false, features: ['Browse every launch', 'Free product: PromptDeck', 'Community changelog'] },
-            { name: 'Supporter', price: 5, feat: true, features: ['Everything in Explorer', 'Early access to launches', 'Name on Supporters wall', 'Vote on the roadmap'] },
-            { name: 'Insider', price: 15, feat: false, features: ['Everything in Supporter', 'Entire product library', 'Top 10 Fans eligible', 'Source access + build logs', 'Monthly office hours'] },
-          ].map(t => (
-            <div key={t.name} style={{ background: 'var(--glass-2)',
-              border: `1px solid ${t.feat ? 'rgba(124,108,255,.55)' : 'var(--stroke-2)'}`,
-              borderRadius: 16, padding: '20px 18px', position: 'relative',
-              boxShadow: t.feat ? '0 0 0 1px rgba(124,108,255,.25),0 18px 40px rgba(124,108,255,.16)' : undefined }}>
-              {t.feat && <div style={{ position: 'absolute', top: -11, left: 20,
-                background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', fontSize: 10,
-                fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', padding: '4px 12px', borderRadius: 20 }}>Popular</div>}
+    if (id === 'members') {
+      const tierPerks: Record<string, string[]> = {
+        explorer:  ['Browse every launch', 'Free product: PromptDeck', 'Community changelog'],
+        supporter: ['Everything in Explorer', 'Early access to launches', 'Name on Supporters wall', 'Vote on the roadmap'],
+        insider:   ['Everything in Supporter', 'Entire product library', 'Top 10 Fans eligible', 'Source access + build logs', 'Monthly office hours'],
+      };
+      const tierColor: Record<string, string> = {
+        explorer: '#3ddc97', supporter: '#9d90ff', insider: '#f5c451',
+      };
+      const tier = memberUser?.tier ?? '';
+      const tierName = memberUser?.tierName ?? '';
+
+      if (memberUser) return (
+        <>
+          {/* member dashboard */}
+          <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>Your membership</p>
+
+          {/* tier hero */}
+          <div style={{ background: 'linear-gradient(135deg,rgba(124,108,255,.18),rgba(124,108,255,.06))',
+            border: '1px solid rgba(124,108,255,.35)', borderRadius: 18, padding: '22px 20px', marginBottom: 18 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+              <div>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: 1.2, color: '#a7aecb', marginBottom: 4 }}>Active plan</div>
+                <div style={{ fontSize: 26, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  🪪 {tierName || 'Member'}
+                  <span style={{ fontSize: 12, background: tierColor[tier] ? `${tierColor[tier]}22` : 'rgba(157,144,255,.15)',
+                    color: tierColor[tier] || '#9d90ff', border: `1px solid ${tierColor[tier] || '#9d90ff'}55`,
+                    borderRadius: 20, padding: '3px 12px', fontWeight: 600 }}>{tier}</span>
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: '#7d84a6', textAlign: 'right' }}>
+                <div>{memberUser.email}</div>
+              </div>
+            </div>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 7, fontSize: 13, color: '#d7dcf1' }}>
+              {(tierPerks[tier] || tierPerks['supporter']).map(f => (
+                <li key={f} style={{ display: 'flex', gap: 8 }}>
+                  <span style={{ color: tierColor[tier] || '#9d90ff', fontWeight: 800 }}>✓</span>{f}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* quick actions */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 18 }}>
+            <button onClick={() => openWin('profile')}
+              style={{ background: 'rgba(53,214,199,.1)', border: '1px solid rgba(53,214,199,.25)',
+                color: '#35d6c7', borderRadius: 12, padding: '13px', fontSize: 13, fontWeight: 650,
+                cursor: 'pointer', fontFamily: 'inherit' }}>
+              👤 My profile
+            </button>
+            <button onClick={() => openWin('request')}
+              style={{ background: 'rgba(255,157,77,.08)', border: '1px solid rgba(255,157,77,.2)',
+                color: '#ff9d4d', borderRadius: 12, padding: '13px', fontSize: 13, fontWeight: 650,
+                cursor: 'pointer', fontFamily: 'inherit' }}>
+              💡 Request build
+            </button>
+          </div>
+
+          {/* upgrade path — only show if not already Insider */}
+          {tier !== 'insider' && (
+            <div style={{ background: 'var(--glass-2)', border: '1px solid rgba(245,196,81,.3)',
+              borderRadius: 16, padding: '20px 18px', position: 'relative', marginBottom: 18 }}>
+              <div style={{ position: 'absolute', top: -11, left: 20,
+                background: 'linear-gradient(180deg,#f5c451,#b88a00)', color: '#1a1200', fontSize: 10,
+                fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', padding: '4px 12px', borderRadius: 20 }}>Upgrade</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700 }}>{t.name}</h3>
-                <div style={{ fontSize: 24, fontWeight: 800 }}>£{t.price}<small style={{ fontSize: 13, fontWeight: 500, color: '#a7aecb' }}>/mo</small></div>
+                <h3 style={{ fontSize: 16, fontWeight: 700 }}>Insider</h3>
+                <div style={{ fontSize: 22, fontWeight: 800 }}>£15<small style={{ fontSize: 13, fontWeight: 500, color: '#a7aecb' }}>/mo</small></div>
               </div>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#d7dcf1', marginBottom: 14 }}>
-                {t.features.map(f => <li key={f} style={{ display: 'flex', gap: 8 }}><span style={{ color: '#3ddc97', fontWeight: 800 }}>✓</span>{f}</li>)}
+                {tierPerks.insider.map(f => <li key={f} style={{ display: 'flex', gap: 8 }}><span style={{ color: '#f5c451', fontWeight: 800 }}>✓</span>{f}</li>)}
               </ul>
-              <button onClick={() => t.price > 0 ? setCheckout({ id: t.name, name: `${t.name} membership`, description: '', icon: '🪪', price: t.price * 100, isFree: false, isNew: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }) : undefined}
-                style={{ background: t.price === 0 ? 'rgba(255,255,255,.08)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)',
-                  color: '#fff', border: t.price === 0 ? '1px solid var(--stroke)' : 'none',
-                  borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 650, cursor: 'pointer',
-                  width: '100%', fontFamily: 'inherit' }}>
-                {t.price === 0 ? 'Current plan' : `Subscribe · £${t.price}/mo`}
+              <button onClick={() => setCheckout({ id: 'Insider', name: 'Insider membership', description: '', icon: '🪪', price: 1500, isFree: false, isNew: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' })}
+                style={{ background: 'linear-gradient(180deg,#f5c451,#b88a00)', color: '#1a1200',
+                  border: 'none', borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 700,
+                  cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}>
+                Upgrade to Insider · £15/mo
               </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
+      );
 
-        <div style={{ marginTop: 24, padding: '16px 18px', background: 'rgba(255,157,77,.06)',
-          border: '1px solid rgba(255,157,77,.2)', borderRadius: 14, display: 'flex',
-          alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <div>
-            <div style={{ fontSize: 13, fontWeight: 650, marginBottom: 3 }}>💡 Got a project idea?</div>
-            <div style={{ fontSize: 12, color: '#a7aecb' }}>Tell me what you want built — top requests shape the roadmap.</div>
+      return (
+        <>
+          <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>{c('members.label')}</p>
+          <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>{c('members.heading')}</h2>
+          <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>{c('members.subheading')}</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {[
+              { name: 'Explorer', price: 0, feat: false, features: tierPerks.explorer },
+              { name: 'Supporter', price: 5, feat: true, features: tierPerks.supporter },
+              { name: 'Insider', price: 15, feat: false, features: tierPerks.insider },
+            ].map(t => (
+              <div key={t.name} style={{ background: 'var(--glass-2)',
+                border: `1px solid ${t.feat ? 'rgba(124,108,255,.55)' : 'var(--stroke-2)'}`,
+                borderRadius: 16, padding: '20px 18px', position: 'relative',
+                boxShadow: t.feat ? '0 0 0 1px rgba(124,108,255,.25),0 18px 40px rgba(124,108,255,.16)' : undefined }}>
+                {t.feat && <div style={{ position: 'absolute', top: -11, left: 20,
+                  background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', fontSize: 10,
+                  fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', padding: '4px 12px', borderRadius: 20 }}>Popular</div>}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700 }}>{t.name}</h3>
+                  <div style={{ fontSize: 24, fontWeight: 800 }}>£{t.price}<small style={{ fontSize: 13, fontWeight: 500, color: '#a7aecb' }}>/mo</small></div>
+                </div>
+                <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#d7dcf1', marginBottom: 14 }}>
+                  {t.features.map(f => <li key={f} style={{ display: 'flex', gap: 8 }}><span style={{ color: '#3ddc97', fontWeight: 800 }}>✓</span>{f}</li>)}
+                </ul>
+                <button onClick={() => t.price > 0 ? setCheckout({ id: t.name, name: `${t.name} membership`, description: '', icon: '🪪', price: t.price * 100, isFree: false, isNew: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }) : undefined}
+                  style={{ background: t.price === 0 ? 'rgba(255,255,255,.08)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)',
+                    color: '#fff', border: t.price === 0 ? '1px solid var(--stroke)' : 'none',
+                    borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 650, cursor: 'pointer',
+                    width: '100%', fontFamily: 'inherit' }}>
+                  {t.price === 0 ? 'Get started free' : `Subscribe · £${t.price}/mo`}
+                </button>
+              </div>
+            ))}
           </div>
-          <button onClick={() => openWin('request')}
-            style={{ background: 'linear-gradient(180deg,#ff9d4d,#c96a00)', color: '#fff', border: 'none',
-              borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 650,
-              cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
-            Request →
-          </button>
-        </div>
-      </>
-    );
+
+          <div style={{ marginTop: 24, padding: '16px 18px', background: 'rgba(255,157,77,.06)',
+            border: '1px solid rgba(255,157,77,.2)', borderRadius: 14, display: 'flex',
+            alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 650, marginBottom: 3 }}>💡 Got a project idea?</div>
+              <div style={{ fontSize: 12, color: '#a7aecb' }}>Tell me what you want built — top requests shape the roadmap.</div>
+            </div>
+            <button onClick={() => openWin('request')}
+              style={{ background: 'linear-gradient(180deg,#ff9d4d,#c96a00)', color: '#fff', border: 'none',
+                borderRadius: 10, padding: '9px 16px', fontSize: 13, fontWeight: 650,
+                cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+              Request →
+            </button>
+          </div>
+        </>
+      );
+    }
 
     if (id === 'request') return (
       <>

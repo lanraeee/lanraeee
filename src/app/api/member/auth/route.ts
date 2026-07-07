@@ -61,12 +61,19 @@ export async function GET(request: NextRequest) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
-  const membership = await prisma.transaction.findFirst({
+  const tx = await prisma.transaction.findFirst({
     where: { userId: user.id, type: 'membership', status: 'completed' },
+    include: { membership: { select: { tier: true, name: true } } },
+    orderBy: { createdAt: 'desc' },
   });
-  if (!membership) return NextResponse.json({ error: 'No active membership' }, { status: 401 });
+  if (!tx) return NextResponse.json({ error: 'No active membership' }, { status: 401 });
 
-  return NextResponse.json({ userId: user.id, email: user.email });
+  return NextResponse.json({
+    userId: user.id,
+    email: user.email,
+    tier: tx.membership?.tier ?? 'supporter',
+    tierName: tx.membership?.name ?? 'Supporter',
+  });
 }
 
 export async function DELETE() {
