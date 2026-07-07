@@ -619,9 +619,6 @@ export default function Desktop() {
             </div>
             <div style={{ flex: 1, height: 1, background: 'var(--stroke-2)' }} />
           </div>
-          <p style={{ fontSize: 12, color: '#7d84a6', textAlign: 'center', marginBottom: 20 }}>
-            25 curated open-source tools trusted by professional pentesters. All free. All on GitHub.
-          </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(168px,1fr))', gap: 12 }}>
             {securityTools.map(tool => (
@@ -649,7 +646,9 @@ export default function Desktop() {
                     borderRadius: 10, background: 'rgba(239,68,68,.1)',
                     border: '1px solid rgba(239,68,68,.22)', color: '#f87171', letterSpacing: '.05em',
                     textTransform: 'uppercase' }}>{tool.category}</span>
-                  <p style={{ fontSize: 11, color: '#a7aecb', lineHeight: 1.55, margin: 0, flex: 1 }}>
+                  <p style={{ fontSize: 11, color: '#a7aecb', lineHeight: 1.55, margin: 0,
+                    display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden' }}>
                     {tool.description}
                   </p>
                 </div>
@@ -1274,7 +1273,7 @@ export default function Desktop() {
           lanrae<span style={{ color: '#9d90ff' }}>Ai</span>
         </div>
         <div style={{ fontSize: 12, color: '#7d84a6', letterSpacing: '.12em', textTransform: 'uppercase', fontWeight: 500,
-          animation: 'tagIn .5s ease .95s both' }}>AI Product Engineering</div>
+          animation: 'tagIn .5s ease .95s both' }}>AI Product Development</div>
       </div>
 
       {/* progress bar */}
