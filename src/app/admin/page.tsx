@@ -300,6 +300,9 @@ export default function AdminPage() {
   const [toolForm, setToolForm] = useState<Omit<SecurityTool, 'id'>>(blankTool());
 
   const [seedingFans, setSeedingFans] = useState(false);
+  const [showAddFan, setShowAddFan] = useState(false);
+  const [fanForm, setFanForm] = useState({ email: '', displayName: '', initials: '', avatarColor: '#9d90ff', membershipTier: 'insider', totalSpent: '' });
+  const [fanFormSaving, setFanFormSaving] = useState(false);
 
   const fetchAll = async () => {
     try {
@@ -462,6 +465,25 @@ export default function AdminPage() {
   const deleteFan = async (id: string) => {
     if (!confirm('Remove this fan from the leaderboard?')) return;
     await fetch('/api/fans', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+    await fetchAll();
+  };
+
+  const reorderFan = async (id: string, direction: 'up' | 'down') => {
+    await fetch('/api/fans', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, direction }) });
+    await fetchAll();
+  };
+
+  const saveFan = async () => {
+    if (!fanForm.email || !fanForm.displayName) return;
+    setFanFormSaving(true);
+    await fetch('/api/fans', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...fanForm, totalSpent: parseFloat(fanForm.totalSpent) || 0 }),
+    });
+    setFanForm({ email: '', displayName: '', initials: '', avatarColor: '#9d90ff', membershipTier: 'insider', totalSpent: '' });
+    setShowAddFan(false);
+    setFanFormSaving(false);
     await fetchAll();
   };
 
@@ -677,45 +699,97 @@ export default function AdminPage() {
         )}
 
         {tab === 'fans' && (() => {
+          const ff: React.CSSProperties = { background: 'rgba(255,255,255,.04)', border: '1px solid var(--stroke)', borderRadius: 9, padding: '10px 12px', fontSize: 13, color: '#eef1fb', fontFamily: 'inherit', width: '100%' };
+          const COLORS = ['#9d90ff','#7c6cff','#f5c451','#35d6c7','#3ddc97','#ff6ba8','#e0895a','#ff5757','#52b7ff','#1f6feb'];
           return (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
                 <h2 style={{ fontSize: 26, fontWeight: 700 }}>Top Supporters</h2>
-                <button onClick={seedFans} disabled={seedingFans}
-                  style={{ background: 'rgba(53,214,199,.15)', color: '#35d6c7', border: '1px solid rgba(53,214,199,.3)',
-                    padding: '10px 16px', borderRadius: 9, fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
-                  {seedingFans ? 'Seeding…' : '🌱 Seed demo fans'}
-                </button>
-              </div>
-              {fans.length === 0 ? (
-                <div style={{ padding: '40px 20px', textAlign: 'center', border: '1px dashed var(--stroke)',
-                  borderRadius: 12, color: '#7d84a6', fontSize: 14 }}>
-                  No supporters yet — leaderboard populates from purchases. Click "Seed demo fans" to add sample data.
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={seedFans} disabled={seedingFans}
+                    style={{ background: 'rgba(53,214,199,.15)', color: '#35d6c7', border: '1px solid rgba(53,214,199,.3)', padding: '10px 16px', borderRadius: 9, fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
+                    {seedingFans ? 'Seeding…' : '🌱 Seed'}
+                  </button>
+                  <button onClick={() => setShowAddFan(v => !v)}
+                    style={{ background: 'rgba(157,144,255,.15)', color: '#9d90ff', border: '1px solid rgba(157,144,255,.3)', padding: '10px 16px', borderRadius: 9, fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
+                    {showAddFan ? 'Cancel' : '+ Add Fan'}
+                  </button>
                 </div>
-              ) : fans.map(f => (
-                <div key={f.id} style={{ display: 'grid', gridTemplateColumns: '40px 44px 1fr auto auto',
+              </div>
+
+              {showAddFan && (
+                <div style={{ background: 'var(--glass)', border: '1px solid var(--stroke)', borderRadius: 14, padding: 20, marginBottom: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>Add / Update Fan</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Email *</label>
+                      <input style={ff} value={fanForm.email} onChange={e => setFanForm(f => ({ ...f, email: e.target.value }))} placeholder="fan@example.com" />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Display Name *</label>
+                      <input style={ff} value={fanForm.displayName} onChange={e => setFanForm(f => ({ ...f, displayName: e.target.value, initials: e.target.value.split(' ').map((w: string) => w[0]).join('').slice(0,2).toUpperCase() }))} placeholder="Jane Doe" />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Initials</label>
+                      <input style={ff} value={fanForm.initials} onChange={e => setFanForm(f => ({ ...f, initials: e.target.value.slice(0,2).toUpperCase() }))} placeholder="JD" maxLength={2} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Tier</label>
+                      <select style={ff} value={fanForm.membershipTier} onChange={e => setFanForm(f => ({ ...f, membershipTier: e.target.value }))}>
+                        <option value="insider">Insider</option>
+                        <option value="supporter">Supporter</option>
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Total Spent (£)</label>
+                      <input style={ff} type="number" value={fanForm.totalSpent} onChange={e => setFanForm(f => ({ ...f, totalSpent: e.target.value }))} placeholder="100.00" />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Avatar Colour</label>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {COLORS.map(c => (
+                          <button key={c} onClick={() => setFanForm(f => ({ ...f, avatarColor: c }))}
+                            style={{ width: 26, height: 26, borderRadius: '50%', background: c, border: fanForm.avatarColor === c ? '3px solid #fff' : '2px solid transparent', cursor: 'pointer', flexShrink: 0 }} />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <button onClick={saveFan} disabled={fanFormSaving || !fanForm.email || !fanForm.displayName}
+                    style={{ alignSelf: 'flex-start', background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none', borderRadius: 9, padding: '10px 22px', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: fanFormSaving ? .6 : 1 }}>
+                    {fanFormSaving ? 'Saving…' : 'Save Fan'}
+                  </button>
+                </div>
+              )}
+
+              {fans.length === 0 ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', border: '1px dashed var(--stroke)', borderRadius: 12, color: '#7d84a6', fontSize: 14 }}>
+                  No supporters yet. Add one manually or click Seed.
+                </div>
+              ) : fans.map((f, idx) => (
+                <div key={f.id} style={{ display: 'grid', gridTemplateColumns: '40px 44px 1fr auto auto auto',
                   alignItems: 'center', gap: 14, padding: '12px 16px', marginBottom: 8,
                   background: 'var(--glass)', border: '1px solid var(--stroke)', borderRadius: 10 }}>
                   <span style={{ fontSize: 18, fontWeight: 800, textAlign: 'center' }}>
                     {f.rank === 1 ? '🥇' : f.rank === 2 ? '🥈' : f.rank === 3 ? '🥉' : `#${f.rank}`}
                   </span>
-                  <div style={{ width: 40, height: 40, borderRadius: '50%', display: 'grid',
-                    placeItems: 'center', fontWeight: 700, color: '#0a0d1c', background: f.avatarColor }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', display: 'grid', placeItems: 'center', fontWeight: 700, color: '#0a0d1c', background: f.avatarColor }}>
                     {f.initials}
                   </div>
                   <div>
                     <div style={{ fontWeight: 650 }}>{f.displayName}
-                      <span style={{ marginLeft: 8, fontSize: 11, color: '#9d90ff', background: 'rgba(157,144,255,.12)',
-                        borderRadius: 5, padding: '2px 7px', fontWeight: 500 }}>{f.membershipTier}</span>
+                      <span style={{ marginLeft: 8, fontSize: 11, color: '#9d90ff', background: 'rgba(157,144,255,.12)', borderRadius: 5, padding: '2px 7px', fontWeight: 500 }}>{f.membershipTier}</span>
                     </div>
                     <div style={{ fontSize: 11, color: '#7d84a6' }}>{f.user?.email}</div>
                   </div>
-                  <span style={{ fontWeight: 700, fontSize: 14, fontVariantNumeric: 'tabular-nums' }}>
-                    £{(f.totalSpent / 100).toFixed(2)}
-                  </span>
+                  <span style={{ fontWeight: 700, fontSize: 14, fontVariantNumeric: 'tabular-nums' }}>£{(f.totalSpent / 100).toFixed(2)}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    <button onClick={() => reorderFan(f.id, 'up')} disabled={idx === 0}
+                      style={{ background: 'rgba(255,255,255,.06)', border: '1px solid var(--stroke)', borderRadius: 5, width: 26, height: 22, fontSize: 10, cursor: idx === 0 ? 'default' : 'pointer', color: '#a7aecb', opacity: idx === 0 ? .3 : 1 }}>▲</button>
+                    <button onClick={() => reorderFan(f.id, 'down')} disabled={idx === fans.length - 1}
+                      style={{ background: 'rgba(255,255,255,.06)', border: '1px solid var(--stroke)', borderRadius: 5, width: 26, height: 22, fontSize: 10, cursor: idx === fans.length - 1 ? 'default' : 'pointer', color: '#a7aecb', opacity: idx === fans.length - 1 ? .3 : 1 }}>▼</button>
+                  </div>
                   <button onClick={() => deleteFan(f.id)}
-                    style={{ background: 'rgba(255,95,87,.15)', color: '#ff7c78', border: 'none',
-                      borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 650, cursor: 'pointer' }}>
+                    style={{ background: 'rgba(255,95,87,.15)', color: '#ff7c78', border: 'none', borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 650, cursor: 'pointer' }}>
                     Remove
                   </button>
                 </div>
