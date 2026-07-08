@@ -784,7 +784,7 @@ export default function Desktop() {
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#d7dcf1', marginBottom: 14 }}>
                 {tierPerks.insider.map(f => <li key={f} style={{ display: 'flex', gap: 8 }}><span style={{ color: '#f5c451', fontWeight: 800 }}>✓</span>{f}</li>)}
               </ul>
-              <button onClick={() => setCheckout({ id: 'Insider', name: 'Insider membership', description: '', icon: '🪪', price: 1500, isFree: false, isNew: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' })}
+              <button onClick={() => setCheckout({ id: 'Insider', name: 'Insider membership', description: '', icon: '🪪', price: 1500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' })}
                 style={{ background: 'linear-gradient(180deg,#f5c451,#b88a00)', color: '#1a1200',
                   border: 'none', borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 700,
                   cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}>
@@ -820,7 +820,7 @@ export default function Desktop() {
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#d7dcf1', marginBottom: 14 }}>
                   {t.features.map(f => <li key={f} style={{ display: 'flex', gap: 8 }}><span style={{ color: '#3ddc97', fontWeight: 800 }}>✓</span>{f}</li>)}
                 </ul>
-                <button onClick={() => t.price > 0 ? setCheckout({ id: t.name, name: `${t.name} membership`, description: '', icon: '🪪', price: t.price * 100, isFree: false, isNew: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }) : undefined}
+                <button onClick={() => t.price > 0 ? setCheckout({ id: t.name, name: `${t.name} membership`, description: '', icon: '🪪', price: t.price * 100, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }) : undefined}
                   style={{ background: t.price === 0 ? 'rgba(255,255,255,.08)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)',
                     color: '#fff', border: t.price === 0 ? '1px solid var(--stroke)' : 'none',
                     borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 650, cursor: 'pointer',
@@ -921,7 +921,7 @@ export default function Desktop() {
             }}>£{a}</span>
           ))}
         </div>
-        <button onClick={() => setCheckout({ id: 'donate', name: `£${donateAmt} tip`, description: '', icon: '💛', price: donateAmt * 100, isFree: false, isNew: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#f5c451,#9a6a00)' })}
+        <button onClick={() => setCheckout({ id: 'donate', name: `£${donateAmt} tip`, description: '', icon: '💛', price: donateAmt * 100, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#f5c451,#9a6a00)' })}
           style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
             border: 'none', borderRadius: 14, padding: '15px', fontSize: 15,
             fontWeight: 650, cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}>
