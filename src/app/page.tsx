@@ -1176,10 +1176,7 @@ export default function Desktop() {
                       padding: '9px 13px', fontSize: 13, lineHeight: 1.5 }}>
                       {msg.fromAdmin && <div style={{ fontSize: 10, color: '#1a8a6a', fontWeight: 700, marginBottom: 3 }}>lanrae</div>}
                       {isVoice && audioB64 ? (
-                        <div>
-                          <audio controls src={`data:audio/mpeg;base64,${audioB64}`} style={{ width: '100%', height: 32, marginBottom: textPart ? 4 : 0 }} />
-                          {textPart && <div>{textPart}</div>}
-                        </div>
+                        <audio controls src={`data:audio/mpeg;base64,${audioB64}`} style={{ width: '100%', height: 32 }} />
                       ) : msg.content}
                       <div style={{ fontSize: 10, color: 'rgba(255,255,255,.35)', marginTop: 3, textAlign: 'right' }}>
                         {new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}

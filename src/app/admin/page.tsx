@@ -1152,16 +1152,8 @@ export default function AdminPage() {
           const renderContent = (content: string) => {
             if (content.startsWith('__VOICE_AUDIO__')) {
               const endIdx = content.indexOf('__END_AUDIO__');
-              if (endIdx !== -1) {
-                const b64 = content.slice('__VOICE_AUDIO__'.length, endIdx);
-                const text = content.slice(endIdx + '__END_AUDIO__'.length);
-                return (
-                  <div>
-                    <audio controls src={`data:audio/mpeg;base64,${b64}`} style={{ width: '100%', height: 32, marginBottom: text ? 6 : 0 }} />
-                    {text && <div>{text}</div>}
-                  </div>
-                );
-              }
+              const b64 = endIdx !== -1 ? content.slice('__VOICE_AUDIO__'.length, endIdx) : content.slice('__VOICE_AUDIO__'.length);
+              return <audio controls src={`data:audio/mpeg;base64,${b64}`} style={{ width: '100%', height: 32 }} />;
             }
             return <>{content}</>;
           };
