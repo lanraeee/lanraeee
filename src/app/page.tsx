@@ -353,6 +353,7 @@ export default function Desktop() {
   const [zMap, setZMap] = useState<Record<string, number>>({});
   const [zTop, setZTop] = useState(100);
   const [checkout, setCheckout] = useState<Product | null>(null);
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
   const [booted, setBooted] = useState(false);
   const [clock, setClock] = useState('');
   const [donateAmt, setDonateAmt] = useState(7);
@@ -576,23 +577,19 @@ export default function Desktop() {
                 {p.requiresMembership && <span style={{ position: 'absolute', top: 8, right: 8 }}>🔒</span>}
                 {p.icon || '📦'}
               </div>
-              <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
                 <h3 style={{ fontSize: 14, fontWeight: 650 }}>{p.name}</h3>
-                <p style={{ fontSize: 11.5, color: '#a7aecb', lineHeight: 1.45 }}>{p.description}</p>
-                {(p.artifactUrl || p.githubUrl || p.vercelUrl) && (
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {p.artifactUrl && <a href={p.artifactUrl} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 11, color: '#9d90ff', textDecoration: 'none', padding: '3px 7px',
-                        borderRadius: 6, border: '1px solid rgba(124,108,255,.3)', background: 'rgba(124,108,255,.1)' }}>📄 Artifact</a>}
-                    {p.githubUrl && <a href={p.githubUrl} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 11, color: '#9d90ff', textDecoration: 'none', padding: '3px 7px',
-                        borderRadius: 6, border: '1px solid rgba(124,108,255,.3)', background: 'rgba(124,108,255,.1)' }}>💻 GitHub</a>}
-                    {p.vercelUrl && <a href={p.vercelUrl} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: 11, color: '#9d90ff', textDecoration: 'none', padding: '3px 7px',
-                        borderRadius: 6, border: '1px solid rgba(124,108,255,.3)', background: 'rgba(124,108,255,.1)' }}>▲ Live</a>}
-                  </div>
-                )}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+                <p style={{ fontSize: 11.5, color: '#a7aecb', lineHeight: 1.45, margin: 0,
+                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {p.description}
+                </p>
+                <button onClick={() => setPreviewProduct(p)}
+                  style={{ alignSelf: 'flex-start', fontSize: 11, color: '#9d90ff', background: 'none',
+                    border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', textDecoration: 'underline',
+                    textDecorationColor: 'rgba(157,144,255,.4)', textUnderlineOffset: 2 }}>
+                  Read more →
+                </button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: 4 }}>
                   <span style={{ fontSize: 14, fontWeight: 700 }}>{p.isFree ? 'Free' : `£${(p.price / 100).toFixed(2)}`}</span>
                   <button onClick={() => setCheckout(p)}
                     style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
@@ -1373,6 +1370,81 @@ export default function Desktop() {
         </div>
         {visitorToasts}
         {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
+        {previewProduct && (
+          <div onClick={() => setPreviewProduct(null)}
+            style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(5,6,15,.72)',
+              backdropFilter: 'blur(18px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div onClick={e => e.stopPropagation()}
+              style={{ background: 'rgba(22,20,56,.95)', border: '1px solid rgba(255,255,255,.13)',
+                borderRadius: 22, width: '100%', maxWidth: 420, overflow: 'hidden',
+                boxShadow: '0 32px 80px rgba(0,0,0,.6)', display: 'flex', flexDirection: 'column' }}>
+              {/* banner */}
+              <div style={{ height: 120, background: previewProduct.gradient, display: 'flex',
+                alignItems: 'center', justifyContent: 'center', fontSize: 48, position: 'relative', flexShrink: 0 }}>
+                {previewProduct.icon || '📦'}
+                {previewProduct.isNew && (
+                  <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 9, fontWeight: 700,
+                    letterSpacing: '.6px', textTransform: 'uppercase', padding: '3px 9px', borderRadius: 20,
+                    background: 'rgba(0,0,0,.4)', border: '1px solid rgba(245,196,81,.4)', color: '#ffd36b' }}>New</span>
+                )}
+                {previewProduct.requiresMembership && (
+                  <span style={{ position: 'absolute', top: 12, right: 12, fontSize: 16 }}>🔒</span>
+                )}
+                <button onClick={() => setPreviewProduct(null)}
+                  style={{ position: 'absolute', top: 12, right: previewProduct.requiresMembership ? 44 : 12,
+                    background: 'rgba(0,0,0,.5)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '50%',
+                    width: 28, height: 28, color: '#fff', fontSize: 14, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>✕</button>
+              </div>
+              {/* body */}
+              <div style={{ padding: '20px 22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <h2 style={{ fontSize: 20, fontWeight: 750, marginBottom: 8 }}>{previewProduct.name}</h2>
+                  <p style={{ fontSize: 13.5, color: '#c4c8e0', lineHeight: 1.65, margin: 0 }}>
+                    {previewProduct.description}
+                  </p>
+                </div>
+                {(previewProduct.artifactUrl || previewProduct.githubUrl || previewProduct.vercelUrl) && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {previewProduct.artifactUrl && (
+                      <a href={previewProduct.artifactUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 12, color: '#9d90ff', textDecoration: 'none', padding: '5px 10px',
+                          borderRadius: 8, border: '1px solid rgba(124,108,255,.35)', background: 'rgba(124,108,255,.1)' }}>
+                        📄 Artifact
+                      </a>
+                    )}
+                    {previewProduct.githubUrl && (
+                      <a href={previewProduct.githubUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 12, color: '#9d90ff', textDecoration: 'none', padding: '5px 10px',
+                          borderRadius: 8, border: '1px solid rgba(124,108,255,.35)', background: 'rgba(124,108,255,.1)' }}>
+                        💻 GitHub
+                      </a>
+                    )}
+                    {previewProduct.vercelUrl && (
+                      <a href={previewProduct.vercelUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 12, color: '#9d90ff', textDecoration: 'none', padding: '5px 10px',
+                          borderRadius: 8, border: '1px solid rgba(124,108,255,.35)', background: 'rgba(124,108,255,.1)' }}>
+                        ▲ Live
+                      </a>
+                    )}
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid rgba(255,255,255,.07)' }}>
+                  <span style={{ fontSize: 22, fontWeight: 800 }}>
+                    {previewProduct.isFree ? 'Free' : `£${(previewProduct.price / 100).toFixed(2)}`}
+                    {!previewProduct.isFree && <small style={{ fontSize: 12, fontWeight: 400, color: '#7d84a6', marginLeft: 4 }}>one-time</small>}
+                  </span>
+                  <button onClick={() => { setCheckout(previewProduct); setPreviewProduct(null); }}
+                    style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
+                      border: 'none', borderRadius: 11, padding: '11px 22px', fontSize: 14,
+                      fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {previewProduct.isFree ? 'Open' : previewProduct.requiresMembership ? 'Unlock' : 'Buy now'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </>
     );
   }
@@ -1480,6 +1552,81 @@ export default function Desktop() {
         </div>
         {visitorToasts}
         {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
+        {previewProduct && (
+          <div onClick={() => setPreviewProduct(null)}
+            style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(5,6,15,.72)',
+              backdropFilter: 'blur(18px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div onClick={e => e.stopPropagation()}
+              style={{ background: 'rgba(22,20,56,.95)', border: '1px solid rgba(255,255,255,.13)',
+                borderRadius: 22, width: '100%', maxWidth: 420, overflow: 'hidden',
+                boxShadow: '0 32px 80px rgba(0,0,0,.6)', display: 'flex', flexDirection: 'column' }}>
+              {/* banner */}
+              <div style={{ height: 120, background: previewProduct.gradient, display: 'flex',
+                alignItems: 'center', justifyContent: 'center', fontSize: 48, position: 'relative', flexShrink: 0 }}>
+                {previewProduct.icon || '📦'}
+                {previewProduct.isNew && (
+                  <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 9, fontWeight: 700,
+                    letterSpacing: '.6px', textTransform: 'uppercase', padding: '3px 9px', borderRadius: 20,
+                    background: 'rgba(0,0,0,.4)', border: '1px solid rgba(245,196,81,.4)', color: '#ffd36b' }}>New</span>
+                )}
+                {previewProduct.requiresMembership && (
+                  <span style={{ position: 'absolute', top: 12, right: 12, fontSize: 16 }}>🔒</span>
+                )}
+                <button onClick={() => setPreviewProduct(null)}
+                  style={{ position: 'absolute', top: 12, right: previewProduct.requiresMembership ? 44 : 12,
+                    background: 'rgba(0,0,0,.5)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '50%',
+                    width: 28, height: 28, color: '#fff', fontSize: 14, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>✕</button>
+              </div>
+              {/* body */}
+              <div style={{ padding: '20px 22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <h2 style={{ fontSize: 20, fontWeight: 750, marginBottom: 8 }}>{previewProduct.name}</h2>
+                  <p style={{ fontSize: 13.5, color: '#c4c8e0', lineHeight: 1.65, margin: 0 }}>
+                    {previewProduct.description}
+                  </p>
+                </div>
+                {(previewProduct.artifactUrl || previewProduct.githubUrl || previewProduct.vercelUrl) && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {previewProduct.artifactUrl && (
+                      <a href={previewProduct.artifactUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 12, color: '#9d90ff', textDecoration: 'none', padding: '5px 10px',
+                          borderRadius: 8, border: '1px solid rgba(124,108,255,.35)', background: 'rgba(124,108,255,.1)' }}>
+                        📄 Artifact
+                      </a>
+                    )}
+                    {previewProduct.githubUrl && (
+                      <a href={previewProduct.githubUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 12, color: '#9d90ff', textDecoration: 'none', padding: '5px 10px',
+                          borderRadius: 8, border: '1px solid rgba(124,108,255,.35)', background: 'rgba(124,108,255,.1)' }}>
+                        💻 GitHub
+                      </a>
+                    )}
+                    {previewProduct.vercelUrl && (
+                      <a href={previewProduct.vercelUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 12, color: '#9d90ff', textDecoration: 'none', padding: '5px 10px',
+                          borderRadius: 8, border: '1px solid rgba(124,108,255,.35)', background: 'rgba(124,108,255,.1)' }}>
+                        ▲ Live
+                      </a>
+                    )}
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid rgba(255,255,255,.07)' }}>
+                  <span style={{ fontSize: 22, fontWeight: 800 }}>
+                    {previewProduct.isFree ? 'Free' : `£${(previewProduct.price / 100).toFixed(2)}`}
+                    {!previewProduct.isFree && <small style={{ fontSize: 12, fontWeight: 400, color: '#7d84a6', marginLeft: 4 }}>one-time</small>}
+                  </span>
+                  <button onClick={() => { setCheckout(previewProduct); setPreviewProduct(null); }}
+                    style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
+                      border: 'none', borderRadius: 11, padding: '11px 22px', fontSize: 14,
+                      fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {previewProduct.isFree ? 'Open' : previewProduct.requiresMembership ? 'Unlock' : 'Buy now'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </>
     );
   }
@@ -1582,6 +1729,81 @@ export default function Desktop() {
 
         {visitorToasts}
         {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
+        {previewProduct && (
+          <div onClick={() => setPreviewProduct(null)}
+            style={{ position: 'fixed', inset: 0, zIndex: 9000, background: 'rgba(5,6,15,.72)',
+              backdropFilter: 'blur(18px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div onClick={e => e.stopPropagation()}
+              style={{ background: 'rgba(22,20,56,.95)', border: '1px solid rgba(255,255,255,.13)',
+                borderRadius: 22, width: '100%', maxWidth: 420, overflow: 'hidden',
+                boxShadow: '0 32px 80px rgba(0,0,0,.6)', display: 'flex', flexDirection: 'column' }}>
+              {/* banner */}
+              <div style={{ height: 120, background: previewProduct.gradient, display: 'flex',
+                alignItems: 'center', justifyContent: 'center', fontSize: 48, position: 'relative', flexShrink: 0 }}>
+                {previewProduct.icon || '📦'}
+                {previewProduct.isNew && (
+                  <span style={{ position: 'absolute', top: 12, left: 12, fontSize: 9, fontWeight: 700,
+                    letterSpacing: '.6px', textTransform: 'uppercase', padding: '3px 9px', borderRadius: 20,
+                    background: 'rgba(0,0,0,.4)', border: '1px solid rgba(245,196,81,.4)', color: '#ffd36b' }}>New</span>
+                )}
+                {previewProduct.requiresMembership && (
+                  <span style={{ position: 'absolute', top: 12, right: 12, fontSize: 16 }}>🔒</span>
+                )}
+                <button onClick={() => setPreviewProduct(null)}
+                  style={{ position: 'absolute', top: 12, right: previewProduct.requiresMembership ? 44 : 12,
+                    background: 'rgba(0,0,0,.5)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '50%',
+                    width: 28, height: 28, color: '#fff', fontSize: 14, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit' }}>✕</button>
+              </div>
+              {/* body */}
+              <div style={{ padding: '20px 22px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <h2 style={{ fontSize: 20, fontWeight: 750, marginBottom: 8 }}>{previewProduct.name}</h2>
+                  <p style={{ fontSize: 13.5, color: '#c4c8e0', lineHeight: 1.65, margin: 0 }}>
+                    {previewProduct.description}
+                  </p>
+                </div>
+                {(previewProduct.artifactUrl || previewProduct.githubUrl || previewProduct.vercelUrl) && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {previewProduct.artifactUrl && (
+                      <a href={previewProduct.artifactUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 12, color: '#9d90ff', textDecoration: 'none', padding: '5px 10px',
+                          borderRadius: 8, border: '1px solid rgba(124,108,255,.35)', background: 'rgba(124,108,255,.1)' }}>
+                        📄 Artifact
+                      </a>
+                    )}
+                    {previewProduct.githubUrl && (
+                      <a href={previewProduct.githubUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 12, color: '#9d90ff', textDecoration: 'none', padding: '5px 10px',
+                          borderRadius: 8, border: '1px solid rgba(124,108,255,.35)', background: 'rgba(124,108,255,.1)' }}>
+                        💻 GitHub
+                      </a>
+                    )}
+                    {previewProduct.vercelUrl && (
+                      <a href={previewProduct.vercelUrl} target="_blank" rel="noopener noreferrer"
+                        style={{ fontSize: 12, color: '#9d90ff', textDecoration: 'none', padding: '5px 10px',
+                          borderRadius: 8, border: '1px solid rgba(124,108,255,.35)', background: 'rgba(124,108,255,.1)' }}>
+                        ▲ Live
+                      </a>
+                    )}
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 4, borderTop: '1px solid rgba(255,255,255,.07)' }}>
+                  <span style={{ fontSize: 22, fontWeight: 800 }}>
+                    {previewProduct.isFree ? 'Free' : `£${(previewProduct.price / 100).toFixed(2)}`}
+                    {!previewProduct.isFree && <small style={{ fontSize: 12, fontWeight: 400, color: '#7d84a6', marginLeft: 4 }}>one-time</small>}
+                  </span>
+                  <button onClick={() => { setCheckout(previewProduct); setPreviewProduct(null); }}
+                    style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
+                      border: 'none', borderRadius: 11, padding: '11px 22px', fontSize: 14,
+                      fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {previewProduct.isFree ? 'Open' : previewProduct.requiresMembership ? 'Unlock' : 'Buy now'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </>
     );
   }
