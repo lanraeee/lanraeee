@@ -39,7 +39,7 @@ export async function getAdminEmail(): Promise<string> {
     const row = await prisma.siteContent.findUnique({ where: { key: 'email.admin' } });
     if (row?.value) return row.value;
   } catch {}
-  return process.env.ADMIN_EMAIL || '';
+  return process.env.ADMIN_EMAIL || process.env.SMTP_USER || '';
 }
 
 /**
@@ -61,16 +61,12 @@ export async function sendEmail(templateName: string, to: string, vars: Vars = {
       return;
     }
 
-    const fromNameRow = await prisma.siteContent.findUnique({ where: { key: 'site.fromName' } }).catch(() => null);
-    const fromName = fromNameRow?.value || process.env.FROM_NAME || 'lanraeAi';
-    const fromAddr = process.env.FROM_EMAIL || `hello@lanrae.co.uk`;
+    // FROM_EMAIL may be plain address OR full RFC "Name <addr>" — use as-is.
+    // Fall back to SMTP_USER so the envelope always has a valid sender.
+    const from = process.env.FROM_EMAIL || process.env.SMTP_USER || 'hello@lanrae.co.uk';
+
     const transporter = createTransport();
-    await transporter.sendMail({
-      from: `${fromName} <${fromAddr}>`,
-      to,
-      subject,
-      html,
-    });
+    await transporter.sendMail({ from, to, subject, html });
   } catch (err) {
     console.error(`[email] failed to send "${templateName}" to ${to}:`, err);
   }
@@ -204,6 +200,19 @@ const DEFAULT_TEMPLATES: { name: string; subject: string; html: string }[] = [
     `),
   },
   {
+    name: 'request_status_update',
+    subject: '📬 Update on your request — {{title}}',
+    html: shell(`
+      <h1 style="font-size:20px;margin:0 0 14px;">Hi {{name}},</h1>
+      <p style="font-size:15px;line-height:1.6;color:#d7dcf1;margin:0 0 18px;">There's a new update on your project request:</p>
+      <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px 16px;font-size:14px;color:#d7dcf1;margin:0 0 22px;">
+        <div style="margin-bottom:8px;"><strong style="color:#a7aecb;">Request:</strong> {{title}}</div>
+        <div><strong style="color:#a7aecb;">Status:</strong> <span style="color:${ACCENT};font-weight:700;">{{statusLabel}}</span></div>
+      </div>
+      <p style="font-size:13px;color:#7d84a6;margin:0;">— Lanrae</p>
+    `),
+  },
+  {
     name: 'admin_new_payment',
     subject: '💰 New payment: £{{amount}} from {{email}}',
     html: simple(`<p><strong>{{email}}</strong> paid £{{amount}} for {{productName}}</p>`),
@@ -244,6 +253,7 @@ export const TEMPLATE_VARS: Record<string, string[]> = {
   admin_new_chat: ['email', 'messagePreview'],
   admin_new_request: ['name', 'email', 'title', 'description'],
   request_confirmation: ['name', 'title', 'description'],
+  request_status_update: ['name', 'title', 'statusLabel'],
   admin_new_payment: ['email', 'amount', 'productName'],
   admin_login_alert: ['time', 'ip'],
 };
