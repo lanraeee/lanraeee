@@ -180,7 +180,28 @@ const DEFAULT_TEMPLATES: { name: string; subject: string; html: string }[] = [
   {
     name: 'admin_new_request',
     subject: '💡 New project request from {{name}}',
-    html: simple(`<p><strong>{{name}}</strong> ({{email}}) requested: <strong>{{title}}</strong> — {{description}}</p>`),
+    html: simple(`
+      <p><strong>{{name}}</strong> ({{email}}) submitted a new project request.</p>
+      <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px 16px;font-size:14px;color:#d7dcf1;margin:14px 0;">
+        <div style="margin-bottom:8px;"><strong style="color:#a7aecb;">Title:</strong> {{title}}</div>
+        <div><strong style="color:#a7aecb;">Details:</strong> {{description}}</div>
+      </div>
+      <p><a href="https://lanrae.co.uk/admin" style="color:${ACCENT};">View in admin panel →</a></p>
+    `),
+  },
+  {
+    name: 'request_confirmation',
+    subject: '✅ We received your request — {{title}}',
+    html: shell(`
+      <h1 style="font-size:20px;margin:0 0 14px;">Got it, {{name}}! 🚀</h1>
+      <p style="font-size:15px;line-height:1.6;color:#d7dcf1;margin:0 0 18px;">Your project request has been received. Here's what you submitted:</p>
+      <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px 16px;font-size:14px;color:#d7dcf1;margin:0 0 22px;">
+        <div style="margin-bottom:8px;"><strong style="color:#a7aecb;">Title:</strong> {{title}}</div>
+        <div><strong style="color:#a7aecb;">Details:</strong> {{description}}</div>
+      </div>
+      <p style="font-size:14px;color:#a7aecb;margin:0 0 22px;">I review every request personally. Top-voted ideas shape what gets built next — watch this space.</p>
+      <p style="font-size:13px;color:#7d84a6;margin:0;">— Lanrae</p>
+    `),
   },
   {
     name: 'admin_new_payment',
@@ -222,6 +243,7 @@ export const TEMPLATE_VARS: Record<string, string[]> = {
   admin_new_member: ['email', 'tier', 'amount'],
   admin_new_chat: ['email', 'messagePreview'],
   admin_new_request: ['name', 'email', 'title', 'description'],
+  request_confirmation: ['name', 'title', 'description'],
   admin_new_payment: ['email', 'amount', 'productName'],
   admin_login_alert: ['time', 'ip'],
 };

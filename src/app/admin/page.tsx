@@ -490,13 +490,17 @@ export default function AdminPage() {
     setSeedingTools(false);
   };
 
-  const navItem = (id: typeof tab, label: string) => (
+  const navItem = (id: typeof tab, label: string, badge?: number) => (
     <button key={id} onClick={() => setTab(id)}
       style={{ background: tab === id ? 'linear-gradient(180deg,#9d90ff,#7c6cff)' : 'none',
         border: 'none', color: tab === id ? '#fff' : '#a7aecb', fontSize: 14, padding: '10px 12px',
         borderRadius: 8, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
-        transition: 'all .15s ease' }}>
-      {label}
+        transition: 'all .15s ease', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+      <span>{label}</span>
+      {!!badge && <span style={{ background: '#ef4444', color: '#fff', fontSize: 10, fontWeight: 800,
+        borderRadius: 20, padding: '1px 7px', lineHeight: '16px', minWidth: 18, textAlign: 'center' }}>
+        {badge > 99 ? '99+' : badge}
+      </span>}
     </button>
   );
 
@@ -513,7 +517,7 @@ export default function AdminPage() {
           {navItem('products', '📦 Products')}
           {navItem('memberships', '🪪 Memberships')}
           {navItem('fans', '🏆 Top Fans')}
-          {navItem('requests', '💡 Requests')}
+          {navItem('requests', '💡 Requests', requests.filter(r => r.status === 'pending').length || undefined)}
           {navItem('content', '✏️ Content')}
           {navItem('analytics', '📊 Analytics')}
           {navItem('messages', '💬 Messages')}

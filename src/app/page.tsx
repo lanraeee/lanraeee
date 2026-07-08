@@ -1104,8 +1104,15 @@ export default function Desktop() {
               <button key={t} onClick={() => setMemberTab(t)}
                 style={{ flex: 1, background: memberTab === t ? 'linear-gradient(180deg,#1a8a6a,#0a3d2a)' : 'none',
                   border: 'none', color: memberTab === t ? '#fff' : '#a7aecb', padding: '8px', borderRadius: 8,
-                  fontSize: 13, fontWeight: memberTab === t ? 650 : 400, cursor: 'pointer', fontFamily: 'inherit', transition: 'all .15s' }}>
-                {t === 'profile' ? '👤 Profile' : '💬 Chat'}
+                  fontSize: 13, fontWeight: memberTab === t ? 650 : 400, cursor: 'pointer', fontFamily: 'inherit',
+                  transition: 'all .15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                {t === 'profile' ? '👤 Profile' : '💬 Messages'}
+                {t === 'chat' && memberMessages.filter(m => m.fromAdmin && !(m as any).read).length > 0 && (
+                  <span style={{ background: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 800,
+                    borderRadius: 20, padding: '1px 5px', lineHeight: '14px' }}>
+                    {memberMessages.filter(m => m.fromAdmin && !(m as any).read).length}
+                  </span>
+                )}
               </button>
             ))}
           </div>
