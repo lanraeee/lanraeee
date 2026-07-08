@@ -85,7 +85,7 @@ type Product = {
   id: string; name: string; description: string; icon: string | null;
   price: number; isFree: boolean; isNew: boolean;
   requiresMembership: string | null;
-  artifactUrl: string | null; githubUrl: string | null; vercelUrl: string | null;
+  artifactUrl: string | null; githubUrl: string | null; showGithub: boolean; vercelUrl: string | null;
   gradient: string;
 };
 type Fan = {
@@ -1404,7 +1404,7 @@ export default function Desktop() {
                     {previewProduct.description}
                   </p>
                 </div>
-                {(previewProduct.artifactUrl || previewProduct.githubUrl || previewProduct.vercelUrl) && (
+                {(previewProduct.artifactUrl || (previewProduct.githubUrl && previewProduct.showGithub) || previewProduct.vercelUrl) && (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {previewProduct.artifactUrl && (
                       <a href={previewProduct.artifactUrl} target="_blank" rel="noopener noreferrer"
@@ -1413,7 +1413,7 @@ export default function Desktop() {
                         📄 Artifact
                       </a>
                     )}
-                    {previewProduct.githubUrl && (
+                    {previewProduct.githubUrl && previewProduct.showGithub && (
                       <a href={previewProduct.githubUrl} target="_blank" rel="noopener noreferrer"
                         style={{ fontSize: 12, color: '#9d90ff', textDecoration: 'none', padding: '5px 10px',
                           borderRadius: 8, border: '1px solid rgba(124,108,255,.35)', background: 'rgba(124,108,255,.1)' }}>
@@ -1586,7 +1586,7 @@ export default function Desktop() {
                     {previewProduct.description}
                   </p>
                 </div>
-                {(previewProduct.artifactUrl || previewProduct.githubUrl || previewProduct.vercelUrl) && (
+                {(previewProduct.artifactUrl || (previewProduct.githubUrl && previewProduct.showGithub) || previewProduct.vercelUrl) && (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {previewProduct.artifactUrl && (
                       <a href={previewProduct.artifactUrl} target="_blank" rel="noopener noreferrer"
@@ -1595,7 +1595,7 @@ export default function Desktop() {
                         📄 Artifact
                       </a>
                     )}
-                    {previewProduct.githubUrl && (
+                    {previewProduct.githubUrl && previewProduct.showGithub && (
                       <a href={previewProduct.githubUrl} target="_blank" rel="noopener noreferrer"
                         style={{ fontSize: 12, color: '#9d90ff', textDecoration: 'none', padding: '5px 10px',
                           borderRadius: 8, border: '1px solid rgba(124,108,255,.35)', background: 'rgba(124,108,255,.1)' }}>
@@ -1763,7 +1763,7 @@ export default function Desktop() {
                     {previewProduct.description}
                   </p>
                 </div>
-                {(previewProduct.artifactUrl || previewProduct.githubUrl || previewProduct.vercelUrl) && (
+                {(previewProduct.artifactUrl || (previewProduct.githubUrl && previewProduct.showGithub) || previewProduct.vercelUrl) && (
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {previewProduct.artifactUrl && (
                       <a href={previewProduct.artifactUrl} target="_blank" rel="noopener noreferrer"
@@ -1772,7 +1772,7 @@ export default function Desktop() {
                         📄 Artifact
                       </a>
                     )}
-                    {previewProduct.githubUrl && (
+                    {previewProduct.githubUrl && previewProduct.showGithub && (
                       <a href={previewProduct.githubUrl} target="_blank" rel="noopener noreferrer"
                         style={{ fontSize: 12, color: '#9d90ff', textDecoration: 'none', padding: '5px 10px',
                           borderRadius: 8, border: '1px solid rgba(124,108,255,.35)', background: 'rgba(124,108,255,.1)' }}>

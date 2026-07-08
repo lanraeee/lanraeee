@@ -32,6 +32,7 @@ model Product {
   requiresMembership String?
   artifactUrl        String?
   githubUrl          String?
+  showGithub         Boolean       @default(false)
   vercelUrl          String?
   gradient           String        @default("linear-gradient(160deg,#7c6cff,#3a1d6e)")
   order              Int           @default(0)

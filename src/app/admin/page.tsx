@@ -6,7 +6,7 @@ import Link from 'next/link';
 type Product = {
   id: string; name: string; description: string; icon: string | null;
   price: number; isFree: boolean; isNew: boolean; requiresMembership: string | null;
-  artifactUrl: string | null; githubUrl: string | null; vercelUrl: string | null;
+  artifactUrl: string | null; githubUrl: string | null; showGithub: boolean; vercelUrl: string | null;
   gradient: string; order: number;
 };
 
@@ -39,6 +39,7 @@ function ProductForm({ product, onSave, onCancel }: {
     price: product?.isFree ? '0' : product ? (product.price / 100).toFixed(2) : '',
     isFree: product?.isFree || false,
     isNew: product?.isNew || false,
+    showGithub: product?.showGithub ?? (product?.isFree || false),
     requiresMembership: product?.requiresMembership || '',
     artifactUrl: product?.artifactUrl || '',
     githubUrl: product?.githubUrl || '',
@@ -81,13 +82,17 @@ function ProductForm({ product, onSave, onCancel }: {
             onChange={e => setForm(f => ({ ...f, price: e.target.value }))} placeholder="19.99" disabled={form.isFree} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'flex-end' }}>
-          <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', paddingBottom: 10 }}>
-            <input type="checkbox" checked={form.isFree} onChange={e => setForm(f => ({ ...f, isFree: e.target.checked, price: e.target.checked ? '0' : f.price }))} />
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', paddingBottom: 6 }}>
+            <input type="checkbox" checked={form.isFree} onChange={e => setForm(f => ({ ...f, isFree: e.target.checked, price: e.target.checked ? '0' : f.price, showGithub: e.target.checked ? true : f.showGithub }))} />
             <span style={{ fontSize: 13 }}>Free</span>
           </label>
-          <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', paddingBottom: 10 }}>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', paddingBottom: 6 }}>
             <input type="checkbox" checked={form.isNew} onChange={e => setForm(f => ({ ...f, isNew: e.target.checked }))} />
             <span style={{ fontSize: 13 }}>Mark as New</span>
+          </label>
+          <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', paddingBottom: 6 }}>
+            <input type="checkbox" checked={form.showGithub} onChange={e => setForm(f => ({ ...f, showGithub: e.target.checked }))} />
+            <span style={{ fontSize: 13 }}>Show GitHub link publicly</span>
           </label>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

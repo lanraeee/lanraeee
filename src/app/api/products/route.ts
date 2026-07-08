@@ -27,6 +27,7 @@ export async function POST(request: Request) {
         requiresMembership: body.requiresMembership || null,
         artifactUrl: body.artifactUrl || null,
         githubUrl: body.githubUrl || null,
+        showGithub: body.showGithub ?? (body.isFree || false),
         vercelUrl: body.vercelUrl || null,
         gradient: body.gradient || 'linear-gradient(160deg,#7c6cff,#3a1d6e)',
       },

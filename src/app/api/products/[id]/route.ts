@@ -30,6 +30,7 @@ export async function PUT(request: Request, { params }: Ctx) {
         requiresMembership: body.requiresMembership || null,
         artifactUrl: body.artifactUrl || null,
         githubUrl: body.githubUrl || null,
+        showGithub: body.showGithub ?? false,
         vercelUrl: body.vercelUrl || null,
         gradient: body.gradient,
         order: body.order,
