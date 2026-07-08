@@ -442,9 +442,13 @@ export default function AdminPage() {
   useEffect(() => {
     if (tab === 'content') fetchContent();
     if (tab === 'analytics') fetchAnalytics();
-    if (tab === 'messages') fetchMessages();
     if (tab === 'email') fetchEmailTemplates();
     if (tab === 'security') fetchSecurityTools();
+    if (tab === 'messages') {
+      fetchMessages();
+      const interval = setInterval(fetchMessages, 3000);
+      return () => clearInterval(interval);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 

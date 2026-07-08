@@ -434,6 +434,14 @@ export default function Desktop() {
   }, []);
 
   useEffect(() => {
+    if (!memberUser) return;
+    const interval = setInterval(() => {
+      fetch('/api/member/chat').then(r => r.json()).then(msgs => Array.isArray(msgs) && setMemberMessages(msgs)).catch(() => {});
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [memberUser]);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get('set-password');
     if (token) {
