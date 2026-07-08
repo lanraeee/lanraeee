@@ -1,31 +1,15 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import { prisma } from '@/lib/prisma';
 
 /**
  * Environment variables required for email delivery (set these in Vercel / .env):
- *   SMTP_USER    — hello@lanrae.co.uk
- *   SMTP_PASS    — livemail password
- *   FROM_EMAIL   — display name + address e.g. `lanrae <hello@lanrae.co.uk>`
- *   ADMIN_EMAIL  — address that receives admin alert emails (or set in admin UI)
- *
- * SMTP host: smtp.livemail.co.uk  port: 587  STARTTLS
+ *   RESEND_API_KEY  — from resend.com dashboard
+ *   FROM_EMAIL      — verified sender e.g. `lanraeAi <hello@lanrae.co.uk>`
+ *   ADMIN_EMAIL     — address that receives admin alert emails (or set in admin UI)
  */
-
-function createTransport() {
-  return nodemailer.createTransport({
-    host: 'smtp.livemail.co.uk',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS,
-    },
-  });
-}
 
 type Vars = Record<string, string | number | undefined | null>;
 
-/** Replace every {{key}} occurrence in `str` with the matching value from `vars`. */
 function interpolate(str: string, vars: Vars): string {
   return str.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key: string) => {
     const v = vars[key];
@@ -39,14 +23,9 @@ export async function getAdminEmail(): Promise<string> {
     const row = await prisma.siteContent.findUnique({ where: { key: 'email.admin' } });
     if (row?.value) return row.value;
   } catch {}
-  return process.env.ADMIN_EMAIL || process.env.SMTP_USER || '';
+  return process.env.ADMIN_EMAIL || '';
 }
 
-/**
- * Look up a template by name, interpolate the vars and send it via nodemailer.
- * Silently returns if the template is missing/disabled or if sending fails —
- * email must never break the calling request.
- */
 export async function sendEmail(templateName: string, to: string, vars: Vars = {}): Promise<void> {
   try {
     if (!to) return;
@@ -56,17 +35,15 @@ export async function sendEmail(templateName: string, to: string, vars: Vars = {
     const subject = interpolate(template.subject, vars);
     const html = interpolate(template.html, vars);
 
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.warn(`[email] SMTP_USER / SMTP_PASS not set — skipping "${templateName}" to ${to}`);
+    if (!process.env.RESEND_API_KEY) {
+      console.warn(`[email] RESEND_API_KEY not set — skipping "${templateName}" to ${to}`);
       return;
     }
 
-    // FROM_EMAIL may be plain address OR full RFC "Name <addr>" — use as-is.
-    // Fall back to SMTP_USER so the envelope always has a valid sender.
-    const from = process.env.FROM_EMAIL || process.env.SMTP_USER || 'hello@lanrae.co.uk';
-
-    const transporter = createTransport();
-    await transporter.sendMail({ from, to, subject, html });
+    const from = process.env.FROM_EMAIL || 'lanraeAi <hello@lanrae.co.uk>';
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { error } = await resend.emails.send({ from, to, subject, html });
+    if (error) throw new Error(JSON.stringify(error));
   } catch (err) {
     console.error(`[email] failed to send "${templateName}" to ${to}:`, err);
   }
