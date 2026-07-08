@@ -58,9 +58,11 @@ export async function POST(request: NextRequest) {
   // Notify the member of the new reply (non-blocking).
   const memberUser = await prisma.user.findUnique({ where: { id: userId } });
   if (memberUser) {
+    const isVoice = content.trim().startsWith('__VOICE_AUDIO__');
+    const replyContent = isVoice ? '🎙️ Voice message' : content.trim();
     await sendEmail('member_chat_reply', memberUser.email, {
       displayName: memberUser.email.split('@')[0],
-      replyContent: content.trim(),
+      replyContent,
       profileUrl: 'https://lanrae.co.uk',
     });
   }

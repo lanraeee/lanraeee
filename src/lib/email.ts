@@ -112,11 +112,13 @@ const DEFAULT_TEMPLATES: { name: string; subject: string; html: string }[] = [
   },
   {
     name: 'member_chat_reply',
-    subject: 'Lanrae replied to your message',
+    subject: '💬 lanrae',
     html: shell(`
-      <h1 style="font-size:20px;margin:0 0 14px;">{{displayName}}, you have a new reply from Lanrae:</h1>
-      <blockquote style="border-left:3px solid ${ACCENT};margin:0 0 22px;padding:10px 16px;background:rgba(157,144,255,0.06);border-radius:0 10px 10px 0;font-size:15px;color:#d7dcf1;">{{replyContent}}</blockquote>
-      <p style="margin:0;">${button('View conversation →', '{{profileUrl}}')}</p>
+      <div style="text-align:center;margin:0 0 24px;">
+        <div style="display:inline-flex;width:48px;height:48px;border-radius:50%;background:linear-gradient(160deg,#9d90ff,#7c6cff);align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;">L</div>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border-radius:14px;padding:18px 20px;margin:0 0 22px;font-size:15px;line-height:1.65;color:#d7dcf1;">{{replyContent}}</div>
+      <p style="text-align:center;margin:0;">${button('Open conversation →', '{{profileUrl}}')}</p>
     `),
   },
   {
@@ -205,12 +207,15 @@ const DEFAULT_TEMPLATES: { name: string; subject: string; html: string }[] = [
  * Upsert all default templates. Existing templates (by name) are left untouched
  * so admin edits are never overwritten; only missing ones are created.
  */
+// Templates whose design is managed in code — always sync subject+html.
+const FORCE_UPDATE = new Set(['member_chat_reply']);
+
 export async function seedTemplates(): Promise<void> {
   try {
     for (const t of DEFAULT_TEMPLATES) {
       await prisma.emailTemplate.upsert({
         where: { name: t.name },
-        update: {},
+        update: FORCE_UPDATE.has(t.name) ? { subject: t.subject, html: t.html } : {},
         create: { name: t.name, subject: t.subject, html: t.html, enabled: true },
       });
     }
