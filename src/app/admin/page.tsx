@@ -263,6 +263,13 @@ export default function AdminPage() {
   const [messages, setMessages] = useState<{ id: string; userId: string; userEmail: string; content: string; fromAdmin: boolean; createdAt: string }[]>([]);
   const [chatReply, setChatReply] = useState<Record<string, string>>({});
   const [activeThread, setActiveThread] = useState<string | null>(null);
+  const [voiceLoading, setVoiceLoading] = useState<Record<string, boolean>>({});
+  const [voicePreview, setVoicePreview] = useState<Record<string, string>>({});
+  const [newMsgModal, setNewMsgModal] = useState(false);
+  const [newMsgEmail, setNewMsgEmail] = useState('');
+  const [newMsgContent, setNewMsgContent] = useState('');
+  const [newMsgError, setNewMsgError] = useState('');
+  const [newMsgLoading, setNewMsgLoading] = useState(false);
   const [emailTemplates, setEmailTemplates] = useState<{ id: string; name: string; subject: string; html: string; enabled: boolean }[]>([]);
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
   const [templateEdits, setTemplateEdits] = useState<{ subject: string; html: string; enabled: boolean }>({ subject: '', html: '', enabled: true });
@@ -1087,109 +1094,234 @@ export default function AdminPage() {
           });
           const active = activeThread && threads[activeThread] ? activeThread : (threadList[0]?.[0] ?? null);
           const activeData = active ? threads[active] : null;
-          const sendReply = async (userId: string) => {
-            if (!chatReply[userId]?.trim()) return;
-            const content = chatReply[userId].trim();
-            setChatReply(r => ({ ...r, [userId]: '' }));
+
+          const sendReply = async (userId: string, contentOverride?: string) => {
+            const content = contentOverride ?? chatReply[userId]?.trim();
+            if (!content) return;
+            if (!contentOverride) setChatReply(r => ({ ...r, [userId]: '' }));
+            setVoicePreview(v => ({ ...v, [userId]: '' }));
             await fetch('/api/member/chat/admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId, content }) });
             fetchMessages();
           };
+
+          const generateVoice = async (userId: string) => {
+            const text = chatReply[userId]?.trim();
+            if (!text) return;
+            setVoiceLoading(l => ({ ...l, [userId]: true }));
+            try {
+              const res = await fetch('/api/admin/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+              const data = await res.json();
+              if (data.audioBase64) {
+                setVoicePreview(v => ({ ...v, [userId]: data.audioBase64 }));
+              } else {
+                alert(data.error || 'TTS failed');
+              }
+            } catch {
+              alert('TTS request failed');
+            }
+            setVoiceLoading(l => ({ ...l, [userId]: false }));
+          };
+
+          const sendVoiceReply = async (userId: string) => {
+            const b64 = voicePreview[userId];
+            const text = chatReply[userId]?.trim() || '';
+            if (!b64) return;
+            const content = `__VOICE_AUDIO__${b64}__END_AUDIO__${text}`;
+            setChatReply(r => ({ ...r, [userId]: '' }));
+            await sendReply(userId, content);
+          };
+
+          const submitNewMsg = async () => {
+            if (!newMsgContent.trim() || !newMsgEmail.trim()) return;
+            setNewMsgLoading(true);
+            setNewMsgError('');
+            const res = await fetch('/api/member/chat/admin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: newMsgEmail.trim(), content: newMsgContent.trim() }) });
+            const data = await res.json();
+            if (!res.ok) {
+              setNewMsgError(data.error || 'Failed to send');
+            } else {
+              setNewMsgModal(false);
+              setNewMsgEmail('');
+              setNewMsgContent('');
+              fetchMessages();
+              setActiveThread(data.userId);
+            }
+            setNewMsgLoading(false);
+          };
+
+          const renderContent = (content: string) => {
+            if (content.startsWith('__VOICE_AUDIO__')) {
+              const endIdx = content.indexOf('__END_AUDIO__');
+              if (endIdx !== -1) {
+                const b64 = content.slice('__VOICE_AUDIO__'.length, endIdx);
+                const text = content.slice(endIdx + '__END_AUDIO__'.length);
+                return (
+                  <div>
+                    <audio controls src={`data:audio/mpeg;base64,${b64}`} style={{ width: '100%', height: 32, marginBottom: text ? 6 : 0 }} />
+                    {text && <div>{text}</div>}
+                  </div>
+                );
+              }
+            }
+            return <>{content}</>;
+          };
+
           return (
-            <div style={{ display: 'flex', height: 'calc(100vh - 120px)', gap: 0, overflow: 'hidden' }}>
-              {/* Sidebar */}
-              <div style={{ width: 280, flexShrink: 0, borderRight: '1px solid var(--stroke)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid var(--stroke)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#cdd3ef' }}>Conversations</span>
-                  <button onClick={fetchMessages} style={{ background: 'none', border: 'none', color: '#7d84a6', fontSize: 16, cursor: 'pointer', lineHeight: 1 }}>↻</button>
-                </div>
-                <div style={{ flex: 1, overflowY: 'auto' }}>
-                  {threadList.length === 0 ? (
-                    <div style={{ padding: '32px 16px', textAlign: 'center', color: '#7d84a6', fontSize: 13 }}>No messages yet</div>
-                  ) : threadList.map(([userId, thread]) => {
-                    const sorted = [...thread.msgs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-                    const last = sorted[0];
-                    const unread = sorted.filter(m => !m.fromAdmin).length > 0;
-                    const isActive = userId === active;
-                    return (
-                      <button key={userId} onClick={() => setActiveThread(userId)}
-                        style={{ width: '100%', textAlign: 'left', background: isActive ? 'rgba(157,144,255,.1)' : 'none', border: 'none', borderBottom: '1px solid var(--stroke)', borderLeft: isActive ? '3px solid #9d90ff' : '3px solid transparent', padding: '14px 16px', cursor: 'pointer', fontFamily: 'inherit', display: 'block' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontSize: 13, fontWeight: 650, color: isActive ? '#9d90ff' : '#cdd3ef', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>
-                            {thread.userEmail.split('@')[0]}
-                          </span>
-                          <span style={{ fontSize: 11, color: '#7d84a6', whiteSpace: 'nowrap', marginLeft: 8 }}>
-                            {last ? new Date(last.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontSize: 12, color: '#7d84a6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                            {last ? (last.fromAdmin ? 'You: ' : '') + last.content : ''}
-                          </span>
-                          {unread && !isActive && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#9d90ff', flexShrink: 0 }} />}
-                        </div>
+            <>
+              {/* New Message Modal */}
+              {newMsgModal && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', zIndex: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ background: '#0e1228', border: '1px solid var(--stroke)', borderRadius: 16, padding: 28, width: 420, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#eef1fb' }}>New Message</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Member Email</label>
+                      <input value={newMsgEmail} onChange={e => setNewMsgEmail(e.target.value)} placeholder="member@example.com"
+                        style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)', borderRadius: 9, padding: '10px 14px', fontSize: 13, color: '#eef1fb', fontFamily: 'inherit', outline: 'none' }} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Message</label>
+                      <textarea value={newMsgContent} onChange={e => setNewMsgContent(e.target.value)} placeholder="Type your message…" rows={4}
+                        style={{ background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)', borderRadius: 9, padding: '10px 14px', fontSize: 13, color: '#eef1fb', fontFamily: 'inherit', outline: 'none', resize: 'vertical' }} />
+                    </div>
+                    {newMsgError && <div style={{ fontSize: 12, color: '#ff6b6b' }}>{newMsgError}</div>}
+                    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                      <button onClick={() => { setNewMsgModal(false); setNewMsgError(''); }} style={{ background: 'none', border: '1px solid var(--stroke)', borderRadius: 9, padding: '9px 18px', fontSize: 13, color: '#a7aecb', cursor: 'pointer', fontFamily: 'inherit' }}>Cancel</button>
+                      <button onClick={submitNewMsg} disabled={newMsgLoading || !newMsgEmail.trim() || !newMsgContent.trim()}
+                        style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none', borderRadius: 9, padding: '9px 18px', fontSize: 13, fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit', opacity: newMsgLoading ? .6 : 1 }}>
+                        {newMsgLoading ? 'Sending…' : 'Send'}
                       </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Thread panel */}
-              {activeData && active ? (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                  {/* Thread header */}
-                  <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--stroke)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(160deg,#9d90ff,#7c6cff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
-                      {activeData.userEmail[0].toUpperCase()}
                     </div>
-                    <div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#eef1fb' }}>{activeData.userEmail.split('@')[0]}</div>
-                      <div style={{ fontSize: 12, color: '#7d84a6' }}>{activeData.userEmail}</div>
-                    </div>
-                    <div style={{ marginLeft: 'auto', fontSize: 12, color: '#7d84a6' }}>{activeData.msgs.length} message{activeData.msgs.length !== 1 ? 's' : ''}</div>
                   </div>
-
-                  {/* Messages */}
-                  <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {[...activeData.msgs].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map(msg => (
-                      <div key={msg.id} style={{ display: 'flex', justifyContent: msg.fromAdmin ? 'flex-end' : 'flex-start', gap: 8, alignItems: 'flex-end' }}>
-                        {!msg.fromAdmin && (
-                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(157,144,255,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#9d90ff', flexShrink: 0 }}>
-                            {activeData.userEmail[0].toUpperCase()}
-                          </div>
-                        )}
-                        <div style={{ maxWidth: '65%' }}>
-                          <div style={{ background: msg.fromAdmin ? 'linear-gradient(160deg,#9d90ff,#7c6cff)' : 'rgba(255,255,255,.07)', borderRadius: msg.fromAdmin ? '16px 4px 16px 16px' : '4px 16px 16px 16px', padding: '10px 14px', fontSize: 13, lineHeight: 1.55 }}>
-                            {msg.content}
-                          </div>
-                          <div style={{ fontSize: 11, color: '#7d84a6', marginTop: 4, textAlign: msg.fromAdmin ? 'right' : 'left' }}>
-                            {new Date(msg.createdAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                        </div>
-                        {msg.fromAdmin && (
-                          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(160deg,#9d90ff,#7c6cff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>L</div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Reply box */}
-                  <div style={{ padding: '14px 20px', borderTop: '1px solid var(--stroke)', display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0 }}>
-                    <input value={chatReply[active] || ''} onChange={e => setChatReply(r => ({ ...r, [active]: e.target.value }))}
-                      placeholder={`Reply to ${activeData.userEmail.split('@')[0]}…`}
-                      onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply(active); } }}
-                      style={{ flex: 1, background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)', borderRadius: 22, padding: '10px 18px', fontSize: 13, color: '#eef1fb', fontFamily: 'inherit', outline: 'none' }} />
-                    <button onClick={() => sendReply(active)}
-                      style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none', borderRadius: '50%', width: 38, height: 38, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      ➤
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7d84a6', fontSize: 14 }}>
-                  Select a conversation
                 </div>
               )}
-            </div>
+
+              <div style={{ display: 'flex', height: 'calc(100vh - 120px)', gap: 0, overflow: 'hidden' }}>
+                {/* Sidebar */}
+                <div style={{ width: 280, flexShrink: 0, borderRight: '1px solid var(--stroke)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                  <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid var(--stroke)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#cdd3ef' }}>Conversations</span>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <button onClick={() => { setNewMsgModal(true); setNewMsgError(''); }} title="New message"
+                        style={{ background: 'rgba(157,144,255,.15)', border: '1px solid rgba(157,144,255,.3)', borderRadius: 7, color: '#9d90ff', fontSize: 16, width: 28, height: 28, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>+</button>
+                      <button onClick={fetchMessages} style={{ background: 'none', border: 'none', color: '#7d84a6', fontSize: 16, cursor: 'pointer', lineHeight: 1 }}>↻</button>
+                    </div>
+                  </div>
+                  <div style={{ flex: 1, overflowY: 'auto' }}>
+                    {threadList.length === 0 ? (
+                      <div style={{ padding: '32px 16px', textAlign: 'center', color: '#7d84a6', fontSize: 13 }}>No messages yet</div>
+                    ) : threadList.map(([userId, thread]) => {
+                      const sorted = [...thread.msgs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+                      const last = sorted[0];
+                      const unread = sorted.filter(m => !m.fromAdmin).length > 0;
+                      const isActive = userId === active;
+                      const lastPreview = last ? (last.content.startsWith('__VOICE_AUDIO__') ? '🎙️ Voice message' : (last.fromAdmin ? 'You: ' : '') + last.content) : '';
+                      return (
+                        <button key={userId} onClick={() => setActiveThread(userId)}
+                          style={{ width: '100%', textAlign: 'left', background: isActive ? 'rgba(157,144,255,.1)' : 'none', border: 'none', borderBottom: '1px solid var(--stroke)', borderLeft: isActive ? '3px solid #9d90ff' : '3px solid transparent', padding: '14px 16px', cursor: 'pointer', fontFamily: 'inherit', display: 'block' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontSize: 13, fontWeight: 650, color: isActive ? '#9d90ff' : '#cdd3ef', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 160 }}>
+                              {thread.userEmail.split('@')[0]}
+                            </span>
+                            <span style={{ fontSize: 11, color: '#7d84a6', whiteSpace: 'nowrap', marginLeft: 8 }}>
+                              {last ? new Date(last.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: 12, color: '#7d84a6', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                              {lastPreview}
+                            </span>
+                            {unread && !isActive && <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#9d90ff', flexShrink: 0 }} />}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Thread panel */}
+                {activeData && active ? (
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                    {/* Thread header */}
+                    <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--stroke)', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(160deg,#9d90ff,#7c6cff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                        {activeData.userEmail[0].toUpperCase()}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#eef1fb' }}>{activeData.userEmail.split('@')[0]}</div>
+                        <div style={{ fontSize: 12, color: '#7d84a6' }}>{activeData.userEmail}</div>
+                      </div>
+                      <div style={{ marginLeft: 'auto', fontSize: 12, color: '#7d84a6' }}>{activeData.msgs.length} message{activeData.msgs.length !== 1 ? 's' : ''}</div>
+                    </div>
+
+                    {/* Messages */}
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {[...activeData.msgs].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).map(msg => (
+                        <div key={msg.id} style={{ display: 'flex', justifyContent: msg.fromAdmin ? 'flex-end' : 'flex-start', gap: 8, alignItems: 'flex-end' }}>
+                          {!msg.fromAdmin && (
+                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(157,144,255,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#9d90ff', flexShrink: 0 }}>
+                              {activeData.userEmail[0].toUpperCase()}
+                            </div>
+                          )}
+                          <div style={{ maxWidth: '65%' }}>
+                            <div style={{ background: msg.fromAdmin ? 'linear-gradient(160deg,#9d90ff,#7c6cff)' : 'rgba(255,255,255,.07)', borderRadius: msg.fromAdmin ? '16px 4px 16px 16px' : '4px 16px 16px 16px', padding: '10px 14px', fontSize: 13, lineHeight: 1.55 }}>
+                              {renderContent(msg.content)}
+                            </div>
+                            <div style={{ fontSize: 11, color: '#7d84a6', marginTop: 4, textAlign: msg.fromAdmin ? 'right' : 'left' }}>
+                              {new Date(msg.createdAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                          </div>
+                          {msg.fromAdmin && (
+                            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(160deg,#9d90ff,#7c6cff)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff', flexShrink: 0 }}>L</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Reply box */}
+                    <div style={{ padding: '14px 20px', borderTop: '1px solid var(--stroke)', flexShrink: 0 }}>
+                      {/* Voice preview bar */}
+                      {voicePreview[active] && (
+                        <div style={{ background: 'rgba(157,144,255,.08)', border: '1px solid rgba(157,144,255,.25)', borderRadius: 12, padding: '10px 14px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <div style={{ fontSize: 11, color: '#9d90ff', fontWeight: 700 }}>🎙️ Voice Preview — send this?</div>
+                          <audio controls src={`data:audio/mpeg;base64,${voicePreview[active]}`} style={{ width: '100%', height: 34 }} />
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button onClick={() => sendVoiceReply(active)}
+                              style={{ flex: 1, background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none', borderRadius: 9, padding: '8px 0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                              Send Voice Reply
+                            </button>
+                            <button onClick={() => setVoicePreview(v => ({ ...v, [active]: '' }))}
+                              style={{ background: 'rgba(255,255,255,.06)', border: '1px solid var(--stroke)', borderRadius: 9, padding: '8px 14px', fontSize: 12, color: '#a7aecb', cursor: 'pointer', fontFamily: 'inherit' }}>
+                              Discard
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                        <input value={chatReply[active] || ''} onChange={e => setChatReply(r => ({ ...r, [active]: e.target.value }))}
+                          placeholder={`Reply to ${activeData.userEmail.split('@')[0]}…`}
+                          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendReply(active); } }}
+                          style={{ flex: 1, background: 'rgba(255,255,255,.05)', border: '1px solid var(--stroke)', borderRadius: 22, padding: '10px 18px', fontSize: 13, color: '#eef1fb', fontFamily: 'inherit', outline: 'none' }} />
+                        {/* Voice button */}
+                        <button onClick={() => generateVoice(active)} disabled={voiceLoading[active] || !chatReply[active]?.trim()}
+                          title="Generate voice reply"
+                          style={{ background: 'rgba(157,144,255,.15)', border: '1px solid rgba(157,144,255,.3)', borderRadius: '50%', width: 38, height: 38, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, opacity: voiceLoading[active] ? .5 : 1 }}>
+                          {voiceLoading[active] ? '⏳' : '🎙️'}
+                        </button>
+                        {/* Send button */}
+                        <button onClick={() => sendReply(active)}
+                          style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none', borderRadius: '50%', width: 38, height: 38, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          ➤
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7d84a6', fontSize: 14 }}>
+                    Select a conversation
+                  </div>
+                )}
+              </div>
+            </>
           );
         })()}
 

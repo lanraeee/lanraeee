@@ -34,9 +34,20 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   if (!isAdmin(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { userId, content } = await request.json();
-  if (!userId || !content?.trim()) {
-    return NextResponse.json({ error: 'userId and content required' }, { status: 400 });
+  const { userId: rawUserId, email, content } = await request.json();
+  if (!content?.trim()) {
+    return NextResponse.json({ error: 'content required' }, { status: 400 });
+  }
+
+  let userId = rawUserId;
+  if (!userId && email) {
+    const user = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() } });
+    if (!user) return NextResponse.json({ error: 'No member found with that email' }, { status: 404 });
+    userId = user.id;
+  }
+
+  if (!userId) {
+    return NextResponse.json({ error: 'userId or email required' }, { status: 400 });
   }
 
   const msg = await prisma.chatMessage.create({

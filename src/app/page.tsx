@@ -1158,19 +1158,36 @@ export default function Desktop() {
               <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid var(--stroke)', borderRadius: 12, padding: 12, minHeight: 200, maxHeight: 300, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {memberMessages.length === 0 ? (
                   <p style={{ fontSize: 13, color: '#7d84a6', margin: 'auto', textAlign: 'center' }}>No messages yet — say hello!</p>
-                ) : memberMessages.map(msg => (
+                ) : memberMessages.map(msg => {
+                  const isVoice = msg.content.startsWith('__VOICE_AUDIO__');
+                  let audioB64 = '';
+                  let textPart = msg.content;
+                  if (isVoice) {
+                    const endIdx = msg.content.indexOf('__END_AUDIO__');
+                    if (endIdx !== -1) {
+                      audioB64 = msg.content.slice('__VOICE_AUDIO__'.length, endIdx);
+                      textPart = msg.content.slice(endIdx + '__END_AUDIO__'.length);
+                    }
+                  }
+                  return (
                   <div key={msg.id} style={{ display: 'flex', justifyContent: msg.fromAdmin ? 'flex-start' : 'flex-end' }}>
                     <div style={{ maxWidth: '78%', background: msg.fromAdmin ? 'rgba(255,255,255,.08)' : 'linear-gradient(160deg,#1a8a6a,#0a3d2a)',
                       borderRadius: msg.fromAdmin ? '4px 14px 14px 14px' : '14px 4px 14px 14px',
                       padding: '9px 13px', fontSize: 13, lineHeight: 1.5 }}>
                       {msg.fromAdmin && <div style={{ fontSize: 10, color: '#1a8a6a', fontWeight: 700, marginBottom: 3 }}>lanrae</div>}
-                      {msg.content}
+                      {isVoice && audioB64 ? (
+                        <div>
+                          <audio controls src={`data:audio/mpeg;base64,${audioB64}`} style={{ width: '100%', height: 32, marginBottom: textPart ? 4 : 0 }} />
+                          {textPart && <div>{textPart}</div>}
+                        </div>
+                      ) : msg.content}
                       <div style={{ fontSize: 10, color: 'rgba(255,255,255,.35)', marginTop: 3, textAlign: 'right' }}>
                         {new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
               <form onSubmit={sendMemberMessage} style={{ display: 'flex', gap: 8 }}>
                 <input value={memberChatInput} onChange={e => setMemberChatInput(e.target.value)}
