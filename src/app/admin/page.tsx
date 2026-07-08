@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { VoicePlayer } from '@/components/VoicePlayer';
 
 type Product = {
   id: string; name: string; description: string; icon: string | null;
@@ -1227,12 +1228,15 @@ export default function AdminPage() {
             setNewMsgLoading(false);
           };
 
+          const parseVoice = (content: string) => {
+            if (!content.startsWith('__VOICE_AUDIO__')) return null;
+            const endIdx = content.indexOf('__END_AUDIO__');
+            return endIdx !== -1 ? content.slice('__VOICE_AUDIO__'.length, endIdx) : content.slice('__VOICE_AUDIO__'.length);
+          };
+
           const renderContent = (content: string) => {
-            if (content.startsWith('__VOICE_AUDIO__')) {
-              const endIdx = content.indexOf('__END_AUDIO__');
-              const b64 = endIdx !== -1 ? content.slice('__VOICE_AUDIO__'.length, endIdx) : content.slice('__VOICE_AUDIO__'.length);
-              return <audio controls src={`data:audio/mpeg;base64,${b64}`} style={{ width: '100%', height: 32 }} />;
-            }
+            const b64 = parseVoice(content);
+            if (b64) return <VoicePlayer src={`data:audio/mpeg;base64,${b64}`} fromAdmin />;
             return <>{content}</>;
           };
 
@@ -1353,7 +1357,7 @@ export default function AdminPage() {
                       {voicePreview[active] && (
                         <div style={{ background: 'rgba(157,144,255,.08)', border: '1px solid rgba(157,144,255,.25)', borderRadius: 12, padding: '10px 14px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
                           <div style={{ fontSize: 11, color: '#9d90ff', fontWeight: 700 }}>🎙️ Voice Preview — send this?</div>
-                          <audio controls src={`data:audio/mpeg;base64,${voicePreview[active]}`} style={{ width: '100%', height: 34 }} />
+                          <VoicePlayer src={`data:audio/mpeg;base64,${voicePreview[active]}`} fromAdmin />
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button onClick={() => sendVoiceReply(active)}
                               style={{ flex: 1, background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none', borderRadius: 9, padding: '8px 0', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>

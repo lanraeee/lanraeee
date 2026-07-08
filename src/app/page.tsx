@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { VoicePlayer } from '@/components/VoicePlayer';
 
 /* ── CMS defaults ───────────────────────────────────────────── */
 const CONTENT_DEFAULTS: Record<string, string> = {
@@ -1184,7 +1185,7 @@ export default function Desktop() {
                       padding: '9px 13px', fontSize: 13, lineHeight: 1.5 }}>
                       {msg.fromAdmin && <div style={{ fontSize: 10, color: '#1a8a6a', fontWeight: 700, marginBottom: 3 }}>lanrae</div>}
                       {isVoice && audioB64 ? (
-                        <audio controls src={`data:audio/mpeg;base64,${audioB64}`} style={{ width: '100%', height: 32 }} />
+                        <VoicePlayer src={`data:audio/mpeg;base64,${audioB64}`} fromAdmin={msg.fromAdmin} />
                       ) : msg.content}
                       <div style={{ fontSize: 10, color: 'rgba(255,255,255,.35)', marginTop: 3, textAlign: 'right' }}>
                         {new Date(msg.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
