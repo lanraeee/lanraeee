@@ -1,4 +1,4 @@
-import Stripe from 'stripe';
+﻿import Stripe from 'stripe';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 
@@ -118,7 +118,7 @@ function HomeLink() {
     <Link href="/" style={{
       color: '#9d90ff', fontSize: 14, textDecoration: 'none', fontWeight: 600, marginTop: 4,
     }}>
-      ← Back to lanraeAi
+      ← Back to Lanrae.co.uk
     </Link>
   );
 }

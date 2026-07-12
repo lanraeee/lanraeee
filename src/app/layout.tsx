@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import "./globals.css";
 import { prisma } from "@/lib/prisma";
 
@@ -15,7 +15,7 @@ async function getSeoMeta() {
 
 export async function generateMetadata(): Promise<Metadata> {
   const m = await getSeoMeta();
-  const title = m['seo.title'] || 'lanraeAi — AI Product Development';
+  const title = m['seo.title'] || 'Lanrae.co.uk — AI Product Development';
   const description = m['seo.description'] || 'Browse, buy, and support AI-powered products built by lanrae. An adaptive AI desktop experience.';
   const ogImage = m['seo.ogImage'] || 'https://lanrae.co.uk/logo.png';
   const keywords = m['seo.keywords'] || 'AI products, AI tools, lanrae, AI studio, artificial intelligence';
@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       url: 'https://lanrae.co.uk',
-      siteName: 'lanraeAi',
+      siteName: 'Lanrae.co.uk',
       images: [{ url: ogImage }],
       type: 'website',
     },

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -890,10 +890,10 @@ export default function AdminPage() {
                 fontFamily: 'inherit', width: '100%', boxSizing: 'border-box', outline: 'none',
               };
               const siteFields = [
-                { key: 'site.name', label: 'Brand name', placeholder: 'lanraeAi' },
+                { key: 'site.name', label: 'Brand name', placeholder: 'Lanrae.co.uk' },
                 { key: 'site.logoUrl', label: 'Logo URL (leave blank to use default)', placeholder: 'https://...' },
-                { key: 'site.fromName', label: 'Email from name', placeholder: 'lanraeAi' },
-                { key: 'seo.title', label: 'SEO page title', placeholder: 'lanraeAi — AI Product Development' },
+                { key: 'site.fromName', label: 'Email from name', placeholder: 'Lanrae.co.uk' },
+                { key: 'seo.title', label: 'SEO page title', placeholder: 'Lanrae.co.uk — AI Product Development' },
                 { key: 'seo.description', label: 'SEO meta description', placeholder: 'Browse and buy AI-powered products built by lanrae.' },
                 { key: 'seo.keywords', label: 'SEO keywords (comma-separated)', placeholder: 'AI, products, studio, lanrae' },
                 { key: 'seo.ogImage', label: 'OG / social share image URL', placeholder: 'https://lanrae.co.uk/logo.png' },

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { VoicePlayer } from '@/components/VoicePlayer';
@@ -6,7 +6,7 @@ import { VoicePlayer } from '@/components/VoicePlayer';
 /* ── CMS defaults ───────────────────────────────────────────── */
 const CONTENT_DEFAULTS: Record<string, string> = {
   'site.logoUrl': '/logo.png',
-  'site.name': 'lanraeAi',
+  'site.name': 'Lanrae.co.uk',
   'app.store.icon': '🛍️',   'app.store.label': 'Store',
   'app.members.icon': '🪪', 'app.members.label': 'Members',
   'app.fans.icon': '🏆',    'app.fans.label': 'Fans',
@@ -384,6 +384,21 @@ export default function Desktop() {
   const [setPasswordDone, setSetPasswordDone] = useState(false);
   const [memberPassword, setMemberPassword] = useState('');
   const [needsPassword, setNeedsPassword] = useState(false);
+  const [weather, setWeather] = useState<{ temp: number; code: number; city: string } | null>(null);
+
+  useEffect(() => {
+    navigator.geolocation?.getCurrentPosition(async ({ coords }) => {
+      try {
+        const { latitude: lat, longitude: lon } = coords;
+        const [meteo, geo] = await Promise.all([
+          fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&temperature_unit=celsius`).then(r => r.json()),
+          fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`).then(r => r.json()),
+        ]);
+        const city = geo?.address?.city || geo?.address?.town || geo?.address?.village || geo?.address?.county || '';
+        setWeather({ temp: Math.round(meteo.current.temperature_2m), code: meteo.current.weather_code, city });
+      } catch {}
+    }, () => {});
+  }, []);
 
   useEffect(() => {
     const detected = detectOS();
@@ -1017,7 +1032,7 @@ export default function Desktop() {
             <>
               <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#1a8a6a', fontWeight: 700, marginBottom: 8 }}>Set Password</p>
               <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>Secure your account</h2>
-              <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 20 }}>Create a password to protect your lanraeAi account.</p>
+              <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 20 }}>Create a password to protect your Lanrae.co.uk account.</p>
               <form onSubmit={async e => {
                 e.preventDefault();
                 if (setPasswordInput !== setPasswordConfirm) { setSetPasswordError('Passwords do not match'); return; }
@@ -1348,14 +1363,40 @@ export default function Desktop() {
             </div>
           </div>
 
-          {/* date widget */}
+          {/* date + weather widget */}
           <div style={{ position: 'absolute', top: 60, left: 0, right: 0, textAlign: 'center' }}>
             <div style={{ fontSize: 13, color: 'rgba(255,255,255,.6)', fontWeight: 500 }}>
               {new Date().toLocaleDateString('en-GB', { weekday: 'long', month: 'long', day: 'numeric' })}
             </div>
-            <div style={{ fontSize: 68, fontWeight: 200, color: '#fff', lineHeight: 1.1, marginTop: 2 }}>
-              {new Date().getDate()}
-            </div>
+            {weather ? (
+              <div style={{ marginTop: 4 }}>
+                <div style={{ fontSize: 62, fontWeight: 200, color: '#fff', lineHeight: 1, letterSpacing: -2 }}>
+                  {(() => {
+                    const c = weather.code;
+                    if (c === 0) return '☀️';
+                    if (c <= 2) return '⛅';
+                    if (c <= 3) return '☁️';
+                    if (c <= 48) return '🌫️';
+                    if (c <= 57) return '🌧️';
+                    if (c <= 67) return '🌧️';
+                    if (c <= 77) return '❄️';
+                    if (c <= 82) return '🌦️';
+                    if (c <= 86) return '🌨️';
+                    return '⛈️';
+                  })()}
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 300, color: '#fff', lineHeight: 1, marginTop: 2 }}>
+                  {weather.temp}°C
+                </div>
+                {weather.city ? (
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,.5)', marginTop: 3 }}>{weather.city}</div>
+                ) : null}
+              </div>
+            ) : (
+              <div style={{ fontSize: 68, fontWeight: 200, color: '#fff', lineHeight: 1.1, marginTop: 2 }}>
+                {new Date().getDate()}
+              </div>
+            )}
           </div>
 
           {/* app grid */}

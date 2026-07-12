@@ -1,10 +1,10 @@
-import { Resend } from 'resend';
+﻿import { Resend } from 'resend';
 import { prisma } from '@/lib/prisma';
 
 /**
  * Environment variables required for email delivery (set these in Vercel / .env):
  *   RESEND_API_KEY  — from resend.com dashboard
- *   FROM_EMAIL      — verified sender e.g. `lanraeAi <hello@lanrae.co.uk>`
+ *   FROM_EMAIL      — verified sender e.g. `Lanrae.co.uk <hello@lanrae.co.uk>`
  *   ADMIN_EMAIL     — address that receives admin alert emails (or set in admin UI)
  */
 
@@ -40,7 +40,7 @@ export async function sendEmail(templateName: string, to: string, vars: Vars = {
       return;
     }
 
-    const from = process.env.FROM_EMAIL || 'lanraeAi <hello@lanrae.co.uk>';
+    const from = process.env.FROM_EMAIL || 'Lanrae.co.uk <hello@lanrae.co.uk>';
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { error } = await resend.emails.send({ from, to, subject, html });
     if (error) throw new Error(JSON.stringify(error));
@@ -89,7 +89,7 @@ function simple(inner: string): string {
 const DEFAULT_TEMPLATES: { name: string; subject: string; html: string }[] = [
   {
     name: 'member_welcome',
-    subject: 'Welcome to lanraeAi 👋',
+    subject: 'Welcome to Lanrae.co.uk 👋',
     html: shell(`
       <h1 style="font-size:20px;margin:0 0 14px;">Welcome {{displayName}}! 🎉</h1>
       <p style="font-size:15px;line-height:1.6;color:#d7dcf1;margin:0 0 22px;">Your membership is active. Set a password to secure your account and jump straight in.</p>
@@ -99,7 +99,7 @@ const DEFAULT_TEMPLATES: { name: string; subject: string; html: string }[] = [
   },
   {
     name: 'member_login_alert',
-    subject: 'New sign-in to your lanraeAi account',
+    subject: 'New sign-in to your Lanrae.co.uk account',
     html: shell(`
       <h1 style="font-size:20px;margin:0 0 14px;">Hi {{displayName}},</h1>
       <p style="font-size:15px;line-height:1.6;color:#d7dcf1;margin:0 0 18px;">We noticed a new sign-in to your account.</p>
@@ -134,7 +134,7 @@ const DEFAULT_TEMPLATES: { name: string; subject: string; html: string }[] = [
   },
   {
     name: 'member_set_password',
-    subject: 'Set your lanraeAi password',
+    subject: 'Set your Lanrae.co.uk password',
     html: shell(`
       <h1 style="font-size:20px;margin:0 0 14px;">Hi {{displayName}},</h1>
       <p style="font-size:15px;line-height:1.6;color:#d7dcf1;margin:0 0 22px;">Use the link below to set your password.</p>
