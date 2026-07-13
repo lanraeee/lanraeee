@@ -551,6 +551,14 @@ export default function Desktop() {
     if (msg.id) setMemberMessages(prev => [...prev, msg]);
   };
 
+  const TIER_RANK: Record<string, number> = { explorer: 1, supporter: 2, insider: 3 };
+  const memberHasAccess = (required: string | null) => {
+    if (!required) return true;
+    const userRank = TIER_RANK[memberUser?.tier?.toLowerCase() ?? ''] ?? 0;
+    const reqRank = TIER_RANK[required.toLowerCase()] ?? 99;
+    return userRank >= reqRank;
+  };
+
   const appsMeta = [
     { id: 'store',   icon: c('app.store.icon'),   label: c('app.store.label'),   gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' },
     { id: 'members', icon: c('app.members.icon'), label: c('app.members.label'), gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
@@ -618,9 +626,14 @@ export default function Desktop() {
                   Read more →
                 </button>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: 4 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700 }}>{p.isFree ? 'Free' : `£${(p.price / 100).toFixed(2)}`}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700 }}>{p.isFree ? 'Free' : `£${(p.price / 100).toFixed(2)}`}</span>
+                    {p.requiresMembership && memberHasAccess(p.requiresMembership) && (
+                      <span style={{ fontSize: 10, color: '#3ddc97', fontWeight: 700, letterSpacing: '.4px' }}>🔓 Unlocked</span>
+                    )}
+                  </div>
                   <button onClick={() => {
-                      if (p.requiresMembership) {
+                      if (p.requiresMembership && !memberHasAccess(p.requiresMembership)) {
                         const tier = p.requiresMembership;
                         const found = membershipTiers.find(t => t.name.toLowerCase() === tier.toLowerCase());
                         setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: found?.price ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' });
@@ -629,7 +642,7 @@ export default function Desktop() {
                     style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
                       border: 'none', borderRadius: 9, padding: '7px 12px', fontSize: 12,
                       fontWeight: 650, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    {p.isFree ? 'Open' : p.requiresMembership ? 'Unlock' : 'Buy'}
+                    {p.isFree ? 'Open' : (p.requiresMembership && !memberHasAccess(p.requiresMembership)) ? 'Unlock' : 'Buy'}
                   </button>
                 </div>
               </div>
@@ -1517,11 +1530,11 @@ export default function Desktop() {
                     {previewProduct.isFree ? 'Free' : `£${(previewProduct.price / 100).toFixed(2)}`}
                     {!previewProduct.isFree && <small style={{ fontSize: 12, fontWeight: 400, color: '#7d84a6', marginLeft: 4 }}>one-time</small>}
                   </span>
-                  <button onClick={() => { if (previewProduct.requiresMembership) { const tier = previewProduct.requiresMembership; const found = membershipTiers.find(t => t.name.toLowerCase() === tier.toLowerCase()); setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: found?.price ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }); } else { setCheckout(previewProduct); } setPreviewProduct(null); }}
+                  <button onClick={() => { if (previewProduct.requiresMembership && !memberHasAccess(previewProduct.requiresMembership)) { const tier = previewProduct.requiresMembership; const found = membershipTiers.find(t => t.name.toLowerCase() === tier.toLowerCase()); setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: found?.price ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }); } else { setCheckout(previewProduct); } setPreviewProduct(null); }}
                     style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
                       border: 'none', borderRadius: 11, padding: '11px 22px', fontSize: 14,
                       fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    {previewProduct.isFree ? 'Open' : previewProduct.requiresMembership ? 'Unlock' : 'Buy now'}
+                    {previewProduct.isFree ? 'Open' : (previewProduct.requiresMembership && !memberHasAccess(previewProduct.requiresMembership)) ? 'Unlock' : 'Buy now'}
                   </button>
                 </div>
               </div>
@@ -1699,11 +1712,11 @@ export default function Desktop() {
                     {previewProduct.isFree ? 'Free' : `£${(previewProduct.price / 100).toFixed(2)}`}
                     {!previewProduct.isFree && <small style={{ fontSize: 12, fontWeight: 400, color: '#7d84a6', marginLeft: 4 }}>one-time</small>}
                   </span>
-                  <button onClick={() => { if (previewProduct.requiresMembership) { const tier = previewProduct.requiresMembership; const found = membershipTiers.find(t => t.name.toLowerCase() === tier.toLowerCase()); setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: found?.price ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }); } else { setCheckout(previewProduct); } setPreviewProduct(null); }}
+                  <button onClick={() => { if (previewProduct.requiresMembership && !memberHasAccess(previewProduct.requiresMembership)) { const tier = previewProduct.requiresMembership; const found = membershipTiers.find(t => t.name.toLowerCase() === tier.toLowerCase()); setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: found?.price ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }); } else { setCheckout(previewProduct); } setPreviewProduct(null); }}
                     style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
                       border: 'none', borderRadius: 11, padding: '11px 22px', fontSize: 14,
                       fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    {previewProduct.isFree ? 'Open' : previewProduct.requiresMembership ? 'Unlock' : 'Buy now'}
+                    {previewProduct.isFree ? 'Open' : (previewProduct.requiresMembership && !memberHasAccess(previewProduct.requiresMembership)) ? 'Unlock' : 'Buy now'}
                   </button>
                 </div>
               </div>
@@ -1876,11 +1889,11 @@ export default function Desktop() {
                     {previewProduct.isFree ? 'Free' : `£${(previewProduct.price / 100).toFixed(2)}`}
                     {!previewProduct.isFree && <small style={{ fontSize: 12, fontWeight: 400, color: '#7d84a6', marginLeft: 4 }}>one-time</small>}
                   </span>
-                  <button onClick={() => { if (previewProduct.requiresMembership) { const tier = previewProduct.requiresMembership; const found = membershipTiers.find(t => t.name.toLowerCase() === tier.toLowerCase()); setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: found?.price ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }); } else { setCheckout(previewProduct); } setPreviewProduct(null); }}
+                  <button onClick={() => { if (previewProduct.requiresMembership && !memberHasAccess(previewProduct.requiresMembership)) { const tier = previewProduct.requiresMembership; const found = membershipTiers.find(t => t.name.toLowerCase() === tier.toLowerCase()); setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: found?.price ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }); } else { setCheckout(previewProduct); } setPreviewProduct(null); }}
                     style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
                       border: 'none', borderRadius: 11, padding: '11px 22px', fontSize: 14,
                       fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-                    {previewProduct.isFree ? 'Open' : previewProduct.requiresMembership ? 'Unlock' : 'Buy now'}
+                    {previewProduct.isFree ? 'Open' : (previewProduct.requiresMembership && !memberHasAccess(previewProduct.requiresMembership)) ? 'Unlock' : 'Buy now'}
                   </button>
                 </div>
               </div>
