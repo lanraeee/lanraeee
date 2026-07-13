@@ -385,6 +385,7 @@ export default function Desktop() {
   const [memberPassword, setMemberPassword] = useState('');
   const [needsPassword, setNeedsPassword] = useState(false);
   const [weather, setWeather] = useState<{ temp: number; code: number; city: string } | null>(null);
+  const [hoveredDock, setHoveredDock] = useState<string | null>(null);
 
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(async ({ coords }) => {
@@ -479,6 +480,7 @@ export default function Desktop() {
           if (window.innerWidth >= 768) {
             openWin('store');
             setTimeout(() => openWin('fans'), 400);
+            setTimeout(() => openWin('request'), 700);
           }
         }, 2200);
       });
@@ -571,7 +573,7 @@ export default function Desktop() {
     store: { width: 'min(660px,92vw)', top: 76, left: 'calc(50% - 300px)' },
     fans: { width: 'min(440px,92vw)', top: 120, left: 'calc(50% + 80px)' },
     members: { width: 'min(680px,92vw)', top: 100, left: 'calc(50% - 340px)' },
-    request: { width: 'min(520px,92vw)', top: 110, left: 'calc(50% - 260px)' },
+    request: { width: 'min(500px,92vw)', top: 145, left: 'calc(50% - 240px)' },
     donate: { width: 'min(380px,92vw)', top: 130, left: 'calc(50% - 190px)' },
     about: { width: 'min(420px,92vw)', top: 120, left: 'calc(50% - 210px)' },
     profile: { width: 'min(500px,92vw)', top: 90, left: 'calc(50% - 250px)' },
@@ -1893,17 +1895,26 @@ export default function Desktop() {
           display: 'flex', alignItems: 'center', gap: 20, padding: '0 14px',
           background: 'rgba(9,11,24,.55)', backdropFilter: 'blur(22px) saturate(160%)',
           borderBottom: '1px solid var(--stroke-2)', fontSize: 13 }}>
-          <div style={{ fontWeight: 800, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 18, height: 18, borderRadius: 4, display: 'block' }} />
-            <span>{c('site.name')}</span>
+          <div style={{ fontWeight: 800, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+            <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 22, height: 22, borderRadius: 6, display: 'block', boxShadow: '0 2px 8px rgba(124,108,255,.55)' }} />
+            <span style={{ background: 'linear-gradient(90deg,#c8beff,#9d90ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{c('site.name')}</span>
           </div>
           {['store', 'members', 'fans', 'donate', 'about'].map(id => (
             <span key={id} onClick={() => openWin(id)}
-              style={{ color: '#dfe3f4', opacity: .86, cursor: 'default', textTransform: 'capitalize' }}>
+              style={{ color: '#dfe3f4', opacity: .8, cursor: 'default', padding: '3px 9px', borderRadius: 6, transition: 'background .15s, opacity .15s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; e.currentTarget.style.opacity = '1'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.opacity = '.8'; }}>
               {id === 'fans' ? 'Top Fans' : id === 'donate' ? 'Support' : id.charAt(0).toUpperCase() + id.slice(1)}
             </span>
           ))}
-          <span style={{ marginLeft: 'auto', color: '#dfe3f4', fontVariantNumeric: 'tabular-nums' }}>{clock}</span>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button onClick={() => openWin('profile')} style={{ background: 'rgba(157,144,255,.12)', border: '1px solid rgba(157,144,255,.25)', borderRadius: 7, padding: '3px 10px', color: '#c4beff', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5, transition: 'background .15s' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(157,144,255,.24)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(157,144,255,.12)')}>
+              <span style={{ fontSize: 13 }}>👤</span><span>Profile</span>
+            </button>
+            <span style={{ color: '#dfe3f4', fontVariantNumeric: 'tabular-nums' }}>{clock}</span>
+          </div>
         </div>
 
         {/* desktop icons */}

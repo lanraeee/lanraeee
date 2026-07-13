@@ -17,6 +17,22 @@ function interpolate(str: string, vars: Vars): string {
   });
 }
 
+function htmlToText(html: string): string {
+  return html
+    .replace(/<a\s[^>]*href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '$2 ($1)')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n\n')
+    .replace(/<\/div>/gi, '\n')
+    .replace(/<\/h[1-6]>/gi, '\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 /** Returns the admin notification address: DB setting first, env var fallback. */
 export async function getAdminEmail(): Promise<string> {
   try {
@@ -40,9 +56,17 @@ export async function sendEmail(templateName: string, to: string, vars: Vars = {
       return;
     }
 
-    const from = process.env.FROM_EMAIL || 'Lanrae.co.uk <hello@lanrae.co.uk>';
+    const from = process.env.FROM_EMAIL || 'Lanrae <hello@lanrae.co.uk>';
+    const text = htmlToText(html);
     const resend = new Resend(process.env.RESEND_API_KEY);
-    const { error } = await resend.emails.send({ from, to, subject, html });
+    const { error } = await resend.emails.send({
+      from,
+      to,
+      subject,
+      html,
+      text,
+      headers: { 'X-Entity-Ref-ID': `${templateName}-${Date.now()}` },
+    });
     if (error) throw new Error(JSON.stringify(error));
   } catch (err) {
     console.error(`[email] failed to send "${templateName}" to ${to}:`, err);
