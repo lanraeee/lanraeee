@@ -355,6 +355,7 @@ export default function Desktop() {
   const [zTop, setZTop] = useState(100);
   const [checkout, setCheckout] = useState<Product | null>(null);
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
+  const [membershipTiers, setMembershipTiers] = useState<{ id: string; tier: string; name: string; price: number; features: string[] }[]>([]);
   const [booted, setBooted] = useState(false);
   const [clock, setClock] = useState('');
   const [donateAmt, setDonateAmt] = useState(7);
@@ -470,6 +471,7 @@ export default function Desktop() {
 
   useEffect(() => {
     fetch('/api/security-tools').then(r => r.json()).then(d => { if (Array.isArray(d)) setSecurityTools(d); }).catch(() => {});
+    fetch('/api/memberships').then(r => r.json()).then(d => { if (Array.isArray(d)) setMembershipTiers(d); }).catch(() => {});
     Promise.all([fetch('/api/products'), fetch('/api/fans')])
       .then(([p, f]) => Promise.all([p.json(), f.json()]))
       .then(([p, f]) => { setProducts(p); setFans(f); })
@@ -619,9 +621,9 @@ export default function Desktop() {
                   <span style={{ fontSize: 14, fontWeight: 700 }}>{p.isFree ? 'Free' : `£${(p.price / 100).toFixed(2)}`}</span>
                   <button onClick={() => {
                       if (p.requiresMembership) {
-                        const tierPrices: Record<string, number> = { Explorer: 0, Supporter: 500, Insider: 1500 };
                         const tier = p.requiresMembership;
-                        setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: tierPrices[tier] ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' });
+                        const found = membershipTiers.find(t => t.name.toLowerCase() === tier.toLowerCase());
+                        setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: found?.price ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' });
                       } else { setCheckout(p); }
                     }}
                     style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
@@ -809,19 +811,21 @@ export default function Desktop() {
               <div style={{ position: 'absolute', top: -11, left: 20,
                 background: 'linear-gradient(180deg,#f5c451,#b88a00)', color: '#1a1200', fontSize: 10,
                 fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', padding: '4px 12px', borderRadius: 20 }}>Upgrade</div>
+              {(() => { const ins = membershipTiers.find(t => t.tier === 'insider'); const insPrice = ins?.price ?? 1500; const insFeatures = ins?.features ?? tierPerks.insider; return (<>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
                 <h3 style={{ fontSize: 16, fontWeight: 700 }}>Insider</h3>
-                <div style={{ fontSize: 22, fontWeight: 800 }}>£15<small style={{ fontSize: 13, fontWeight: 500, color: '#a7aecb' }}>/mo</small></div>
+                <div style={{ fontSize: 22, fontWeight: 800 }}>£{insPrice / 100}<small style={{ fontSize: 13, fontWeight: 500, color: '#a7aecb' }}>/mo</small></div>
               </div>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#d7dcf1', marginBottom: 14 }}>
-                {tierPerks.insider.map(f => <li key={f} style={{ display: 'flex', gap: 8 }}><span style={{ color: '#f5c451', fontWeight: 800 }}>✓</span>{f}</li>)}
+                {insFeatures.map((f: string) => <li key={f} style={{ display: 'flex', gap: 8 }}><span style={{ color: '#f5c451', fontWeight: 800 }}>✓</span>{f}</li>)}
               </ul>
-              <button onClick={() => setCheckout({ id: 'Insider', name: 'Insider membership', description: '', icon: '🪪', price: 1500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' })}
+              <button onClick={() => setCheckout({ id: 'Insider', name: 'Insider membership', description: '', icon: '🪪', price: insPrice, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' })}
                 style={{ background: 'linear-gradient(180deg,#f5c451,#b88a00)', color: '#1a1200',
                   border: 'none', borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 700,
                   cursor: 'pointer', width: '100%', fontFamily: 'inherit' }}>
-                Upgrade to Insider · £15/mo
+                Upgrade to Insider · £{insPrice / 100}/mo
               </button>
+              </>); })()}
             </div>
           )}
         </>
@@ -833,11 +837,11 @@ export default function Desktop() {
           <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>{c('members.heading')}</h2>
           <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>{c('members.subheading')}</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {[
-              { name: 'Explorer', price: 0, feat: false, features: tierPerks.explorer },
-              { name: 'Supporter', price: 5, feat: true, features: tierPerks.supporter },
-              { name: 'Insider', price: 15, feat: false, features: tierPerks.insider },
-            ].map(t => (
+            {(membershipTiers.length > 0 ? membershipTiers.map(t => ({ name: t.name, price: t.price / 100, priceRaw: t.price, feat: t.tier === 'supporter', features: t.features })) : [
+              { name: 'Explorer', price: 0, priceRaw: 0, feat: false, features: tierPerks.explorer },
+              { name: 'Supporter', price: 5, priceRaw: 500, feat: true, features: tierPerks.supporter },
+              { name: 'Insider', price: 15, priceRaw: 1500, feat: false, features: tierPerks.insider },
+            ]).map(t => (
               <div key={t.name} style={{ background: 'var(--glass-2)',
                 border: `1px solid ${t.feat ? 'rgba(124,108,255,.55)' : 'var(--stroke-2)'}`,
                 borderRadius: 16, padding: '20px 18px', position: 'relative',
@@ -852,12 +856,12 @@ export default function Desktop() {
                 <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, color: '#d7dcf1', marginBottom: 14 }}>
                   {t.features.map(f => <li key={f} style={{ display: 'flex', gap: 8 }}><span style={{ color: '#3ddc97', fontWeight: 800 }}>✓</span>{f}</li>)}
                 </ul>
-                <button onClick={() => t.price > 0 ? setCheckout({ id: t.name, name: `${t.name} membership`, description: '', icon: '🪪', price: t.price * 100, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }) : undefined}
-                  style={{ background: t.price === 0 ? 'rgba(255,255,255,.08)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)',
-                    color: '#fff', border: t.price === 0 ? '1px solid var(--stroke)' : 'none',
+                <button onClick={() => t.priceRaw > 0 ? setCheckout({ id: t.name, name: `${t.name} membership`, description: '', icon: '🪪', price: t.priceRaw, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }) : undefined}
+                  style={{ background: t.priceRaw === 0 ? 'rgba(255,255,255,.08)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)',
+                    color: '#fff', border: t.priceRaw === 0 ? '1px solid var(--stroke)' : 'none',
                     borderRadius: 12, padding: '13px', fontSize: 14, fontWeight: 650, cursor: 'pointer',
                     width: '100%', fontFamily: 'inherit' }}>
-                  {t.price === 0 ? 'Get started free' : `Subscribe · £${t.price}/mo`}
+                  {t.priceRaw === 0 ? 'Get started free' : `Subscribe · £${t.price}/mo`}
                 </button>
               </div>
             ))}
@@ -1513,7 +1517,7 @@ export default function Desktop() {
                     {previewProduct.isFree ? 'Free' : `£${(previewProduct.price / 100).toFixed(2)}`}
                     {!previewProduct.isFree && <small style={{ fontSize: 12, fontWeight: 400, color: '#7d84a6', marginLeft: 4 }}>one-time</small>}
                   </span>
-                  <button onClick={() => { const tierPrices: Record<string, number> = { Explorer: 0, Supporter: 500, Insider: 1500 }; if (previewProduct.requiresMembership) { const tier = previewProduct.requiresMembership; setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: tierPrices[tier] ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }); } else { setCheckout(previewProduct); } setPreviewProduct(null); }}
+                  <button onClick={() => { if (previewProduct.requiresMembership) { const tier = previewProduct.requiresMembership; const found = membershipTiers.find(t => t.name.toLowerCase() === tier.toLowerCase()); setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: found?.price ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }); } else { setCheckout(previewProduct); } setPreviewProduct(null); }}
                     style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
                       border: 'none', borderRadius: 11, padding: '11px 22px', fontSize: 14,
                       fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -1695,7 +1699,7 @@ export default function Desktop() {
                     {previewProduct.isFree ? 'Free' : `£${(previewProduct.price / 100).toFixed(2)}`}
                     {!previewProduct.isFree && <small style={{ fontSize: 12, fontWeight: 400, color: '#7d84a6', marginLeft: 4 }}>one-time</small>}
                   </span>
-                  <button onClick={() => { const tierPrices: Record<string, number> = { Explorer: 0, Supporter: 500, Insider: 1500 }; if (previewProduct.requiresMembership) { const tier = previewProduct.requiresMembership; setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: tierPrices[tier] ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }); } else { setCheckout(previewProduct); } setPreviewProduct(null); }}
+                  <button onClick={() => { if (previewProduct.requiresMembership) { const tier = previewProduct.requiresMembership; const found = membershipTiers.find(t => t.name.toLowerCase() === tier.toLowerCase()); setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: found?.price ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }); } else { setCheckout(previewProduct); } setPreviewProduct(null); }}
                     style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
                       border: 'none', borderRadius: 11, padding: '11px 22px', fontSize: 14,
                       fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -1872,7 +1876,7 @@ export default function Desktop() {
                     {previewProduct.isFree ? 'Free' : `£${(previewProduct.price / 100).toFixed(2)}`}
                     {!previewProduct.isFree && <small style={{ fontSize: 12, fontWeight: 400, color: '#7d84a6', marginLeft: 4 }}>one-time</small>}
                   </span>
-                  <button onClick={() => { const tierPrices: Record<string, number> = { Explorer: 0, Supporter: 500, Insider: 1500 }; if (previewProduct.requiresMembership) { const tier = previewProduct.requiresMembership; setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: tierPrices[tier] ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }); } else { setCheckout(previewProduct); } setPreviewProduct(null); }}
+                  <button onClick={() => { if (previewProduct.requiresMembership) { const tier = previewProduct.requiresMembership; const found = membershipTiers.find(t => t.name.toLowerCase() === tier.toLowerCase()); setCheckout({ id: tier, name: `${tier} membership`, description: '', icon: '🪪', price: found?.price ?? 500, isFree: false, isNew: false, showGithub: false, requiresMembership: null, artifactUrl: null, githubUrl: null, vercelUrl: null, gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' }); } else { setCheckout(previewProduct); } setPreviewProduct(null); }}
                     style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
                       border: 'none', borderRadius: 11, padding: '11px 22px', fontSize: 14,
                       fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
