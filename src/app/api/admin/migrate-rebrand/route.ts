@@ -12,6 +12,8 @@ export async function POST(req: NextRequest) {
     'site.name': 'Lanrae.co.uk',
     'site.fromName': 'Lanrae.co.uk',
     'seo.title': 'Lanrae.co.uk — AI Product Development',
+    'seo.description': 'Browse, buy, and support AI-powered products built by Lanrae. An adaptive AI desktop experience.',
+    'about.heading': 'Lanrae.co.uk · AI Product Engineer',
   };
 
   const results: string[] = [];

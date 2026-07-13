@@ -1312,7 +1312,7 @@ export default function Desktop() {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
         <div style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-.01em', lineHeight: 1,
           animation: 'textIn .6s cubic-bezier(.34,1.2,.64,1) .75s both' }}>
-          lanrae<span style={{ color: '#9d90ff' }}>Ai</span>
+          {c('site.name')}
         </div>
         <div style={{ fontSize: 12, color: '#7d84a6', letterSpacing: '.12em', textTransform: 'uppercase', fontWeight: 500,
           animation: 'tagIn .5s ease .95s both' }}>AI Product Development</div>
@@ -1555,7 +1555,7 @@ export default function Desktop() {
               <div style={{ fontSize: 12, color: 'rgba(255,255,255,.6)', fontWeight: 400 }}>Welcome to</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 28, height: 28, borderRadius: 6 }} />
-                <span style={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>lanrae<span style={{ color: '#b8b0ff' }}>Ai</span></span>
+                <span style={{ fontSize: 22, fontWeight: 500, color: '#fff' }}>{c('site.name')}</span>
               </div>
             </div>
             <button onClick={() => openWin('profile')} style={{ width: 44, height: 44, borderRadius: '50%', display: 'grid', placeItems: 'center',
@@ -1730,7 +1730,7 @@ export default function Desktop() {
             borderBottom: '1px solid rgba(255,255,255,.07)', fontSize: 13 }}>
             <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: -.2 }}>
               <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 20, height: 20, borderRadius: 4, marginRight: 6, verticalAlign: 'middle' }} />
-              lanrae<span style={{ color: '#9d90ff' }}>Ai</span>
+              {c('site.name')}
             </span>
             {['store', 'members', 'fans', 'donate', 'about'].map(id => (
               <span key={id} onClick={() => openWin(id)}
@@ -1895,7 +1895,7 @@ export default function Desktop() {
           borderBottom: '1px solid var(--stroke-2)', fontSize: 13 }}>
           <div style={{ fontWeight: 800, display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 18, height: 18, borderRadius: 4, display: 'block' }} />
-            <span>lanrae<span style={{ color: '#9d90ff' }}>Ai</span></span>
+            <span>{c('site.name')}</span>
           </div>
           {['store', 'members', 'fans', 'donate', 'about'].map(id => (
             <span key={id} onClick={() => openWin(id)}

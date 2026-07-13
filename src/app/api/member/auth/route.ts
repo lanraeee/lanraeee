@@ -33,8 +33,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Login alert email (non-blocking).
-    await sendEmail('member_login_alert', user.email, {
+    sendEmail('member_login_alert', user.email, {
       displayName: user.email.split('@')[0],
       time: new Date().toLocaleString('en-GB'),
       device: request.headers.get('user-agent')?.split('(')[1]?.split(')')[0] || 'Unknown',
