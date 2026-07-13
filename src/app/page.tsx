@@ -1753,39 +1753,53 @@ export default function Desktop() {
             display: 'flex', alignItems: 'center', padding: '0 16px',
             background: 'rgba(9,11,24,.65)', backdropFilter: 'blur(28px)',
             borderBottom: '1px solid rgba(255,255,255,.07)', fontSize: 13 }}>
-            <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: -.2 }}>
-              <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 20, height: 20, borderRadius: 4, marginRight: 6, verticalAlign: 'middle' }} />
-              {c('site.name')}
+            <span style={{ fontWeight: 700, fontSize: 14, letterSpacing: -.2, display: 'flex', alignItems: 'center', gap: 7 }}>
+              <img src={c('site.logoUrl')} alt="lanrae" style={{ width: 22, height: 22, borderRadius: 6, display: 'block', boxShadow: '0 2px 8px rgba(124,108,255,.5)' }} />
+              <span style={{ background: 'linear-gradient(90deg,#c8beff,#9d90ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{c('site.name')}</span>
             </span>
             {['store', 'members', 'fans', 'donate', 'about'].map(id => (
               <span key={id} onClick={() => openWin(id)}
-                style={{ color: '#cdd3ef', opacity: .8, cursor: 'default', marginLeft: 20,
-                  padding: '4px 8px', borderRadius: 5, fontSize: 13,
-                  transition: 'background .1s' }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.1)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                style={{ color: '#cdd3ef', opacity: .8, cursor: 'default', marginLeft: 16,
+                  padding: '4px 9px', borderRadius: 6, fontSize: 13,
+                  transition: 'background .15s, opacity .15s' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,.1)'; e.currentTarget.style.opacity = '1'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.opacity = '.8'; }}>
                 {id === 'fans' ? 'Top Fans' : id === 'donate' ? 'Support' : id.charAt(0).toUpperCase() + id.slice(1)}
               </span>
             ))}
-            <span style={{ marginLeft: 'auto', color: '#cdd3ef', fontVariantNumeric: 'tabular-nums', fontSize: 12 }}>{clock}</span>
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button onClick={() => openWin('profile')} style={{ background: 'rgba(157,144,255,.12)', border: '1px solid rgba(157,144,255,.25)', borderRadius: 6, padding: '3px 10px', color: '#c4beff', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5, transition: 'background .15s' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(157,144,255,.24)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(157,144,255,.12)')}>
+                <span style={{ fontSize: 13 }}>👤</span><span>Profile</span>
+              </button>
+              <span style={{ color: '#cdd3ef', fontVariantNumeric: 'tabular-nums', fontSize: 12 }}>{clock}</span>
+            </div>
           </div>
 
           {/* desktop icons */}
           {[
-            { id: 'store', icon: '🛍️', label: 'Store', top: 60, left: 24 },
-            { id: 'fans', icon: '🏆', label: 'Top Fans', top: 160, left: 24 },
-            { id: 'about', icon: 'ℹ️', label: 'About', top: 260, left: 24 },
-          ].map(({ id, icon, label, top, left }) => (
-            <div key={id} onClick={() => openWin(id)}
-              style={{ position: 'absolute', top, left, width: 80, textAlign: 'center',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'default' }}>
-              <div style={{ width: 52, height: 52, borderRadius: 8, display: 'grid', placeItems: 'center',
-                fontSize: 24, background: 'var(--glass)', backdropFilter: 'blur(20px) saturate(160%)',
-                border: '1px solid rgba(255,255,255,.14)', boxShadow: '0 6px 20px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.1)' }}>{icon}</div>
-              <span style={{ fontSize: 11.5, color: '#e8ecf7', textShadow: '0 1px 4px rgba(0,0,0,.8)',
-                padding: '2px 5px', borderRadius: 4, background: 'rgba(0,0,0,.25)' }}>{label}</span>
-            </div>
-          ))}
+            { id: 'store', top: 60, left: 24 },
+            { id: 'fans', top: 165, left: 24 },
+            { id: 'about', top: 270, left: 24 },
+          ].map(({ id, top, left }) => {
+            const deskApp = appsMeta.find(a => a.id === id)!;
+            return (
+              <div key={id} onClick={() => openWin(id)}
+                style={{ position: 'absolute', top, left, width: 80, textAlign: 'center',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'default' }}
+                onMouseEnter={e => { const ic = (e.currentTarget as HTMLElement).firstElementChild as HTMLElement; ic.style.transform = 'scale(1.1) translateY(-3px)'; ic.style.filter = 'brightness(1.12)'; }}
+                onMouseLeave={e => { const ic = (e.currentTarget as HTMLElement).firstElementChild as HTMLElement; ic.style.transform = ''; ic.style.filter = ''; }}>
+                <div style={{ width: 52, height: 52, borderRadius: 10, display: 'grid', placeItems: 'center',
+                  fontSize: 24, background: deskApp.gradient,
+                  border: '1px solid rgba(255,255,255,.18)',
+                  boxShadow: '0 8px 22px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.18)',
+                  transition: 'transform .2s cubic-bezier(.2,.9,.3,1.3), filter .2s' }}>{deskApp.icon}</div>
+                <span style={{ fontSize: 11.5, color: '#e8ecf7', textShadow: '0 1px 4px rgba(0,0,0,.8)',
+                  padding: '2px 6px', borderRadius: 4, background: 'rgba(0,0,0,.28)', backdropFilter: 'blur(6px)' }}>{deskApp.label}</span>
+              </div>
+            );
+          })}
 
           {/* Windows */}
           {wins.map(({ id, title, subtitle }) => (
@@ -1808,16 +1822,18 @@ export default function Desktop() {
               marginRight: 6, borderRight: '1px solid rgba(255,255,255,.08)', paddingRight: 10 }}>⊞</div>
             {appsMeta.map(app => (
               <div key={app.id} title={app.label} onClick={() => openWin(app.id)}
-                style={{ width: 44, height: 40, borderRadius: 8, display: 'grid', placeItems: 'center',
+                style={{ width: 46, height: 42, borderRadius: 10, display: 'grid', placeItems: 'center',
                   fontSize: 22, cursor: 'pointer', position: 'relative',
-                  background: open[app.id] ? 'rgba(157,144,255,.2)' : 'transparent',
-                  transition: 'background .1s' }}
-                onMouseEnter={e => { if (!open[app.id]) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.1)'; }}
-                onMouseLeave={e => { if (!open[app.id]) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+                  background: open[app.id] ? app.gradient : 'transparent',
+                  border: open[app.id] ? '1px solid rgba(255,255,255,.18)' : '1px solid transparent',
+                  boxShadow: open[app.id] ? '0 4px 14px rgba(0,0,0,.4)' : 'none',
+                  transition: 'background .15s, border-color .15s, box-shadow .15s' }}
+                onMouseEnter={e => { if (!open[app.id]) { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,.1)'; el.style.borderColor = 'rgba(255,255,255,.08)'; } }}
+                onMouseLeave={e => { if (!open[app.id]) { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.borderColor = 'transparent'; } }}>
                 {app.icon}
                 {open[app.id] && <div style={{ position: 'absolute', bottom: 2, left: '50%',
-                  transform: 'translateX(-50%)', width: 14, height: 2, borderRadius: 1,
-                  background: '#9d90ff' }} />}
+                  transform: 'translateX(-50%)', width: 16, height: 2, borderRadius: 1,
+                  background: 'rgba(255,255,255,.7)' }} />}
               </div>
             ))}
           </div>
@@ -1942,20 +1958,27 @@ export default function Desktop() {
 
         {/* desktop icons */}
         {[
-          { id: 'store', icon: '🛍️', label: 'Store', top: 52, left: 28 },
-          { id: 'fans', icon: '🏆', label: 'Top Fans', top: 158, left: 28 },
-          { id: 'about', icon: 'ℹ️', label: 'About', top: 264, left: 28 },
-        ].map(({ id, icon, label, top, left }) => (
-          <div key={id} onClick={() => openWin(id)}
-            style={{ position: 'absolute', top, left, width: 88, textAlign: 'center',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'default' }}>
-            <div style={{ width: 56, height: 56, borderRadius: 12, display: 'grid', placeItems: 'center',
-              fontSize: 26, background: 'var(--glass)', backdropFilter: 'blur(20px) saturate(160%)',
-              border: '1px solid var(--stroke)', boxShadow: '0 8px 22px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.1)' }}>{icon}</div>
-            <span style={{ fontSize: 11.5, color: '#eaeefb', textShadow: '0 1px 4px rgba(0,0,0,.7)',
-              padding: '1px 6px', borderRadius: 5 }}>{label}</span>
-          </div>
-        ))}
+          { id: 'store', top: 52, left: 28 },
+          { id: 'fans', top: 162, left: 28 },
+          { id: 'about', top: 272, left: 28 },
+        ].map(({ id, top, left }) => {
+          const deskApp = appsMeta.find(a => a.id === id)!;
+          return (
+            <div key={id} onClick={() => openWin(id)}
+              style={{ position: 'absolute', top, left, width: 80, textAlign: 'center',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'default' }}
+              onMouseEnter={e => { const ic = (e.currentTarget as HTMLElement).firstElementChild as HTMLElement; ic.style.transform = 'scale(1.1) translateY(-4px)'; ic.style.filter = 'brightness(1.12)'; }}
+              onMouseLeave={e => { const ic = (e.currentTarget as HTMLElement).firstElementChild as HTMLElement; ic.style.transform = ''; ic.style.filter = ''; }}>
+              <div style={{ width: 58, height: 58, borderRadius: 15, display: 'grid', placeItems: 'center',
+                fontSize: 28, background: deskApp.gradient,
+                border: '1px solid rgba(255,255,255,.18)',
+                boxShadow: '0 10px 28px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.18)',
+                transition: 'transform .2s cubic-bezier(.2,.9,.3,1.3), filter .2s' }}>{deskApp.icon}</div>
+              <span style={{ fontSize: 11.5, color: '#eaeefb', textShadow: '0 1px 4px rgba(0,0,0,.8)',
+                padding: '2px 7px', borderRadius: 5, background: 'rgba(0,0,0,.28)', backdropFilter: 'blur(6px)' }}>{deskApp.label}</span>
+            </div>
+          );
+        })}
 
         {/* macOS windows */}
         {wins.map(({ id, title, subtitle }) => (
@@ -1968,22 +1991,38 @@ export default function Desktop() {
 
         {/* dock */}
         <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 800,
-          display: 'flex', alignItems: 'flex-end', gap: 8, padding: '9px 12px',
-          background: 'rgba(14,16,36,.48)', backdropFilter: 'blur(32px) saturate(180%)',
-          border: '1px solid var(--stroke)', borderRadius: 20,
-          boxShadow: '0 18px 44px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1)' }}>
-          {appsMeta.map(({ id, icon, label }) => (
-            <div key={id} title={label} onClick={() => openWin(id)}
-              style={{ width: 50, height: 50, borderRadius: 13, display: 'grid', placeItems: 'center',
-                fontSize: 25, cursor: 'pointer', position: 'relative',
-                background: open[id] ? 'rgba(124,108,255,.22)' : 'var(--glass)',
-                border: `1px solid ${open[id] ? 'rgba(124,108,255,.5)' : 'var(--stroke)'}`,
-                transition: 'transform .16s cubic-bezier(.2,.9,.3,1.3)', transformOrigin: 'bottom center' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.32) translateY(-8px)'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; }}>
-              {icon}
-              {open[id] && <div style={{ position: 'absolute', bottom: -6, left: '50%',
-                transform: 'translateX(-50%)', width: 4, height: 4, borderRadius: '50%', background: '#eef1fb' }} />}
+          display: 'flex', alignItems: 'flex-end', gap: 6, padding: '10px 14px',
+          background: 'rgba(10,12,28,.52)', backdropFilter: 'blur(36px) saturate(200%)',
+          border: '1px solid rgba(255,255,255,.12)', borderRadius: 22,
+          boxShadow: '0 20px 50px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.1)' }}>
+          {appsMeta.map((app) => (
+            <div key={app.id} onClick={() => openWin(app.id)}
+              style={{ position: 'relative', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+              onMouseEnter={() => setHoveredDock(app.id)}
+              onMouseLeave={() => setHoveredDock(null)}>
+              <div style={{
+                position: 'absolute', bottom: 'calc(100% + 10px)', left: '50%', transform: 'translateX(-50%)',
+                background: 'rgba(8,10,24,.9)', border: '1px solid rgba(255,255,255,.14)',
+                backdropFilter: 'blur(12px)', color: '#eef1fb', fontSize: 11, fontWeight: 600,
+                padding: '5px 11px', borderRadius: 8, whiteSpace: 'nowrap',
+                opacity: hoveredDock === app.id ? 1 : 0,
+                transition: 'opacity .15s', pointerEvents: 'none', zIndex: 10,
+              }}>{app.label}</div>
+              <div style={{
+                width: 50, height: 50, borderRadius: 14, display: 'grid', placeItems: 'center',
+                fontSize: 24, background: app.gradient,
+                border: `1px solid rgba(255,255,255,.${open[app.id] ? '22' : '1'})`,
+                boxShadow: open[app.id]
+                  ? '0 8px 24px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.2)'
+                  : '0 4px 14px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.12)',
+                transform: hoveredDock === app.id ? 'scale(1.28) translateY(-10px)' : '',
+                transition: 'transform .2s cubic-bezier(.2,.9,.3,1.3), box-shadow .2s',
+                transformOrigin: 'bottom center',
+                filter: open[app.id] ? 'brightness(1.05)' : 'brightness(0.88)',
+              }}>{app.icon}</div>
+              <div style={{ height: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {open[app.id] && <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(255,255,255,.8)' }} />}
+              </div>
             </div>
           ))}
         </div>
