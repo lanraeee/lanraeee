@@ -412,6 +412,8 @@ function SnakeGame() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement).isContentEditable) return;
       if (e.key==='ArrowUp'    || e.key==='w' || e.key==='W') { e.preventDefault(); steer(-1,0); }
       else if (e.key==='ArrowDown'  || e.key==='s' || e.key==='S') { e.preventDefault(); steer(1,0); }
       else if (e.key==='ArrowLeft'  || e.key==='a' || e.key==='A') { e.preventDefault(); steer(0,-1); }
@@ -446,33 +448,32 @@ function SnakeGame() {
         ))}
       </div>
 
-      {/* D-pad — large touch-friendly buttons */}
-      <div style={{ display:'grid', gridTemplateAreas:'"_ up _" "left down right"', gridTemplateColumns:'70px 70px 70px', gridTemplateRows:'70px 70px', gap:6 }}>
+      {/* D-pad — large touch-friendly buttons; '.' = empty cell in CSS grid */}
+      <div style={{ display:'grid', gridTemplateAreas:'". up ." "left down right"', gridTemplateColumns:'repeat(3,70px)', gridTemplateRows:'70px 70px', gap:6, marginTop:4 }}>
         {([['up','▲',[-1,0]],['left','◀',[0,-1]],['down','▼',[1,0]],['right','▶',[0,1]]] as [string,string,[number,number]][]).map(([area,lbl,d]) => (
           <button
             key={area}
             onPointerDown={e => { e.preventDefault(); steer(d[0],d[1]); }}
             style={{
               gridArea: area,
-              background: 'rgba(255,255,255,.1)',
-              border: '1px solid rgba(255,255,255,.18)',
-              borderRadius: 16,
-              color: '#eef1fb',
-              fontSize: 22,
+              background: 'rgba(255,255,255,.12)',
+              border: '2px solid rgba(255,255,255,.22)',
+              borderRadius: 18,
+              color: '#ffffff',
+              fontSize: 26,
+              fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: 70,
-              height: 70,
               fontFamily: 'inherit',
               WebkitTapHighlightColor: 'transparent',
               touchAction: 'none',
-              transition: 'background .1s',
-              boxShadow: '0 4px 12px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.12)',
+              transition: 'background .1s, transform .08s',
+              boxShadow: '0 6px 16px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.2)',
             }}
-            onPointerEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.18)')}
-            onPointerLeave={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.1)')}
+            onPointerEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.22)'; }}
+            onPointerLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.12)'; (e.currentTarget as HTMLElement).style.transform = ''; }}
           >
             {lbl}
           </button>
@@ -482,41 +483,76 @@ function SnakeGame() {
   );
 }
 
-/* ── Browser quick-launcher (Safari / Edge) ─────────────────── */
+/* ── Browser in-app frame (Safari / Edge) ───────────────────── */
 function BrowserApp({ isSafari, bookmarks }: { isSafari: boolean; bookmarks: { label: string; icon: string; url: string }[] }) {
-  const [url, setUrl] = useState('');
+  const [input, setInput] = useState('');
+  const [frameUrl, setFrameUrl] = useState('');
   const accent = isSafari ? '#0a84ff' : '#0078d4';
   const accentGrad = isSafari ? 'linear-gradient(180deg,#0a84ff,#0050c8)' : 'linear-gradient(180deg,#0078d4,#00457a)';
-  const go = () => {
-    const target = url.trim();
-    if (!target) return;
-    window.open(target.startsWith('http') ? target : `https://${target}`, '_blank', 'noopener,noreferrer');
+
+  const navigate = (href: string) => {
+    const url = href.trim();
+    if (!url) return;
+    const full = url.startsWith('http') ? url : `https://${url}`;
+    setFrameUrl(full);
+    setInput(full);
   };
+
   return (
-    <div>
-      <div style={{ display:'flex', gap:8, marginBottom:18 }}>
+    <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
+      {/* address bar */}
+      <div style={{ display:'flex', gap:8, marginBottom:12 }}>
+        {frameUrl && (
+          <button onClick={() => { setFrameUrl(''); setInput(''); }}
+            title="Home"
+            style={{ background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.1)', borderRadius:10, padding:'0 12px', color:'#eef1fb', fontSize:16, cursor:'pointer', flexShrink:0 }}>
+            🏠
+          </button>
+        )}
         <div style={{ flex:1, display:'flex', alignItems:'center', background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', borderRadius:11, padding:'0 12px', gap:8 }}>
-          <span style={{ fontSize:13, color:'#7d84a6' }}>🔒</span>
-          <input value={url} onChange={e => setUrl(e.target.value)} onKeyDown={e => e.key==='Enter' && go()}
+          <span style={{ fontSize:12, color:'#7d84a6', flexShrink:0 }}>🔒</span>
+          <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==='Enter' && navigate(input)}
             placeholder={isSafari ? 'Search or enter website name' : 'Search or enter a web address'}
-            style={{ flex:1, background:'none', border:'none', color:'#eef1fb', fontSize:13, outline:'none', fontFamily:'inherit', padding:'11px 0' }} />
+            style={{ flex:1, background:'none', border:'none', color:'#eef1fb', fontSize:13, outline:'none', fontFamily:'inherit', padding:'10px 0' }} />
         </div>
-        <button onClick={go} style={{ background:accentGrad, color:'#fff', border:'none', borderRadius:11, padding:'0 18px', fontSize:13, fontWeight:650, cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
+        <button onClick={() => navigate(input)} style={{ background:accentGrad, color:'#fff', border:'none', borderRadius:11, padding:'0 16px', fontSize:13, fontWeight:650, cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap', flexShrink:0 }}>
           Go →
         </button>
       </div>
-      <p style={{ fontSize:10.5, textTransform:'uppercase', letterSpacing:'1.8px', color:accent, fontWeight:700, marginBottom:12 }}>Favourites</p>
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
-        {bookmarks.map(bm => (
-          <button key={bm.url} onClick={() => window.open(bm.url,'_blank','noopener,noreferrer')}
-            style={{ background:'var(--glass-2)', border:'1px solid var(--stroke-2)', borderRadius:13, padding:'14px 8px', display:'flex', flexDirection:'column', alignItems:'center', gap:6, cursor:'pointer', fontFamily:'inherit', transition:'background .15s' }}
-            onMouseEnter={e => (e.currentTarget.style.background='rgba(255,255,255,.1)')}
-            onMouseLeave={e => (e.currentTarget.style.background='var(--glass-2)')}>
-            <span style={{ fontSize:22 }}>{bm.icon}</span>
-            <span style={{ fontSize:11.5, color:'#a7aecb', fontWeight:500 }}>{bm.label}</span>
-          </button>
-        ))}
-      </div>
+
+      {frameUrl ? (
+        <div style={{ position:'relative', borderRadius:12, overflow:'hidden', border:'1px solid rgba(255,255,255,.1)' }}>
+          <iframe
+            key={frameUrl}
+            src={frameUrl}
+            style={{ width:'100%', height:400, border:'none', display:'block', background:'#fff' }}
+            allow="fullscreen"
+            title="browser"
+          />
+          {/* always-visible external-open button for sites that block embedding */}
+          <div style={{ position:'absolute', bottom:10, right:10 }}>
+            <button onClick={() => window.open(frameUrl,'_blank','noopener,noreferrer')}
+              style={{ background:'rgba(10,12,28,.82)', backdropFilter:'blur(10px)', border:'1px solid rgba(255,255,255,.18)', borderRadius:9, color:'#eef1fb', fontSize:12, fontWeight:600, padding:'6px 12px', cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:5 }}>
+              ↗ Open in browser tab
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          <p style={{ fontSize:10.5, textTransform:'uppercase', letterSpacing:'1.8px', color:accent, fontWeight:700, marginBottom:12 }}>Favourites</p>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
+            {bookmarks.map(bm => (
+              <button key={bm.url} onClick={() => navigate(bm.url)}
+                style={{ background:'var(--glass-2)', border:'1px solid var(--stroke-2)', borderRadius:13, padding:'14px 8px', display:'flex', flexDirection:'column', alignItems:'center', gap:6, cursor:'pointer', fontFamily:'inherit', transition:'background .15s' }}
+                onMouseEnter={e => (e.currentTarget.style.background='rgba(255,255,255,.1)')}
+                onMouseLeave={e => (e.currentTarget.style.background='var(--glass-2)')}>
+                <span style={{ fontSize:22 }}>{bm.icon}</span>
+                <span style={{ fontSize:11.5, color:'#a7aecb', fontWeight:500 }}>{bm.label}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -1453,7 +1489,10 @@ export default function Desktop() {
     if (id === 'spotify') return (
       <div>
         <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#1db954', fontWeight: 700, marginBottom: 8 }}>Music</p>
-        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 12 }}>Spotify</h2>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>Spotify</h2>
+        <p style={{ fontSize: 12, color: '#7d84a6', marginBottom: 14, lineHeight: 1.5 }}>
+          Full tracks play when you're logged in to Spotify. Not logged in? You'll hear 30-second previews — <a href="https://accounts.spotify.com/login" target="_blank" rel="noopener noreferrer" style={{ color: '#1db954', textDecoration: 'none', fontWeight: 600 }}>sign in here</a> then come back.
+        </p>
         <iframe
           src={c('spotify.embedUrl')}
           width="100%"
