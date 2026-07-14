@@ -52,7 +52,7 @@ const CONTENT_DEFAULTS: Record<string, string> = {
   'win.edge.title': 'Microsoft Edge', 'win.edge.subtitle': '',
   'win.spotify.title': 'Spotify', 'win.spotify.subtitle': '',
   'win.snake.title': 'Snake Xenzia', 'win.snake.subtitle': '— classic Nokia',
-  'spotify.embedUrl': 'https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator',
+  'spotify.embedUrl': 'https://open.spotify.com/embed/playlist/5lKfoFXeyYe3aJCOvmubp9?utm_source=generator&si=ea24e6827ef144de',
   'app.dock.ios': 'store,spotify,safari,profile',
   'app.dock.android': 'store,spotify,edge,profile',
 };

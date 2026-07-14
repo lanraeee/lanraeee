@@ -248,7 +248,7 @@ const CONTENT_DEFAULTS: Record<string, string> = {
   'about.body': 'I design, build, and ship AI-powered products end to end — then launch them here, on a desktop you can actually drive. lanrae.co.uk is the studio, the storefront, and the changelog, all in one.',
   'app.dock.ios': 'store,spotify,safari,profile',
   'app.dock.android': 'store,spotify,edge,profile',
-  'spotify.embedUrl': 'https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator',
+  'spotify.embedUrl': 'https://open.spotify.com/embed/playlist/5lKfoFXeyYe3aJCOvmubp9?utm_source=generator&si=ea24e6827ef144de',
   'win.store.title': 'Product Store',    'win.store.subtitle': '— AI, built by lanrae',
   'win.fans.title': 'Top 10 Fans',       'win.fans.subtitle': '— this month',
   'win.members.title': 'Membership',     'win.members.subtitle': '',
