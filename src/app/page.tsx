@@ -424,10 +424,8 @@ function SnakeGame() {
 
   const g = gs.current;
   const W = GRID * CELL;
-  const btnStyle: React.CSSProperties = { background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)', borderRadius: 9, color: '#eef1fb', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, fontFamily: 'inherit' };
-
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12, userSelect:'none' }}>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12, userSelect:'none', touchAction:'none' }}>
       <div style={{ width:W, display:'flex', justifyContent:'space-between', fontSize:13, color:'#a7aecb' }}>
         <span>Score <b style={{color:'#3ddc97'}}>{g.score}</b></span>
         <span>Best <b style={{color:'#f5c451'}}>{g.best}</b></span>
@@ -436,10 +434,10 @@ function SnakeGame() {
         {!g.running && (
           <div style={{ position:'absolute',inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12 }}>
             {g.score > 0 && <div style={{ fontSize:13, color:'#ff7c78', fontWeight:700 }}>Game Over!</div>}
-            <button onClick={start} style={{ background:'linear-gradient(180deg,#22c55e,#14532d)', color:'#fff', border:'none', borderRadius:10, padding:'10px 24px', fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+            <button onPointerDown={e => { e.preventDefault(); start(); }} style={{ background:'linear-gradient(180deg,#22c55e,#14532d)', color:'#fff', border:'none', borderRadius:10, padding:'10px 24px', fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
               {g.score > 0 ? '↺ Play again' : '▶ Start'}
             </button>
-            {g.score === 0 && <div style={{ fontSize:11, color:'#7d84a6' }}>Arrow keys / WASD · Space to start</div>}
+            {g.score === 0 && <div style={{ fontSize:11, color:'#7d84a6' }}>Arrow keys / WASD · tap buttons below</div>}
           </div>
         )}
         <div style={{ position:'absolute', left:g.food[1]*CELL+2, top:g.food[0]*CELL+2, width:CELL-4, height:CELL-4, background:'#ff6b6b', borderRadius:'50%', boxShadow:'0 0 8px rgba(255,107,107,.7)' }} />
@@ -447,9 +445,37 @@ function SnakeGame() {
           <div key={i} style={{ position:'absolute', left:seg[1]*CELL+1, top:seg[0]*CELL+1, width:CELL-2, height:CELL-2, background:i===0?'#3ddc97':`rgba(61,220,151,${Math.max(.3,1-i*.04)})`, borderRadius:i===0?4:2, boxShadow:i===0?'0 0 8px rgba(61,220,151,.5)':'none' }} />
         ))}
       </div>
-      <div style={{ display:'grid', gridTemplateAreas:'"_ up _" "left down right"', gridTemplateColumns:'44px 44px 44px', gridTemplateRows:'44px 44px', gap:4 }}>
-        {([['up','↑',[-1,0]],['left','←',[0,-1]],['down','↓',[1,0]],['right','→',[0,1]]] as [string,string,[number,number]][]).map(([area,lbl,d]) => (
-          <button key={area} onClick={() => steer(d[0],d[1])} style={{ ...btnStyle, gridArea:area }}>{lbl}</button>
+
+      {/* D-pad — large touch-friendly buttons */}
+      <div style={{ display:'grid', gridTemplateAreas:'"_ up _" "left down right"', gridTemplateColumns:'70px 70px 70px', gridTemplateRows:'70px 70px', gap:6 }}>
+        {([['up','▲',[-1,0]],['left','◀',[0,-1]],['down','▼',[1,0]],['right','▶',[0,1]]] as [string,string,[number,number]][]).map(([area,lbl,d]) => (
+          <button
+            key={area}
+            onPointerDown={e => { e.preventDefault(); steer(d[0],d[1]); }}
+            style={{
+              gridArea: area,
+              background: 'rgba(255,255,255,.1)',
+              border: '1px solid rgba(255,255,255,.18)',
+              borderRadius: 16,
+              color: '#eef1fb',
+              fontSize: 22,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 70,
+              height: 70,
+              fontFamily: 'inherit',
+              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'none',
+              transition: 'background .1s',
+              boxShadow: '0 4px 12px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.12)',
+            }}
+            onPointerEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.18)')}
+            onPointerLeave={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,.1)')}
+          >
+            {lbl}
+          </button>
         ))}
       </div>
     </div>
