@@ -213,6 +213,13 @@ const CONTENT_KEYS = [
     { key: 'about.heading', label: 'Heading' },
     { key: 'about.body', label: 'Body text', type: 'textarea' },
   ]},
+  { section: 'Mobile Bottom Bar', fields: [
+    { key: 'app.dock.ios', label: 'iOS dock (comma-separated app IDs)' },
+    { key: 'app.dock.android', label: 'Android nav (comma-separated app IDs)' },
+  ]},
+  { section: 'Spotify', fields: [
+    { key: 'spotify.embedUrl', label: 'Embed URL (open.spotify.com/embed/…)', type: 'textarea' },
+  ]},
 ];
 
 const CONTENT_DEFAULTS: Record<string, string> = {
@@ -239,6 +246,9 @@ const CONTENT_DEFAULTS: Record<string, string> = {
   'donate.subheading': 'Every tip goes straight into building the next product.',
   'about.heading': 'lanrae · AI Product Engineer',
   'about.body': 'I design, build, and ship AI-powered products end to end — then launch them here, on a desktop you can actually drive. lanrae.co.uk is the studio, the storefront, and the changelog, all in one.',
+  'app.dock.ios': 'store,spotify,safari,profile',
+  'app.dock.android': 'store,spotify,edge,profile',
+  'spotify.embedUrl': 'https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator',
   'win.store.title': 'Product Store',    'win.store.subtitle': '— AI, built by lanrae',
   'win.fans.title': 'Top 10 Fans',       'win.fans.subtitle': '— this month',
   'win.members.title': 'Membership',     'win.members.subtitle': '',

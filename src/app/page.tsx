@@ -44,6 +44,17 @@ const CONTENT_DEFAULTS: Record<string, string> = {
   'win.about.subtitle': '',
   'app.profile.icon': '👤', 'app.profile.label': 'Profile',
   'win.profile.title': 'Member Profile', 'win.profile.subtitle': '',
+  'app.safari.icon': '🧭', 'app.safari.label': 'Safari',
+  'app.edge.icon': '🔷',   'app.edge.label': 'Edge',
+  'app.spotify.icon': '🎵', 'app.spotify.label': 'Spotify',
+  'app.snake.icon': '🐍',   'app.snake.label': 'Snake',
+  'win.safari.title': 'Safari', 'win.safari.subtitle': '',
+  'win.edge.title': 'Microsoft Edge', 'win.edge.subtitle': '',
+  'win.spotify.title': 'Spotify', 'win.spotify.subtitle': '',
+  'win.snake.title': 'Snake Xenzia', 'win.snake.subtitle': '— classic Nokia',
+  'spotify.embedUrl': 'https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator',
+  'app.dock.ios': 'store,spotify,safari,profile',
+  'app.dock.android': 'store,spotify,edge,profile',
 };
 
 /* ── security toolkit fallback (replaced by DB at runtime) ─── */
@@ -345,6 +356,145 @@ function Checkout({ product, onClose }: { product: Product | null; onClose: () =
   );
 }
 
+/* ── Snake Xenzia game ──────────────────────────────────────── */
+function SnakeGame() {
+  const GRID = 20, CELL = 15, SPEED = 130;
+  const gs = useRef({
+    snake: [[5,10],[5,9],[5,8]] as number[][],
+    food: [10,15] as number[],
+    dir: [0,1] as [number,number],
+    score: 0,
+    best: 0,
+    running: false,
+  });
+  const [, redraw] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const rnd = (sn: number[][]) => {
+    let f: number[];
+    do { f = [~~(Math.random()*GRID), ~~(Math.random()*GRID)]; }
+    while (sn.some(s => s[0]===f[0] && s[1]===f[1]));
+    return f;
+  };
+
+  const tick = () => {
+    const g = gs.current;
+    if (!g.running) return;
+    const [dr,dc] = g.dir;
+    const nh = [(g.snake[0][0]+dr+GRID)%GRID, (g.snake[0][1]+dc+GRID)%GRID];
+    if (g.snake.some(s => s[0]===nh[0] && s[1]===nh[1])) {
+      g.running = false;
+      if (g.score > g.best) g.best = g.score;
+      redraw(n => n+1);
+      return;
+    }
+    const ate = nh[0]===g.food[0] && nh[1]===g.food[1];
+    g.snake = ate ? [nh,...g.snake] : [nh,...g.snake.slice(0,-1)];
+    if (ate) { g.score += 10; g.food = rnd(g.snake); }
+    redraw(n => n+1);
+  };
+
+  const start = () => {
+    const g = gs.current;
+    const initSnake = [[5,10],[5,9],[5,8]];
+    if (g.score > g.best) g.best = g.score;
+    g.snake = initSnake; g.food = rnd(initSnake); g.dir = [0,1]; g.score = 0; g.running = true;
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(tick, SPEED);
+    redraw(n => n+1);
+  };
+
+  const steer = (dr: number, dc: number) => {
+    const g = gs.current;
+    if (dr !== -g.dir[0] || dc !== -g.dir[1]) g.dir = [dr, dc];
+    if (!g.running) start();
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key==='ArrowUp'    || e.key==='w' || e.key==='W') { e.preventDefault(); steer(-1,0); }
+      else if (e.key==='ArrowDown'  || e.key==='s' || e.key==='S') { e.preventDefault(); steer(1,0); }
+      else if (e.key==='ArrowLeft'  || e.key==='a' || e.key==='A') { e.preventDefault(); steer(0,-1); }
+      else if (e.key==='ArrowRight' || e.key==='d' || e.key==='D') { e.preventDefault(); steer(0,1); }
+      else if (e.key===' ') { e.preventDefault(); if (!gs.current.running) start(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('keydown', onKey); if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  const g = gs.current;
+  const W = GRID * CELL;
+  const btnStyle: React.CSSProperties = { background: 'rgba(255,255,255,.08)', border: '1px solid rgba(255,255,255,.14)', borderRadius: 9, color: '#eef1fb', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 44, height: 44, fontFamily: 'inherit' };
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12, userSelect:'none' }}>
+      <div style={{ width:W, display:'flex', justifyContent:'space-between', fontSize:13, color:'#a7aecb' }}>
+        <span>Score <b style={{color:'#3ddc97'}}>{g.score}</b></span>
+        <span>Best <b style={{color:'#f5c451'}}>{g.best}</b></span>
+      </div>
+      <div style={{ position:'relative', width:W, height:W, background:'rgba(0,0,0,.3)', borderRadius:10, border:'1px solid rgba(255,255,255,.08)', overflow:'hidden' }}>
+        {!g.running && (
+          <div style={{ position:'absolute',inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12 }}>
+            {g.score > 0 && <div style={{ fontSize:13, color:'#ff7c78', fontWeight:700 }}>Game Over!</div>}
+            <button onClick={start} style={{ background:'linear-gradient(180deg,#22c55e,#14532d)', color:'#fff', border:'none', borderRadius:10, padding:'10px 24px', fontSize:14, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+              {g.score > 0 ? '↺ Play again' : '▶ Start'}
+            </button>
+            {g.score === 0 && <div style={{ fontSize:11, color:'#7d84a6' }}>Arrow keys / WASD · Space to start</div>}
+          </div>
+        )}
+        <div style={{ position:'absolute', left:g.food[1]*CELL+2, top:g.food[0]*CELL+2, width:CELL-4, height:CELL-4, background:'#ff6b6b', borderRadius:'50%', boxShadow:'0 0 8px rgba(255,107,107,.7)' }} />
+        {g.snake.map((seg,i) => (
+          <div key={i} style={{ position:'absolute', left:seg[1]*CELL+1, top:seg[0]*CELL+1, width:CELL-2, height:CELL-2, background:i===0?'#3ddc97':`rgba(61,220,151,${Math.max(.3,1-i*.04)})`, borderRadius:i===0?4:2, boxShadow:i===0?'0 0 8px rgba(61,220,151,.5)':'none' }} />
+        ))}
+      </div>
+      <div style={{ display:'grid', gridTemplateAreas:'"_ up _" "left down right"', gridTemplateColumns:'44px 44px 44px', gridTemplateRows:'44px 44px', gap:4 }}>
+        {([['up','↑',[-1,0]],['left','←',[0,-1]],['down','↓',[1,0]],['right','→',[0,1]]] as [string,string,[number,number]][]).map(([area,lbl,d]) => (
+          <button key={area} onClick={() => steer(d[0],d[1])} style={{ ...btnStyle, gridArea:area }}>{lbl}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── Browser quick-launcher (Safari / Edge) ─────────────────── */
+function BrowserApp({ isSafari, bookmarks }: { isSafari: boolean; bookmarks: { label: string; icon: string; url: string }[] }) {
+  const [url, setUrl] = useState('');
+  const accent = isSafari ? '#0a84ff' : '#0078d4';
+  const accentGrad = isSafari ? 'linear-gradient(180deg,#0a84ff,#0050c8)' : 'linear-gradient(180deg,#0078d4,#00457a)';
+  const go = () => {
+    const target = url.trim();
+    if (!target) return;
+    window.open(target.startsWith('http') ? target : `https://${target}`, '_blank', 'noopener,noreferrer');
+  };
+  return (
+    <div>
+      <div style={{ display:'flex', gap:8, marginBottom:18 }}>
+        <div style={{ flex:1, display:'flex', alignItems:'center', background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', borderRadius:11, padding:'0 12px', gap:8 }}>
+          <span style={{ fontSize:13, color:'#7d84a6' }}>🔒</span>
+          <input value={url} onChange={e => setUrl(e.target.value)} onKeyDown={e => e.key==='Enter' && go()}
+            placeholder={isSafari ? 'Search or enter website name' : 'Search or enter a web address'}
+            style={{ flex:1, background:'none', border:'none', color:'#eef1fb', fontSize:13, outline:'none', fontFamily:'inherit', padding:'11px 0' }} />
+        </div>
+        <button onClick={go} style={{ background:accentGrad, color:'#fff', border:'none', borderRadius:11, padding:'0 18px', fontSize:13, fontWeight:650, cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap' }}>
+          Go →
+        </button>
+      </div>
+      <p style={{ fontSize:10.5, textTransform:'uppercase', letterSpacing:'1.8px', color:accent, fontWeight:700, marginBottom:12 }}>Favourites</p>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10 }}>
+        {bookmarks.map(bm => (
+          <button key={bm.url} onClick={() => window.open(bm.url,'_blank','noopener,noreferrer')}
+            style={{ background:'var(--glass-2)', border:'1px solid var(--stroke-2)', borderRadius:13, padding:'14px 8px', display:'flex', flexDirection:'column', alignItems:'center', gap:6, cursor:'pointer', fontFamily:'inherit', transition:'background .15s' }}
+            onMouseEnter={e => (e.currentTarget.style.background='rgba(255,255,255,.1)')}
+            onMouseLeave={e => (e.currentTarget.style.background='var(--glass-2)')}>
+            <span style={{ fontSize:22 }}>{bm.icon}</span>
+            <span style={{ fontSize:11.5, color:'#a7aecb', fontWeight:500 }}>{bm.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ── main ───────────────────────────────────────────────────── */
 export default function Desktop() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -567,6 +717,10 @@ export default function Desktop() {
     { id: 'donate',  icon: c('app.donate.icon'),  label: c('app.donate.label'),  gradient: 'linear-gradient(160deg,#ff6ba8,#7a1d47)' },
     { id: 'about',   icon: c('app.about.icon'),   label: c('app.about.label'),   gradient: 'linear-gradient(160deg,#35d6c7,#0e5a52)' },
     { id: 'profile', icon: c('app.profile.icon'), label: c('app.profile.label'), gradient: 'linear-gradient(160deg,#1a8a6a,#0a3d2a)' },
+    { id: 'safari',  icon: c('app.safari.icon'),  label: c('app.safari.label'),  gradient: 'linear-gradient(160deg,#0a84ff,#0050c8)' },
+    { id: 'edge',    icon: c('app.edge.icon'),    label: c('app.edge.label'),    gradient: 'linear-gradient(160deg,#0078d4,#00457a)' },
+    { id: 'spotify', icon: c('app.spotify.icon'), label: c('app.spotify.label'), gradient: 'linear-gradient(160deg,#1db954,#0d5e2a)' },
+    { id: 'snake',   icon: c('app.snake.icon'),   label: c('app.snake.label'),   gradient: 'linear-gradient(160deg,#22c55e,#14532d)' },
   ];
 
   const wins = [
@@ -577,6 +731,10 @@ export default function Desktop() {
     { id: 'donate',  title: c('win.donate.title'),  subtitle: c('win.donate.subtitle') || undefined },
     { id: 'about',   title: c('win.about.title'),   subtitle: c('win.about.subtitle') || undefined },
     { id: 'profile', title: c('win.profile.title'), subtitle: c('win.profile.subtitle') || undefined },
+    { id: 'safari',  title: c('win.safari.title'),  subtitle: c('win.safari.subtitle') || undefined },
+    { id: 'edge',    title: c('win.edge.title'),    subtitle: c('win.edge.subtitle') || undefined },
+    { id: 'spotify', title: c('win.spotify.title'), subtitle: c('win.spotify.subtitle') || undefined },
+    { id: 'snake',   title: c('win.snake.title'),   subtitle: c('win.snake.subtitle') || undefined },
   ];
 
   const winStyles: Record<string, React.CSSProperties> = {
@@ -587,6 +745,10 @@ export default function Desktop() {
     donate: { width: 'min(380px,92vw)', top: 130, left: 'calc(50% - 190px)' },
     about: { width: 'min(420px,92vw)', top: 120, left: 'calc(50% - 210px)' },
     profile: { width: 'min(500px,92vw)', top: 90, left: 'calc(50% - 250px)' },
+    safari: { width: 'min(520px,92vw)', top: 110, left: 'calc(50% - 260px)' },
+    edge: { width: 'min(520px,92vw)', top: 110, left: 'calc(50% - 260px)' },
+    spotify: { width: 'min(360px,92vw)', top: 100, left: 'calc(50% - 180px)' },
+    snake: { width: 'min(360px,92vw)', top: 100, left: 'calc(50% - 180px)' },
   };
 
   /* ── shared content ───────────────────────────────────── */
@@ -1249,6 +1411,43 @@ export default function Desktop() {
         </div>
       );
     }
+    if (id === 'safari' || id === 'edge') {
+      const isSafari = id === 'safari';
+      const bookmarks = [
+        { label: 'Google',      icon: '🔍', url: 'https://google.com' },
+        { label: 'YouTube',     icon: '▶️',  url: 'https://youtube.com' },
+        { label: 'GitHub',      icon: '💻', url: 'https://github.com' },
+        { label: 'X / Twitter', icon: '✖️',  url: 'https://x.com' },
+        { label: 'Reddit',      icon: '🔶', url: 'https://reddit.com' },
+        { label: 'Instagram',   icon: '📸', url: 'https://instagram.com' },
+      ];
+      return <BrowserApp isSafari={isSafari} bookmarks={bookmarks} />;
+    }
+
+    if (id === 'spotify') return (
+      <div>
+        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#1db954', fontWeight: 700, marginBottom: 8 }}>Music</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 12 }}>Spotify</h2>
+        <iframe
+          src={c('spotify.embedUrl')}
+          width="100%"
+          height="352"
+          frameBorder="0"
+          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+          loading="lazy"
+          style={{ borderRadius: 14, display: 'block' }}
+        />
+      </div>
+    );
+
+    if (id === 'snake') return (
+      <div>
+        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#22c55e', fontWeight: 700, marginBottom: 4 }}>Classic Nokia</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 14 }}>Snake Xenzia</h2>
+        <SnakeGame />
+      </div>
+    );
+
     return null;
   };
 
@@ -1445,7 +1644,11 @@ export default function Desktop() {
             <div style={{ background: 'rgba(255,255,255,.14)', backdropFilter: 'blur(30px) saturate(160%)',
               borderRadius: 26, padding: '12px 16px', border: '1px solid rgba(255,255,255,.18)',
               display: 'flex', justifyContent: 'space-around' }}>
-              {appsMeta.slice(0, 4).map(app => (
+              {((() => {
+                const raw = c('app.dock.ios');
+                const ids = raw ? raw.split(',').map(s => s.trim()).filter(Boolean) : [];
+                return ids.length > 0 ? ids.map(id => appsMeta.find(a => a.id === id)).filter(Boolean) as typeof appsMeta : appsMeta.slice(0, 4);
+              })()).map(app => (
                 <div key={app.id} onClick={() => openWin(app.id)}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
                   <div style={{ width: 56, height: 56, borderRadius: 14, background: app.gradient,
@@ -1549,7 +1752,11 @@ export default function Desktop() {
      ANDROID LAYOUT — Material You
   ════════════════════════════════════════════════════════ */
   if (isMobile && os === 'android') {
-    const androidNav = appsMeta.slice(0, 4);
+    const rawAndroid = c('app.dock.android');
+    const androidIds = rawAndroid ? rawAndroid.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const androidNav = androidIds.length > 0
+      ? androidIds.map(id => appsMeta.find(a => a.id === id)).filter(Boolean) as typeof appsMeta
+      : appsMeta.slice(0, 4);
     return (
       <>
         {bootScreen}
@@ -1739,6 +1946,10 @@ export default function Desktop() {
       donate: { width: 'min(380px,92vw)', top: 110, left: 'calc(50% - 190px)' },
       about: { width: 'min(420px,92vw)', top: 100, left: 'calc(50% - 210px)' },
       profile: { width: 'min(500px,92vw)', top: 70, left: 'calc(50% - 250px)' },
+      safari: { width: 'min(520px,92vw)', top: 90, left: 'calc(50% - 260px)' },
+      edge: { width: 'min(520px,92vw)', top: 90, left: 'calc(50% - 260px)' },
+      spotify: { width: 'min(360px,92vw)', top: 80, left: 'calc(50% - 180px)' },
+      snake: { width: 'min(360px,92vw)', top: 80, left: 'calc(50% - 180px)' },
     };
 
     return (
