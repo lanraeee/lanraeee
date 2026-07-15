@@ -603,6 +603,7 @@ export default function Desktop() {
   const [weekCount, setWeekCount] = useState(0);
   const [spToasts, setSpToasts] = useState<{ id: number; icon: string; text: string; sub: string }[]>([]);
   const spSeen = useRef<Set<string>>(new Set());
+  const [demoToast, setDemoToast] = useState<{ id: number; flag: string; name: string; city: string; tier: string; tierIcon: string } | null>(null);
 
   useEffect(() => {
     const poll = async () => {
@@ -635,6 +636,67 @@ export default function Desktop() {
     poll();
     const interval = setInterval(poll, 45000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const DEMO_SUBSCRIBERS = [
+      { flag:'🇳🇬', name:'Emeka',      city:'Lagos' },
+      { flag:'🇯🇵', name:'Yuki',       city:'Tokyo' },
+      { flag:'🇺🇸', name:'Marcus',     city:'New York' },
+      { flag:'🇬🇧', name:'Charlotte',  city:'London' },
+      { flag:'🇮🇳', name:'Priya',      city:'Mumbai' },
+      { flag:'🇦🇪', name:'Omar',       city:'Dubai' },
+      { flag:'🇧🇷', name:'Isabella',   city:'São Paulo' },
+      { flag:'🇩🇪', name:'Lukas',      city:'Berlin' },
+      { flag:'🇨🇦', name:'Aisha',      city:'Toronto' },
+      { flag:'🇰🇷', name:'Min-jun',    city:'Seoul' },
+      { flag:'🇿🇦', name:'Lerato',     city:'Cape Town' },
+      { flag:'🇸🇬', name:'Mei Ling',   city:'Singapore' },
+      { flag:'🇫🇷', name:'Camille',    city:'Paris' },
+      { flag:'🇦🇺', name:'Liam',       city:'Sydney' },
+      { flag:'🇲🇽', name:'Diego',      city:'Mexico City' },
+      { flag:'🇸🇪', name:'Ingrid',     city:'Stockholm' },
+      { flag:'🇰🇪', name:'Amara',      city:'Nairobi' },
+      { flag:'🇳🇱', name:'Lars',       city:'Amsterdam' },
+      { flag:'🇵🇭', name:'Ana',        city:'Manila' },
+      { flag:'🇹🇷', name:'Zeynep',     city:'Istanbul' },
+      { flag:'🇪🇬', name:'Hassan',     city:'Cairo' },
+      { flag:'🇨🇴', name:'Valentina',  city:'Bogotá' },
+      { flag:'🇬🇭', name:'Kwame',      city:'Accra' },
+      { flag:'🇵🇰', name:'Zara',       city:'Karachi' },
+      { flag:'🇮🇩', name:'Arjuna',     city:'Jakarta' },
+      { flag:'🇮🇹', name:'Matteo',     city:'Milan' },
+      { flag:'🇷🇺', name:'Sasha',      city:'Moscow' },
+      { flag:'🇦🇷', name:'Luciana',    city:'Buenos Aires' },
+      { flag:'🇿🇼', name:'Chido',      city:'Harare' },
+      { flag:'🇺🇦', name:'Olena',      city:'Kyiv' },
+    ];
+    const TIERS = [
+      { tier:'Supporter', tierIcon:'⭐' },
+      { tier:'Supporter', tierIcon:'⭐' },
+      { tier:'Insider',   tierIcon:'🏆' },
+      { tier:'Supporter', tierIcon:'⭐' },
+      { tier:'Insider',   tierIcon:'🏆' },
+      { tier:'Explorer',  tierIcon:'🎉' },
+    ];
+    const used = new Set<number>();
+    const fire = () => {
+      let idx: number;
+      do { idx = Math.floor(Math.random() * DEMO_SUBSCRIBERS.length); } while (used.has(idx) && used.size < DEMO_SUBSCRIBERS.length);
+      if (used.size >= DEMO_SUBSCRIBERS.length) used.clear();
+      used.add(idx);
+      const person = DEMO_SUBSCRIBERS[idx];
+      const tierObj = TIERS[Math.floor(Math.random() * TIERS.length)];
+      const id = Date.now();
+      setDemoToast({ id, ...person, ...tierObj });
+      setTimeout(() => setDemoToast(t => t?.id === id ? null : t), 6500);
+      const next = 28000 + Math.random() * 52000;
+      timeoutRef = window.setTimeout(fire, next);
+    };
+    let timeoutRef: ReturnType<typeof window.setTimeout>;
+    const initial = 12000 + Math.random() * 18000;
+    timeoutRef = window.setTimeout(fire, initial);
+    return () => clearTimeout(timeoutRef);
   }, []);
 
   useEffect(() => {
@@ -1584,6 +1646,36 @@ export default function Desktop() {
     return code.toUpperCase().replace(/./g, ch => String.fromCodePoint(ch.charCodeAt(0) + 127397));
   };
 
+  const demoToastEl = demoToast && (
+    <div key={demoToast.id} style={{
+      position: 'fixed', bottom: 96, right: 16, zIndex: 1700,
+      background: 'linear-gradient(135deg,rgba(14,16,42,.97),rgba(22,18,56,.97))',
+      backdropFilter: 'blur(24px)',
+      border: '1px solid rgba(157,144,255,.3)',
+      borderRadius: 16,
+      padding: '13px 16px',
+      display: 'flex', alignItems: 'center', gap: 13,
+      boxShadow: '0 12px 36px rgba(0,0,0,.6), 0 0 0 1px rgba(157,144,255,.08)',
+      animation: 'rise .4s cubic-bezier(.2,.9,.3,1.1)',
+      maxWidth: 270,
+      pointerEvents: 'none',
+    }}>
+      <div style={{ fontSize: 32, lineHeight: 1, flexShrink: 0 }}>{demoToast.flag}</div>
+      <div>
+        <div style={{ fontSize: 13, fontWeight: 700, color: '#eef1fb', lineHeight: 1.35 }}>
+          {demoToast.name} from {demoToast.city}
+        </div>
+        <div style={{ fontSize: 12, color: '#a7aecb', marginTop: 2 }}>
+          {demoToast.tierIcon} just joined <span style={{ color: '#c4beff', fontWeight: 650 }}>{demoToast.tier}</span>
+        </div>
+        <div style={{ fontSize: 11, color: '#3ddc97', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600 }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#3ddc97', display: 'inline-block', boxShadow: '0 0 5px #3ddc97' }} />
+          Verified · just now
+        </div>
+      </div>
+    </div>
+  );
+
   const paymentToasts = spToasts.length > 0 && (
     <div style={{ position: 'fixed', bottom: 160, left: 16, zIndex: 1600,
       display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
@@ -1821,6 +1913,7 @@ export default function Desktop() {
             </Sheet>
           ))}
         </div>
+        {demoToastEl}
         {paymentToasts}
         {visitorToasts}
         {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
@@ -2008,6 +2101,7 @@ export default function Desktop() {
             </Sheet>
           ))}
         </div>
+        {demoToastEl}
         {paymentToasts}
         {visitorToasts}
         {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
@@ -2206,6 +2300,7 @@ export default function Desktop() {
           </div>
         </div>
 
+        {demoToastEl}
         {paymentToasts}
         {visitorToasts}
         {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
