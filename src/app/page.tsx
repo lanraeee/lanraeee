@@ -691,11 +691,11 @@ export default function Desktop() {
       setDemoToast({ id, ...person, ...tierObj });
       setTimeout(() => setDemoToast(t => t?.id === id ? null : t), 6500);
       const next = 28000 + Math.random() * 52000;
-      timeoutRef = window.setTimeout(fire, next);
+      timeoutRef = setTimeout(fire, next);
     };
-    let timeoutRef: ReturnType<typeof window.setTimeout>;
+    let timeoutRef = 0 as unknown as ReturnType<typeof setTimeout>;
     const initial = 12000 + Math.random() * 18000;
-    timeoutRef = window.setTimeout(fire, initial);
+    timeoutRef = setTimeout(fire, initial);
     return () => clearTimeout(timeoutRef);
   }, []);
 
