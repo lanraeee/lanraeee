@@ -599,6 +599,43 @@ export default function Desktop() {
   const [needsPassword, setNeedsPassword] = useState(false);
   const [weather, setWeather] = useState<{ temp: number; code: number; city: string } | null>(null);
   const [hoveredDock, setHoveredDock] = useState<string | null>(null);
+  const [memberCount, setMemberCount] = useState(0);
+  const [weekCount, setWeekCount] = useState(0);
+  const [spToasts, setSpToasts] = useState<{ id: number; icon: string; text: string; sub: string }[]>([]);
+  const spSeen = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const res = await fetch('/api/social-proof');
+        if (!res.ok) return;
+        const { events, memberCount: mc, weekCount: wc } = await res.json();
+        setMemberCount(mc);
+        setWeekCount(wc);
+        if (!Array.isArray(events)) return;
+        events.forEach((e: { type: string; tier: string | null; product: string | null; minutesAgo: number; tierLevel: string | null }, idx: number) => {
+          if (e.minutesAgo > 60) return;
+          const key = `${e.type}-${e.tier}-${e.product}-${e.minutesAgo}`;
+          if (spSeen.current.has(key)) return;
+          spSeen.current.add(key);
+          const id = Date.now() + idx;
+          const isMembership = e.type === 'membership';
+          const icon = isMembership
+            ? (e.tierLevel === 'insider' ? '🏆' : e.tierLevel === 'supporter' ? '⭐' : '🎉')
+            : '🛍️';
+          const text = isMembership
+            ? `New ${e.tier ?? 'member'} subscription`
+            : `${e.product ?? 'Product'} just purchased`;
+          const sub = e.minutesAgo === 0 ? 'just now' : `${e.minutesAgo}m ago`;
+          setSpToasts(prev => [...prev.slice(-2), { id, icon, text, sub }]);
+          setTimeout(() => setSpToasts(prev => prev.filter(t => t.id !== id)), 7000);
+        });
+      } catch {}
+    };
+    poll();
+    const interval = setInterval(poll, 45000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(async ({ coords }) => {
@@ -819,7 +856,14 @@ export default function Desktop() {
       <>
         <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>{c('store.label')}</p>
         <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>{c('store.heading')}</h2>
-        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>{c('store.subheading')}</p>
+        <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 10 }}>{c('store.subheading')}</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#3ddc97', fontWeight: 600 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#3ddc97', display: 'inline-block', boxShadow: '0 0 6px #3ddc97' }} />
+            Secure checkout · Instant delivery
+          </div>
+          <div style={{ fontSize: 12, color: '#f5c451', fontWeight: 600 }}>⭐ Members unlock everything free</div>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 14 }}>
           {products.length === 0 ? (
             <p style={{ color: '#7d84a6', fontSize: 13, gridColumn: '1/-1', padding: '20px 0' }}>
@@ -1072,7 +1116,26 @@ export default function Desktop() {
         <>
           <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 8 }}>{c('members.label')}</p>
           <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>{c('members.heading')}</h2>
-          <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 16 }}>{c('members.subheading')}</p>
+          <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 12 }}>{c('members.subheading')}</p>
+
+          {/* Social proof bar */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+            {memberCount > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(61,220,151,.1)', border: '1px solid rgba(61,220,151,.25)', borderRadius: 20, padding: '5px 12px', fontSize: 12, color: '#3ddc97', fontWeight: 600 }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#3ddc97', display: 'inline-block', boxShadow: '0 0 6px #3ddc97' }} />
+                {memberCount} members and growing
+              </div>
+            )}
+            {weekCount > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(157,144,255,.1)', border: '1px solid rgba(157,144,255,.25)', borderRadius: 20, padding: '5px 12px', fontSize: 12, color: '#c4beff', fontWeight: 600 }}>
+                🔥 {weekCount} joined this week
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(245,196,81,.08)', border: '1px solid rgba(245,196,81,.25)', borderRadius: 20, padding: '5px 12px', fontSize: 12, color: '#f5c451', fontWeight: 600 }}>
+              ⚡ Founding member pricing — locks in forever
+            </div>
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {(membershipTiers.length > 0 ? membershipTiers.map(t => ({ name: t.name, price: t.price / 100, priceRaw: t.price, feat: t.tier === 'supporter', features: t.features })) : [
               { name: 'Explorer', price: 0, priceRaw: 0, feat: false, features: tierPerks.explorer },
@@ -1521,6 +1584,32 @@ export default function Desktop() {
     return code.toUpperCase().replace(/./g, ch => String.fromCodePoint(ch.charCodeAt(0) + 127397));
   };
 
+  const paymentToasts = spToasts.length > 0 && (
+    <div style={{ position: 'fixed', bottom: 160, left: 16, zIndex: 1600,
+      display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
+      {spToasts.map(t => (
+        <div key={t.id} style={{
+          background: 'linear-gradient(135deg,rgba(30,20,72,.96),rgba(20,30,60,.96))',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(157,144,255,.35)',
+          borderRadius: 14,
+          padding: '11px 16px',
+          display: 'flex', alignItems: 'center', gap: 12,
+          fontSize: 13, color: '#eef1fb',
+          boxShadow: '0 8px 28px rgba(0,0,0,.55), 0 0 0 1px rgba(157,144,255,.1)',
+          animation: 'rise .35s cubic-bezier(.2,.9,.3,1.1)',
+          minWidth: 230,
+        }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(160deg,#9d90ff,#7c6cff)', display: 'grid', placeItems: 'center', fontSize: 18, flexShrink: 0 }}>{t.icon}</div>
+          <div>
+            <div style={{ fontWeight: 650, fontSize: 13, lineHeight: 1.3 }}>{t.text}</div>
+            <div style={{ fontSize: 11, color: '#9d90ff', marginTop: 2, fontWeight: 500 }}>✓ Verified · {t.sub}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   const visitorToasts = toasts.length > 0 && (
     <div style={{ position: 'fixed', bottom: 88, left: 16, zIndex: 1500,
       display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
@@ -1732,6 +1821,7 @@ export default function Desktop() {
             </Sheet>
           ))}
         </div>
+        {paymentToasts}
         {visitorToasts}
         {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
         {previewProduct && (
@@ -1918,6 +2008,7 @@ export default function Desktop() {
             </Sheet>
           ))}
         </div>
+        {paymentToasts}
         {visitorToasts}
         {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
         {previewProduct && (
@@ -2115,6 +2206,7 @@ export default function Desktop() {
           </div>
         </div>
 
+        {paymentToasts}
         {visitorToasts}
         {checkout && <Checkout product={checkout} onClose={() => setCheckout(null)} />}
         {previewProduct && (
