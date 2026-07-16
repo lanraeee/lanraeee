@@ -360,14 +360,14 @@ function Checkout({ product, onClose }: { product: Product | null; onClose: () =
 
 /* ── TroveAgent AI chat ─────────────────────────────────────── */
 function TroveAgent() {
-  const [messages, setMessages] = React.useState<{ role: 'user' | 'assistant'; text: string }[]>([
+  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; text: string }[]>([
     { role: 'assistant', text: "Hi! I'm TroveAgent, your AI assistant. How can I help you today?" },
   ]);
-  const [input, setInput] = React.useState('');
-  const [loading, setLoading] = React.useState(false);
-  const bottomRef = React.useRef<HTMLDivElement>(null);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
