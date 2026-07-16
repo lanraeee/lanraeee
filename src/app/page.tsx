@@ -48,10 +48,12 @@ const CONTENT_DEFAULTS: Record<string, string> = {
   'app.edge.icon': '🔷',   'app.edge.label': 'Edge',
   'app.spotify.icon': '🎵', 'app.spotify.label': 'Spotify',
   'app.snake.icon': '🐍',   'app.snake.label': 'Snake',
+  'app.troveagent.icon': '🤖', 'app.troveagent.label': 'TroveAgent',
   'win.safari.title': 'Safari', 'win.safari.subtitle': '',
   'win.edge.title': 'Microsoft Edge', 'win.edge.subtitle': '',
   'win.spotify.title': 'Spotify', 'win.spotify.subtitle': '',
   'win.snake.title': 'Snake Xenzia', 'win.snake.subtitle': '— classic Nokia',
+  'win.troveagent.title': 'TroveAgent', 'win.troveagent.subtitle': '— AI Assistant / Agent',
   'spotify.embedUrl': 'https://open.spotify.com/embed/playlist/5lKfoFXeyYe3aJCOvmubp9?utm_source=generator&si=ea24e6827ef144de',
   'app.dock.ios': 'store,spotify,safari,profile',
   'app.dock.android': 'store,spotify,edge,profile',
@@ -352,6 +354,102 @@ function Checkout({ product, onClose }: { product: Product | null; onClose: () =
         </div>
       </div>
       <style>{`@keyframes rise{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}} @keyframes load{to{width:100%}}`}</style>
+    </div>
+  );
+}
+
+/* ── TroveAgent AI chat ─────────────────────────────────────── */
+function TroveAgent() {
+  const [messages, setMessages] = React.useState<{ role: 'user' | 'assistant'; text: string }[]>([
+    { role: 'assistant', text: "Hi! I'm TroveAgent, your AI assistant. How can I help you today?" },
+  ]);
+  const [input, setInput] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const bottomRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const send = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+    setInput('');
+    setMessages(prev => [...prev, { role: 'user', text }]);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/troveagent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      });
+      const data = await res.json();
+      setMessages(prev => [...prev, { role: 'assistant', text: data.reply || 'Sorry, I had trouble responding.' }]);
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', text: 'Something went wrong. Please try again.' }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0, height: 360 }}>
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10, paddingBottom: 8 }}>
+        {messages.map((m, i) => (
+          <div key={i} style={{
+            display: 'flex',
+            justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start',
+          }}>
+            <div style={{
+              maxWidth: '80%',
+              background: m.role === 'user'
+                ? 'linear-gradient(135deg,#9d90ff,#7c6cff)'
+                : 'rgba(255,255,255,0.06)',
+              border: m.role === 'assistant' ? '1px solid rgba(255,255,255,0.1)' : 'none',
+              borderRadius: m.role === 'user' ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+              padding: '10px 14px',
+              fontSize: 13,
+              color: '#eef1fb',
+              lineHeight: 1.55,
+              whiteSpace: 'pre-wrap',
+            }}>
+              {m.text}
+            </div>
+          </div>
+        ))}
+        {loading && (
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px 16px 16px 4px', padding: '10px 14px', fontSize: 13, color: '#7d84a6' }}>
+              Thinking…
+            </div>
+          </div>
+        )}
+        <div ref={bottomRef} />
+      </div>
+      <div style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+          placeholder="Ask TroveAgent anything…"
+          style={{
+            flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
+            borderRadius: 12, padding: '10px 14px', fontSize: 13, color: '#eef1fb',
+            outline: 'none',
+          }}
+        />
+        <button
+          onClick={send}
+          disabled={loading || !input.trim()}
+          style={{
+            background: 'linear-gradient(135deg,#9d90ff,#7c6cff)',
+            border: 'none', borderRadius: 12, padding: '0 18px',
+            fontSize: 16, cursor: loading ? 'default' : 'pointer',
+            opacity: loading || !input.trim() ? 0.5 : 1,
+            color: '#fff',
+          }}
+        >↑</button>
+      </div>
     </div>
   );
 }
@@ -881,7 +979,8 @@ export default function Desktop() {
     { id: 'safari',  icon: c('app.safari.icon'),  label: c('app.safari.label'),  gradient: 'linear-gradient(160deg,#0a84ff,#0050c8)' },
     { id: 'edge',    icon: c('app.edge.icon'),    label: c('app.edge.label'),    gradient: 'linear-gradient(160deg,#0078d4,#00457a)' },
     { id: 'spotify', icon: c('app.spotify.icon'), label: c('app.spotify.label'), gradient: 'linear-gradient(160deg,#1db954,#0d5e2a)' },
-    { id: 'snake',   icon: c('app.snake.icon'),   label: c('app.snake.label'),   gradient: 'linear-gradient(160deg,#22c55e,#14532d)' },
+    { id: 'snake',      icon: c('app.snake.icon'),      label: c('app.snake.label'),      gradient: 'linear-gradient(160deg,#22c55e,#14532d)' },
+    { id: 'troveagent', icon: c('app.troveagent.icon'), label: c('app.troveagent.label'), gradient: 'linear-gradient(160deg,#9d90ff,#5b4fcf)' },
   ];
 
   const wins = [
@@ -895,7 +994,8 @@ export default function Desktop() {
     { id: 'safari',  title: c('win.safari.title'),  subtitle: c('win.safari.subtitle') || undefined },
     { id: 'edge',    title: c('win.edge.title'),    subtitle: c('win.edge.subtitle') || undefined },
     { id: 'spotify', title: c('win.spotify.title'), subtitle: c('win.spotify.subtitle') || undefined },
-    { id: 'snake',   title: c('win.snake.title'),   subtitle: c('win.snake.subtitle') || undefined },
+    { id: 'snake',      title: c('win.snake.title'),      subtitle: c('win.snake.subtitle') || undefined },
+    { id: 'troveagent', title: c('win.troveagent.title'), subtitle: c('win.troveagent.subtitle') || undefined },
   ];
 
   const winStyles: Record<string, React.CSSProperties> = {
@@ -909,7 +1009,8 @@ export default function Desktop() {
     safari: { width: 'min(520px,92vw)', top: 110, left: 'calc(50% - 260px)' },
     edge: { width: 'min(520px,92vw)', top: 110, left: 'calc(50% - 260px)' },
     spotify: { width: 'min(360px,92vw)', top: 100, left: 'calc(50% - 180px)' },
-    snake: { width: 'min(360px,92vw)', top: 100, left: 'calc(50% - 180px)' },
+    snake:      { width: 'min(360px,92vw)', top: 100, left: 'calc(50% - 180px)' },
+    troveagent: { width: 'min(480px,92vw)', top: 90,  left: 'calc(50% - 240px)' },
   };
 
   /* ── shared content ───────────────────────────────────── */
@@ -1632,6 +1733,14 @@ export default function Desktop() {
       </div>
     );
 
+    if (id === 'troveagent') return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#9d90ff', fontWeight: 700, marginBottom: 4 }}>AI Assistant / Agent</p>
+        <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 14 }}>TroveAgent</h2>
+        <TroveAgent />
+      </div>
+    );
+
     return null;
   };
 
@@ -2193,7 +2302,8 @@ export default function Desktop() {
       safari: { width: 'min(520px,92vw)', top: 90, left: 'calc(50% - 260px)' },
       edge: { width: 'min(520px,92vw)', top: 90, left: 'calc(50% - 260px)' },
       spotify: { width: 'min(360px,92vw)', top: 80, left: 'calc(50% - 180px)' },
-      snake: { width: 'min(360px,92vw)', top: 80, left: 'calc(50% - 180px)' },
+      snake:      { width: 'min(360px,92vw)', top: 80, left: 'calc(50% - 180px)' },
+      troveagent: { width: 'min(480px,92vw)', top: 70, left: 'calc(50% - 240px)' },
     };
 
     return (
