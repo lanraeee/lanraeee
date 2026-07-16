@@ -13,6 +13,26 @@ export async function GET() {
   }
 }
 
+export async function PATCH(request: Request) {
+  try {
+    const { id, direction } = await request.json();
+    const all = await prisma.product.findMany({ orderBy: { order: 'asc' } });
+    const idx = all.findIndex(p => p.id === id);
+    if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= all.length) return NextResponse.json({ ok: true });
+    const a = all[idx], b = all[swapIdx];
+    await Promise.all([
+      prisma.product.update({ where: { id: a.id }, data: { order: b.order } }),
+      prisma.product.update({ where: { id: b.id }, data: { order: a.order } }),
+    ]);
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json({ error: 'Failed to reorder' }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();

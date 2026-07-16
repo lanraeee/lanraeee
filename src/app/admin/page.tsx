@@ -348,6 +348,11 @@ export default function AdminPage() {
     fetchAll();
   };
 
+  const reorderProduct = async (id: string, direction: 'up' | 'down') => {
+    await fetch('/api/products', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, direction }) });
+    fetchAll();
+  };
+
   const updateRequestStatus = async (id: string, status: string) => {
     await fetch(`/api/project-requests/${id}`, {
       method: 'PATCH',
@@ -620,10 +625,10 @@ export default function AdminPage() {
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {products.map(p => (
+                {products.map((p, idx) => (
                   <div key={p.id} style={{ background: 'var(--glass)', border: '1px solid var(--stroke)',
                     borderRadius: 12, padding: '14px 16px', display: 'grid',
-                    gridTemplateColumns: '52px 1fr auto auto auto auto auto', alignItems: 'center', gap: 14 }}>
+                    gridTemplateColumns: '52px 1fr auto auto auto auto auto auto', alignItems: 'center', gap: 14 }}>
                     <div style={{ width: 52, height: 52, borderRadius: 10, display: 'grid', placeItems: 'center',
                       fontSize: 24, background: p.gradient, border: '1px solid var(--stroke-2)' }}>{p.icon}</div>
                     <div>
@@ -636,6 +641,13 @@ export default function AdminPage() {
                     {p.artifactUrl && <a href={p.artifactUrl} target="_blank" rel="noopener noreferrer" title="Artifact" style={{ fontSize: 16, opacity: .8 }}>📄</a>}
                     {p.githubUrl && <a href={p.githubUrl} target="_blank" rel="noopener noreferrer" title="GitHub" style={{ fontSize: 16, opacity: .8 }}>💻</a>}
                     {p.vercelUrl && <a href={p.vercelUrl} target="_blank" rel="noopener noreferrer" title="Live" style={{ fontSize: 16, opacity: .8 }}>▲</a>}
+                    {/* reorder */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                      <button onClick={() => reorderProduct(p.id, 'up')} disabled={idx === 0}
+                        style={{ background: 'rgba(255,255,255,.06)', border: '1px solid var(--stroke)', borderRadius: 5, width: 26, height: 22, fontSize: 10, cursor: idx === 0 ? 'default' : 'pointer', color: '#a7aecb', opacity: idx === 0 ? .3 : 1 }}>▲</button>
+                      <button onClick={() => reorderProduct(p.id, 'down')} disabled={idx === products.length - 1}
+                        style={{ background: 'rgba(255,255,255,.06)', border: '1px solid var(--stroke)', borderRadius: 5, width: 26, height: 22, fontSize: 10, cursor: idx === products.length - 1 ? 'default' : 'pointer', color: '#a7aecb', opacity: idx === products.length - 1 ? .3 : 1 }}>▼</button>
+                    </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button onClick={() => setEditProduct(p)}
                         style={{ background: 'rgba(124,108,255,.2)', color: '#9d90ff', border: 'none',
