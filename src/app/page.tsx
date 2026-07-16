@@ -358,7 +358,33 @@ function Checkout({ product, onClose }: { product: Product | null; onClose: () =
   );
 }
 
-/* ── TroveAgent AI assistant ────────────────────────────────── */
+/* ── TroveAgent helpers ─────────────────────────────────────── */
+type TierInfo = { tier: string; tierName: string; limit: number | null; loggedIn: boolean };
+
+function getUsed(tier: string): number {
+  try {
+    if (tier === 'supporter') {
+      const raw = localStorage.getItem('ta_sup');
+      if (!raw) return 0;
+      const { n, d } = JSON.parse(raw);
+      return d === new Date().toISOString().slice(0, 10) ? n : 0;
+    }
+    return parseInt(localStorage.getItem('ta_free') || '0', 10);
+  } catch { return 0; }
+}
+
+function incrementUsed(tier: string) {
+  try {
+    if (tier === 'supporter') {
+      const today = new Date().toISOString().slice(0, 10);
+      const n = getUsed('supporter');
+      localStorage.setItem('ta_sup', JSON.stringify({ n: n + 1, d: today }));
+    } else if (tier === 'free') {
+      localStorage.setItem('ta_free', String(getUsed('free') + 1));
+    }
+  } catch {}
+}
+
 function renderBlocks(text: string, mono = false) {
   const parts = text.split(/(```[\s\S]*?```)/g);
   return parts.map((part, i) => {
@@ -388,11 +414,32 @@ function TroveAgent() {
   const [chatInput, setChatInput] = useState('');
   const [termInput, setTermInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [tierInfo, setTierInfo] = useState<TierInfo | null>(null);
+  const [usedCount, setUsedCount] = useState(0);
   const chatEnd = useRef<HTMLDivElement>(null);
   const termEnd = useRef<HTMLDivElement>(null);
 
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatMsgs]);
   useEffect(() => { termEnd.current?.scrollIntoView({ behavior: 'smooth' }); }, [termLines]);
+
+  useEffect(() => {
+    fetch('/api/troveagent/status')
+      .then(r => r.json())
+      .then((d: TierInfo) => { setTierInfo(d); setUsedCount(getUsed(d.tier)); })
+      .catch(() => setTierInfo({ tier: 'free', tierName: 'Free', limit: 3, loggedIn: false }));
+  }, []);
+
+  const tier = tierInfo?.tier ?? 'free';
+  const limit = tierInfo?.limit ?? 3;
+  const isUnlimited = tier === 'insider';
+  const limitReached = !isUnlimited && usedCount >= limit;
+  const remaining = isUnlimited ? null : Math.max(0, limit - usedCount);
+  const nearLimit = !isUnlimited && remaining !== null && remaining <= 1;
+
+  const afterSend = () => {
+    incrementUsed(tier);
+    setUsedCount(getUsed(tier));
+  };
 
   const callApi = async (message: string, mode: 'chat' | 'terminal') => {
     const res = await fetch('/api/troveagent', {
@@ -406,13 +453,14 @@ function TroveAgent() {
 
   const sendChat = async () => {
     const text = chatInput.trim();
-    if (!text || loading) return;
+    if (!text || loading || limitReached) return;
     setChatInput('');
     setChatMsgs(prev => [...prev, { role: 'user', text }]);
     setLoading(true);
     try {
       const reply = await callApi(text, 'chat');
       setChatMsgs(prev => [...prev, { role: 'assistant', text: reply }]);
+      afterSend();
     } catch {
       setChatMsgs(prev => [...prev, { role: 'assistant', text: 'Something went wrong. Please try again.' }]);
     } finally { setLoading(false); }
@@ -420,13 +468,14 @@ function TroveAgent() {
 
   const sendTerm = async () => {
     const text = termInput.trim();
-    if (!text || loading) return;
+    if (!text || loading || limitReached) return;
     setTermInput('');
     setTermLines(prev => [...prev, { type: 'cmd', text }]);
     setLoading(true);
     try {
       const reply = await callApi(text, 'terminal');
       setTermLines(prev => [...prev, { type: 'out', text: reply }]);
+      afterSend();
     } catch {
       setTermLines(prev => [...prev, { type: 'out', text: 'Error: request failed.' }]);
     } finally { setLoading(false); }
@@ -436,17 +485,67 @@ function TroveAgent() {
     <button onClick={() => setTab(id)} style={{
       padding: '5px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
       background: tab === id ? 'rgba(157,144,255,0.2)' : 'transparent',
-      color: tab === id ? '#c4beff' : '#7d84a6',
-      transition: 'all .15s',
+      color: tab === id ? '#c4beff' : '#7d84a6', transition: 'all .15s',
     }}>{label}</button>
   );
 
+  /* Upgrade wall */
+  const upgradeWall = (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: '20px 12px', textAlign: 'center' }}>
+      <div style={{ fontSize: 36 }}>🔒</div>
+      <div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: '#eef1fb', marginBottom: 6 }}>
+          {tier === 'free' ? "You've used all 3 free prompts" : `Daily limit of ${limit} reached`}
+        </div>
+        <div style={{ fontSize: 12.5, color: '#7d84a6', lineHeight: 1.6 }}>
+          {tier === 'free' ? 'Upgrade to keep chatting with TroveAgent.' : 'Your limit resets tomorrow. Upgrade to Insider for unlimited access.'}
+        </div>
+      </div>
+      {/* Tier cards */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+        {[
+          { name: 'Supporter', detail: '100 prompts / day', color: '#9d90ff', highlight: tier === 'free' },
+          { name: 'Insider', detail: 'Unlimited · full access', color: '#f5c451', highlight: true },
+        ].map(t => (
+          <div key={t.name} style={{
+            background: t.highlight ? `rgba(${t.color === '#f5c451' ? '245,196,81' : '157,144,255'},.1)` : 'rgba(255,255,255,.04)',
+            border: `1px solid ${t.highlight ? (t.color === '#f5c451' ? 'rgba(245,196,81,.35)' : 'rgba(157,144,255,.35)') : 'rgba(255,255,255,.1)'}`,
+            borderRadius: 12, padding: '12px 16px', minWidth: 130,
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: t.color, marginBottom: 4 }}>{t.name}</div>
+            <div style={{ fontSize: 11.5, color: '#a7aecb' }}>{t.detail}</div>
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={() => window.dispatchEvent(new CustomEvent('trove-open', { detail: 'members' }))}
+        style={{ background: 'linear-gradient(135deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none', borderRadius: 12, padding: '11px 28px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+        View Membership Plans →
+      </button>
+    </div>
+  );
+
+  /* Usage pill */
+  const usagePill = !isUnlimited && tierInfo && (
+    <div style={{
+      fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20,
+      background: nearLimit ? 'rgba(245,131,81,.15)' : 'rgba(255,255,255,.06)',
+      border: `1px solid ${nearLimit ? 'rgba(245,131,81,.4)' : 'rgba(255,255,255,.1)'}`,
+      color: nearLimit ? '#f58351' : '#7d84a6', whiteSpace: 'nowrap' as const,
+    }}>
+      {remaining === 0 ? 'No prompts left' : `${remaining} prompt${remaining === 1 ? '' : 's'} left${tier === 'supporter' ? ' today' : ''}`}
+    </div>
+  );
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 400 }}>
-      {/* Tab bar */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 10, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 8 }}>
-        {tabBtn('chat', '💬  Chat')}
-        {tabBtn('terminal', '⌨️  Terminal')}
+    <div style={{ display: 'flex', flexDirection: 'column', height: 420 }}>
+      {/* Tab bar + usage pill */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: 8 }}>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {tabBtn('chat', '💬  Chat')}
+          {tabBtn('terminal', '⌨️  Terminal')}
+        </div>
+        {usagePill}
       </div>
 
       {/* Chat tab */}
@@ -473,16 +572,18 @@ function TroveAgent() {
             )}
             <div ref={chatEnd} />
           </div>
-          <div style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-            <input
-              value={chatInput}
-              onChange={e => setChatInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }}
-              placeholder="Ask about design, code, branding…"
-              style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 14px', fontSize: 13, color: '#eef1fb', outline: 'none' }}
-            />
-            <button onClick={sendChat} disabled={loading || !chatInput.trim()} style={{ background: 'linear-gradient(135deg,#9d90ff,#7c6cff)', border: 'none', borderRadius: 12, padding: '0 18px', fontSize: 16, cursor: loading ? 'default' : 'pointer', opacity: loading || !chatInput.trim() ? 0.5 : 1, color: '#fff' }}>↑</button>
-          </div>
+          {limitReached ? upgradeWall : (
+            <div style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              <input
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } }}
+                placeholder="Ask about design, code, branding…"
+                style={{ flex: 1, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '10px 14px', fontSize: 13, color: '#eef1fb', outline: 'none' }}
+              />
+              <button onClick={sendChat} disabled={loading || !chatInput.trim()} style={{ background: 'linear-gradient(135deg,#9d90ff,#7c6cff)', border: 'none', borderRadius: 12, padding: '0 18px', fontSize: 16, cursor: loading ? 'default' : 'pointer', opacity: loading || !chatInput.trim() ? 0.5 : 1, color: '#fff' }}>↑</button>
+            </div>
+          )}
         </>
       )}
 
@@ -501,17 +602,19 @@ function TroveAgent() {
             {loading && tab === 'terminal' && <div style={{ color: '#7d84a6' }}>▌</div>}
             <div ref={termEnd} />
           </div>
-          <div style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)', alignItems: 'center' }}>
-            <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#7affb2', fontWeight: 700 }}>$</span>
-            <input
-              value={termInput}
-              onChange={e => setTermInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendTerm(); } }}
-              placeholder="write code, scaffold a project, debug…"
-              style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '9px 12px', fontSize: 13, color: '#eef1fb', outline: 'none', fontFamily: 'monospace' }}
-            />
-            <button onClick={sendTerm} disabled={loading || !termInput.trim()} style={{ background: 'rgba(122,255,178,0.15)', border: '1px solid rgba(122,255,178,0.3)', borderRadius: 10, padding: '0 16px', height: 38, fontSize: 15, cursor: loading ? 'default' : 'pointer', opacity: loading || !termInput.trim() ? 0.4 : 1, color: '#7affb2' }}>↵</button>
-          </div>
+          {limitReached ? upgradeWall : (
+            <div style={{ display: 'flex', gap: 8, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.08)', alignItems: 'center' }}>
+              <span style={{ fontFamily: 'monospace', fontSize: 13, color: '#7affb2', fontWeight: 700 }}>$</span>
+              <input
+                value={termInput}
+                onChange={e => setTermInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); sendTerm(); } }}
+                placeholder="write code, scaffold a project, debug…"
+                style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '9px 12px', fontSize: 13, color: '#eef1fb', outline: 'none', fontFamily: 'monospace' }}
+              />
+              <button onClick={sendTerm} disabled={loading || !termInput.trim()} style={{ background: 'rgba(122,255,178,0.15)', border: '1px solid rgba(122,255,178,0.3)', borderRadius: 10, padding: '0 16px', height: 38, fontSize: 15, cursor: loading ? 'default' : 'pointer', opacity: loading || !termInput.trim() ? 0.4 : 1, color: '#7affb2' }}>↵</button>
+            </div>
+          )}
         </>
       )}
     </div>
@@ -931,6 +1034,13 @@ export default function Desktop() {
     }, 3000);
     return () => clearInterval(interval);
   }, [memberUser]);
+
+  useEffect(() => {
+    const handler = (e: Event) => openWin((e as CustomEvent<string>).detail);
+    window.addEventListener('trove-open', handler);
+    return () => window.removeEventListener('trove-open', handler);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
