@@ -1182,12 +1182,6 @@ export default function Desktop() {
 
           {/* Social proof bar */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-            {memberCount > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(61,220,151,.1)', border: '1px solid rgba(61,220,151,.25)', borderRadius: 20, padding: '5px 12px', fontSize: 12, color: '#3ddc97', fontWeight: 600 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#3ddc97', display: 'inline-block', boxShadow: '0 0 6px #3ddc97' }} />
-                {memberCount} members and growing
-              </div>
-            )}
             {weekCount > 0 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(157,144,255,.1)', border: '1px solid rgba(157,144,255,.25)', borderRadius: 20, padding: '5px 12px', fontSize: 12, color: '#c4beff', fontWeight: 600 }}>
                 🔥 {weekCount} joined this week
