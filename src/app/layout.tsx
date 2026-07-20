@@ -16,13 +16,14 @@ async function getSeoMeta() {
 export async function generateMetadata(): Promise<Metadata> {
   const m = await getSeoMeta();
   const title = m['seo.title'] || 'Lanrae.co.uk — AI Product Development';
-  const description = m['seo.description'] || 'Browse, buy, and support AI-powered products built by lanrae. An adaptive AI desktop experience.';
-  const ogImage = m['seo.ogImage'] || 'https://lanrae.co.uk/logo.png';
-  const keywords = m['seo.keywords'] || 'AI products, AI tools, lanrae, AI studio, artificial intelligence';
+  const description = m['seo.description'] || 'Browse, buy, and support AI-powered products built by lanrae. Tutorials, tools, and digital goods.';
+  const keywords = m['seo.keywords'] || 'AI products, AI tools, lanrae, AI studio, artificial intelligence, tutorials';
   return {
-    title,
+    metadataBase: new URL('https://lanrae.co.uk'),
+    title: { default: title, template: '%s | lanrae' },
     description,
     keywords,
+    authors: [{ name: 'lanrae', url: 'https://lanrae.co.uk' }],
     icons: {
       icon: [
         { url: '/favicon.ico', sizes: 'any' },
@@ -35,15 +36,19 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       url: 'https://lanrae.co.uk',
-      siteName: 'Lanrae.co.uk',
-      images: [{ url: ogImage }],
+      siteName: 'lanrae',
+      locale: 'en_GB',
       type: 'website',
+      // opengraph-image.tsx auto-provides the 1200×630 image
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: [ogImage],
+      // Twitter also picks up opengraph-image.tsx automatically
+    },
+    alternates: {
+      canonical: 'https://lanrae.co.uk',
     },
   };
 }
