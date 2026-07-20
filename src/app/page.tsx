@@ -908,7 +908,10 @@ function RadioApp() {
   const station = RADIO_STATIONS.find(s => s.id === stationId) ?? null;
 
   useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = volume;
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+      (audioRef.current as HTMLAudioElement & { referrerPolicy: string }).referrerPolicy = 'no-referrer';
+    }
   }, [volume]);
 
   useEffect(() => () => { audioRef.current?.pause(); }, []);
@@ -948,7 +951,6 @@ function RadioApp() {
     <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
       <audio
         ref={audioRef}
-        referrerPolicy="no-referrer"
         onPlaying={() => { setLoading(false); setPlaying(true); setError(false); }}
         onWaiting={() => setLoading(true)}
         onPause={() => { setPlaying(false); setLoading(false); }}
