@@ -258,7 +258,7 @@ const CONTENT_DEFAULTS: Record<string, string> = {
 };
 
 export default function AdminPage() {
-  const [tab, setTab] = useState<'products' | 'memberships' | 'fans' | 'requests' | 'content' | 'analytics' | 'messages' | 'email' | 'security'>('products');
+  const [tab, setTab] = useState<'products' | 'memberships' | 'fans' | 'requests' | 'content' | 'analytics' | 'messages' | 'email' | 'security' | 'blog'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [fans, setFans] = useState<any[]>([]);
@@ -314,6 +314,84 @@ export default function AdminPage() {
   const [showAddFan, setShowAddFan] = useState(false);
   const [fanForm, setFanForm] = useState({ email: '', displayName: '', initials: '', avatarColor: '#9d90ff', membershipTier: 'insider', totalSpent: '' });
   const [fanFormSaving, setFanFormSaving] = useState(false);
+
+  type Post = {
+    id: string; title: string; slug: string; excerpt: string | null;
+    content: string; category: string; tags: string[]; published: boolean;
+    publishedAt: string | null; readTime: number | null; icon: string | null;
+    gradient: string; order: number;
+  };
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [editPost, setEditPost] = useState<Post | 'new' | null>(null);
+  const [postForm, setPostForm] = useState({
+    title: '', slug: '', excerpt: '', content: '', category: 'tutorial',
+    tags: '', published: false, readTime: '', icon: '📝',
+    gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)',
+  });
+  const [postSaving, setPostSaving] = useState(false);
+  const [seedingPost, setSeedingPost] = useState(false);
+  const [postPreview, setPostPreview] = useState(false);
+
+
+  const openNewPost = () => {
+    setPostForm({ title: '', slug: '', excerpt: '', content: '', category: 'tutorial', tags: '', published: false, readTime: '', icon: '📝', gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' });
+    setEditPost('new');
+  };
+
+  const openEditPost = (p: Post) => {
+    setPostForm({
+      title: p.title, slug: p.slug, excerpt: p.excerpt || '', content: p.content,
+      category: p.category, tags: p.tags.join(', '), published: p.published,
+      readTime: p.readTime ? String(p.readTime) : '', icon: p.icon || '📝', gradient: p.gradient,
+    });
+    setEditPost(p);
+  };
+
+  const savePost = async () => {
+    setPostSaving(true);
+    const isNew = editPost === 'new';
+    const url = isNew ? '/api/posts' : `/api/posts/${(editPost as Post).id}`;
+    const method = isNew ? 'POST' : 'PUT';
+    await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...postForm,
+        tags: postForm.tags.split(',').map(t => t.trim()).filter(Boolean),
+        readTime: postForm.readTime ? parseInt(postForm.readTime) : null,
+      }),
+    });
+    setEditPost(null);
+    setPostSaving(false);
+    fetchPostsAdmin();
+  };
+
+  const deletePost = async (id: string) => {
+    if (!confirm('Delete this post?')) return;
+    await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+    fetchPostsAdmin();
+  };
+
+  const togglePublish = async (p: Post) => {
+    await fetch(`/api/posts/${p.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ published: !p.published }),
+    });
+    fetchPostsAdmin();
+  };
+
+  const fetchPostsAdmin = async () => {
+    const data = await fetch('/api/posts/admin').then(r => r.json()).catch(() => []);
+    setPosts(Array.isArray(data) ? data : []);
+  };
+
+  const seedTailscalePost = async () => {
+    setSeedingPost(true);
+    await fetch('/api/posts/seed', { method: 'POST' });
+    setSeedingPost(false);
+    fetchPostsAdmin();
+  };
 
   const fetchAll = async () => {
     try {
@@ -463,6 +541,7 @@ export default function AdminPage() {
     if (tab === 'analytics') fetchAnalytics();
     if (tab === 'email') fetchEmailTemplates();
     if (tab === 'security') fetchSecurityTools();
+    if (tab === 'blog') fetchPostsAdmin();
     if (tab === 'messages') {
       fetchMessages();
       const interval = setInterval(fetchMessages, 3000);
@@ -572,6 +651,7 @@ export default function AdminPage() {
           {navItem('messages', '💬 Messages')}
           {navItem('email', '📧 Email')}
           {navItem('security', '🛡️ Security Tools')}
+          {navItem('blog', '✍️ Blog')}
         </nav>
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ padding: '12px', background: 'rgba(53,214,199,.08)', border: '1px solid rgba(53,214,199,.2)',
@@ -1564,6 +1644,214 @@ export default function AdminPage() {
                           style={{ background: 'rgba(255,95,87,.15)', color: '#ff7c78', border: 'none',
                             borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 650, cursor: 'pointer' }}>Delete</button>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          );
+        })()}
+
+        {tab === 'blog' && (() => {
+          const iF: React.CSSProperties = {
+            background: 'rgba(255,255,255,.04)', border: '1px solid var(--stroke)',
+            borderRadius: 9, padding: '10px 12px', fontSize: 13, color: '#eef1fb',
+            fontFamily: 'inherit', width: '100%',
+          };
+          const POST_GRADIENTS = [
+            'linear-gradient(160deg,#7c6cff,#3a1d6e)',
+            'linear-gradient(160deg,#1f6feb,#0d3a7a)',
+            'linear-gradient(160deg,#35d6c7,#0e5a52)',
+            'linear-gradient(160deg,#e0895a,#7a2f1c)',
+            'linear-gradient(160deg,#ff6ba8,#7a1d47)',
+            'linear-gradient(160deg,#9d90ff,#2b1a5e)',
+            'linear-gradient(160deg,#f5c451,#9a6a00)',
+          ];
+          return (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                <div>
+                  <h2 style={{ fontSize: 26, fontWeight: 700 }}>Blog</h2>
+                  <p style={{ fontSize: 13, color: '#7d84a6', marginTop: 4 }}>
+                    Manage tutorials and posts at <a href="/blog" target="_blank" style={{ color: '#9d90ff', textDecoration: 'none' }}>lanrae.co.uk/blog</a>
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={seedTailscalePost} disabled={seedingPost}
+                    style={{ background: 'rgba(53,214,199,.1)', color: '#35d6c7', border: '1px solid rgba(53,214,199,.2)',
+                      padding: '9px 16px', borderRadius: 9, fontSize: 12, fontWeight: 650, cursor: 'pointer' }}>
+                    {seedingPost ? 'Seeding…' : '🔐 Seed Tailscale Tutorial'}
+                  </button>
+                  <button onClick={openNewPost}
+                    style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none',
+                      padding: '10px 18px', borderRadius: 9, fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
+                    + New Post
+                  </button>
+                </div>
+              </div>
+
+              {/* post form */}
+              {editPost && (
+                <div style={{ background: 'var(--glass)', border: '1px solid var(--stroke)', borderRadius: 14,
+                  padding: 24, marginBottom: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 700 }}>{editPost === 'new' ? 'New Post' : 'Edit Post'}</h3>
+                    <button onClick={() => setPostPreview(p => !p)}
+                      style={{ background: 'rgba(255,255,255,.06)', border: '1px solid var(--stroke)',
+                        color: '#a7aecb', borderRadius: 7, padding: '5px 12px', fontSize: 12, cursor: 'pointer' }}>
+                      {postPreview ? 'Edit' : 'Preview'}
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 1fr', gap: 12 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Title *</label>
+                      <input style={iF} value={postForm.title}
+                        onChange={e => {
+                          const title = e.target.value;
+                          const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                          setPostForm(f => ({ ...f, title, slug }));
+                        }} placeholder="SSH Into Your Windows PC…" />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Icon</label>
+                      <input style={{ ...iF, fontSize: 22, textAlign: 'center' }} value={postForm.icon}
+                        onChange={e => setPostForm(f => ({ ...f, icon: e.target.value }))} />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Slug</label>
+                      <input style={iF} value={postForm.slug}
+                        onChange={e => setPostForm(f => ({ ...f, slug: e.target.value }))} placeholder="my-post-slug" />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Excerpt</label>
+                    <textarea style={{ ...iF, resize: 'vertical', minHeight: 60 }} value={postForm.excerpt}
+                      onChange={e => setPostForm(f => ({ ...f, excerpt: e.target.value }))}
+                      placeholder="One-sentence summary shown on the blog listing…" />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Category</label>
+                      <select style={{ ...iF, cursor: 'pointer' }} value={postForm.category}
+                        onChange={e => setPostForm(f => ({ ...f, category: e.target.value }))}>
+                        {['tutorial', 'devlog', 'guide', 'video'].map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Tags (comma separated)</label>
+                      <input style={iF} value={postForm.tags}
+                        onChange={e => setPostForm(f => ({ ...f, tags: e.target.value }))} placeholder="ssh, tailscale, networking" />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Read Time (min)</label>
+                      <input style={iF} type="number" min="1" value={postForm.readTime}
+                        onChange={e => setPostForm(f => ({ ...f, readTime: e.target.value }))} placeholder="10" />
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'flex-end' }}>
+                      <label style={{ display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', paddingBottom: 10 }}>
+                        <input type="checkbox" checked={postForm.published}
+                          onChange={e => setPostForm(f => ({ ...f, published: e.target.checked }))} />
+                        <span style={{ fontSize: 13 }}>Published</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* gradient picker */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>Card Gradient</label>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      {POST_GRADIENTS.map(g => (
+                        <div key={g} onClick={() => setPostForm(f => ({ ...f, gradient: g }))}
+                          style={{ width: 44, height: 44, borderRadius: 10, background: g, cursor: 'pointer',
+                            border: postForm.gradient === g ? '2px solid #9d90ff' : '2px solid transparent',
+                            boxShadow: postForm.gradient === g ? '0 0 0 2px rgba(124,108,255,.4)' : undefined }} />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* content editor / preview */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 11, color: '#a7aecb', textTransform: 'uppercase', letterSpacing: '.5px' }}>
+                      Content (Markdown) *
+                    </label>
+                    {postPreview ? (
+                      <div style={{ background: 'rgba(255,255,255,.03)', border: '1px solid var(--stroke)',
+                        borderRadius: 9, padding: 16, minHeight: 300, fontSize: 14, lineHeight: 1.7,
+                        color: '#c8ceea', whiteSpace: 'pre-wrap', fontFamily: 'inherit', overflowY: 'auto', maxHeight: 500 }}>
+                        {postForm.content || <span style={{ color: '#7d84a6' }}>Nothing to preview yet…</span>}
+                      </div>
+                    ) : (
+                      <textarea style={{ ...iF, resize: 'vertical', minHeight: 300, fontFamily: '"SF Mono", "Fira Code", monospace', fontSize: 13, lineHeight: 1.6 }}
+                        value={postForm.content}
+                        onChange={e => setPostForm(f => ({ ...f, content: e.target.value }))}
+                        placeholder="# My Post Title&#10;&#10;Write your post in Markdown here…" />
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <button onClick={savePost} disabled={postSaving}
+                      style={{ flex: 1, background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff',
+                        border: 'none', borderRadius: 9, padding: '11px', fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
+                      {postSaving ? 'Saving…' : editPost === 'new' ? 'Create post' : 'Save changes'}
+                    </button>
+                    <button onClick={() => setEditPost(null)}
+                      style={{ flex: 1, background: 'rgba(255,255,255,.06)', color: '#a7aecb',
+                        border: '1px solid var(--stroke)', borderRadius: 9, padding: '11px', fontSize: 13, cursor: 'pointer' }}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* posts list */}
+              {posts.length === 0 && !editPost ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', border: '1px dashed var(--stroke)',
+                  borderRadius: 12, color: '#7d84a6' }}>
+                  <p style={{ fontSize: 14, marginBottom: 12 }}>No posts yet.</p>
+                  <p style={{ fontSize: 13, marginBottom: 20 }}>Click <b style={{ color: '#35d6c7' }}>"Seed Tailscale Tutorial"</b> to import the first post, or create one manually.</p>
+                  <button onClick={openNewPost}
+                    style={{ background: 'linear-gradient(180deg,#9d90ff,#7c6cff)', color: '#fff', border: 'none',
+                      padding: '10px 18px', borderRadius: 9, fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
+                    + Create your first post
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {posts.map(p => (
+                    <div key={p.id} style={{ background: 'var(--glass)', border: '1px solid var(--stroke)',
+                      borderRadius: 12, padding: '14px 16px', display: 'grid',
+                      gridTemplateColumns: '52px 1fr auto auto auto', alignItems: 'center', gap: 14 }}>
+                      <div style={{ width: 52, height: 52, borderRadius: 10, display: 'grid', placeItems: 'center',
+                        fontSize: 24, background: p.gradient, border: '1px solid var(--stroke-2)', flexShrink: 0 }}>
+                        {p.icon || '📝'}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 650, marginBottom: 2 }}>{p.title}</div>
+                        <div style={{ display: 'flex', gap: 10, fontSize: 12, color: '#7d84a6' }}>
+                          <span style={{ padding: '1px 7px', borderRadius: 8, background: 'rgba(124,108,255,.12)',
+                            color: '#9d90ff', fontWeight: 600 }}>{p.category}</span>
+                          {p.readTime && <span>{p.readTime} min read</span>}
+                          {p.publishedAt && <span>{new Date(p.publishedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>}
+                          <a href={`/blog/${p.slug}`} target="_blank" rel="noopener noreferrer"
+                            style={{ color: '#9d90ff', textDecoration: 'none' }}>↗ View</a>
+                        </div>
+                      </div>
+                      <button onClick={() => togglePublish(p)}
+                        style={{ background: p.published ? 'rgba(61,220,151,.1)' : 'rgba(255,255,255,.06)',
+                          color: p.published ? '#3ddc97' : '#7d84a6',
+                          border: `1px solid ${p.published ? 'rgba(61,220,151,.25)' : 'var(--stroke)'}`,
+                          borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 650, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                        {p.published ? '● Live' : '○ Draft'}
+                      </button>
+                      <button onClick={() => openEditPost(p)}
+                        style={{ background: 'rgba(124,108,255,.2)', color: '#9d90ff', border: 'none',
+                          borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 650, cursor: 'pointer' }}>Edit</button>
+                      <button onClick={() => deletePost(p.id)}
+                        style={{ background: 'rgba(255,95,87,.15)', color: '#ff7c78', border: 'none',
+                          borderRadius: 7, padding: '6px 12px', fontSize: 12, fontWeight: 650, cursor: 'pointer' }}>Delete</button>
                     </div>
                   ))}
                 </div>
