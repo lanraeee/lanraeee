@@ -874,25 +874,23 @@ function BrowserApp({ isSafari, bookmarks }: { isSafari: boolean; bookmarks: { l
 
 /* ── radio app ──────────────────────────────────────────────── */
 const RADIO_STATIONS = [
-  // UK
-  { id:'capital',     name:'Capital FM',       genre:'UK Top 40 · Pop',      emoji:'🎵', color:'#e01e5a', gradient:'linear-gradient(135deg,#7c0527,#a3103e)', stream:'https://media-ice.musicradio.com/CapitalMP3' },
-  { id:'classicfm',   name:'Classic FM',       genre:'Classical',            emoji:'🎻', color:'#7c6cff', gradient:'linear-gradient(135deg,#1e1b4b,#312e81)', stream:'https://media-ice.musicradio.com/ClassicFMMP3' },
-  { id:'kissfm',      name:'Kiss FM UK',       genre:'Dance · R&B',          emoji:'💋', color:'#f43f5e', gradient:'linear-gradient(135deg,#4c0519,#9f1239)', stream:'https://media-ice.musicradio.com/KISSMP3' },
-  { id:'heart',       name:'Heart FM',         genre:'Easy Listening · Pop', emoji:'💗', color:'#f472b6', gradient:'linear-gradient(135deg,#831843,#9d174d)', stream:'https://media-ice.musicradio.com/HeartMP3' },
-  { id:'radiox',      name:'Radio X',          genre:'Rock · Indie',         emoji:'🎸', color:'#f97316', gradient:'linear-gradient(135deg,#7c2d12,#9a3412)', stream:'https://media-ice.musicradio.com/RadioXMP3' },
-  { id:'lbc',         name:'LBC',              genre:'News · Talk',          emoji:'📢', color:'#fbbf24', gradient:'linear-gradient(135deg,#78350f,#92400e)', stream:'https://media-ice.musicradio.com/LBCMP3' },
-  { id:'smooth',      name:'Smooth Radio',     genre:'Soul · R&B · Chill',   emoji:'🌊', color:'#60a5fa', gradient:'linear-gradient(135deg,#1e3a5f,#1e40af)', stream:'https://media-ice.musicradio.com/SmoothMP3' },
+  // UK — NTS & independent streams (open, no referrer lock)
+  { id:'nts1',        name:'NTS Radio 1',      genre:'UK · Eclectic · Live',  emoji:'🇬🇧', color:'#f43f5e', gradient:'linear-gradient(135deg,#4c0519,#9f1239)', stream:'https://stream-relay-geo.ntslive.co.uk/stream' },
+  { id:'nts2',        name:'NTS Radio 2',      genre:'UK · Experimental',     emoji:'🔴', color:'#e01e5a', gradient:'linear-gradient(135deg,#7c0527,#a3103e)', stream:'https://stream-relay-geo.ntslive.co.uk/stream2' },
+  { id:'soho',        name:'Soho Radio',       genre:'London · Soul · Jazz',  emoji:'🎷', color:'#fbbf24', gradient:'linear-gradient(135deg,#78350f,#92400e)', stream:'https://sohoradio.ice.infomaniak.ch/sohoradio-256.mp3' },
+  { id:'radioparadise', name:'Radio Paradise', genre:'Indie · Rock · World',  emoji:'🌍', color:'#34d399', gradient:'linear-gradient(135deg,#064e3b,#065f46)', stream:'https://stream.radioparadise.com/mp3-128' },
   // US
-  { id:'kexp',        name:'KEXP 90.3',        genre:'Indie · Alternative',  emoji:'📻', color:'#34d399', gradient:'linear-gradient(135deg,#064e3b,#065f46)', stream:'https://kexp-mp3-128.streamguys1.com/kexp128.mp3' },
-  { id:'groovesalad', name:'Groove Salad',     genre:'Ambient · Chill',      emoji:'🌿', color:'#22c55e', gradient:'linear-gradient(135deg,#064e3b,#065f46)', stream:'https://ice1.somafm.com/groovesalad-256-mp3' },
-  { id:'secretagent', name:'Secret Agent',     genre:'Lounge · Spy Jazz',    emoji:'🕵️', color:'#94a3b8', gradient:'linear-gradient(135deg,#1e293b,#334155)', stream:'https://ice1.somafm.com/secretagent-128-mp3' },
-  { id:'dronezone',   name:'Drone Zone',       genre:'Deep Ambient',         emoji:'🌌', color:'#818cf8', gradient:'linear-gradient(135deg,#1e1b4b,#312e81)', stream:'https://ice1.somafm.com/dronezone-256-mp3' },
-  { id:'deepspace',   name:'Deep Space One',   genre:'Sci-Fi · Ambient',     emoji:'🚀', color:'#38bdf8', gradient:'linear-gradient(135deg,#0c4a6e,#075985)', stream:'https://ice1.somafm.com/deepspaceone-256-mp3' },
-  { id:'beatblender', name:'Beat Blender',     genre:'Electronic · House',   emoji:'🎛️', color:'#a78bfa', gradient:'linear-gradient(135deg,#4c1d95,#5b21b6)', stream:'https://ice1.somafm.com/beatblender-256-mp3' },
-  { id:'illstreet',   name:'Ill Street Blues', genre:'Hip Hop · Beats',      emoji:'🎧', color:'#f59e0b', gradient:'linear-gradient(135deg,#78350f,#92400e)', stream:'https://ice1.somafm.com/illstreet-256-mp3' },
-  { id:'lush',        name:'Lush',             genre:'Indie Pop · Female',   emoji:'🌸', color:'#f472b6', gradient:'linear-gradient(135deg,#831843,#9d174d)', stream:'https://ice1.somafm.com/lush-256-mp3' },
-  { id:'u80s',        name:'Underground 80s',  genre:'80s · Synthpop',       emoji:'🕺', color:'#fb923c', gradient:'linear-gradient(135deg,#7c2d12,#9a3412)', stream:'https://ice1.somafm.com/u80s-256-mp3' },
-  { id:'indiepop',    name:'Indie Pop Rocks',  genre:'Indie · Alternative',  emoji:'🎤', color:'#c084fc', gradient:'linear-gradient(135deg,#581c87,#6b21a8)', stream:'https://ice1.somafm.com/indiepop-256-mp3' },
+  { id:'kexp',        name:'KEXP 90.3',        genre:'Indie · Alternative',   emoji:'📻', color:'#22c55e', gradient:'linear-gradient(135deg,#064e3b,#065f46)', stream:'https://kexp-mp3-128.streamguys1.com/kexp128.mp3' },
+  { id:'wfmu',        name:'WFMU',             genre:'Freeform · Eclectic',   emoji:'📡', color:'#60a5fa', gradient:'linear-gradient(135deg,#1e3a5f,#1e40af)', stream:'https://stream0.wfmu.org/freeform-128k.mp3' },
+  { id:'groovesalad', name:'Groove Salad',     genre:'Ambient · Chill',       emoji:'🌿', color:'#4ade80', gradient:'linear-gradient(135deg,#14532d,#166534)', stream:'https://ice1.somafm.com/groovesalad-256-mp3' },
+  { id:'secretagent', name:'Secret Agent',     genre:'Lounge · Spy Jazz',     emoji:'🕵️', color:'#94a3b8', gradient:'linear-gradient(135deg,#1e293b,#334155)', stream:'https://ice1.somafm.com/secretagent-128-mp3' },
+  { id:'dronezone',   name:'Drone Zone',       genre:'Deep Ambient',          emoji:'🌌', color:'#818cf8', gradient:'linear-gradient(135deg,#1e1b4b,#312e81)', stream:'https://ice1.somafm.com/dronezone-256-mp3' },
+  { id:'deepspace',   name:'Deep Space One',   genre:'Sci-Fi · Ambient',      emoji:'🚀', color:'#38bdf8', gradient:'linear-gradient(135deg,#0c4a6e,#075985)', stream:'https://ice1.somafm.com/deepspaceone-256-mp3' },
+  { id:'beatblender', name:'Beat Blender',     genre:'Electronic · House',    emoji:'🎛️', color:'#a78bfa', gradient:'linear-gradient(135deg,#4c1d95,#5b21b6)', stream:'https://ice1.somafm.com/beatblender-256-mp3' },
+  { id:'illstreet',   name:'Ill Street Blues', genre:'Hip Hop · Beats',       emoji:'🎧', color:'#f59e0b', gradient:'linear-gradient(135deg,#78350f,#92400e)', stream:'https://ice1.somafm.com/illstreet-256-mp3' },
+  { id:'lush',        name:'Lush',             genre:'Indie Pop · Female',    emoji:'🌸', color:'#f472b6', gradient:'linear-gradient(135deg,#831843,#9d174d)', stream:'https://ice1.somafm.com/lush-256-mp3' },
+  { id:'u80s',        name:'Underground 80s',  genre:'80s · Synthpop',        emoji:'🕺', color:'#fb923c', gradient:'linear-gradient(135deg,#7c2d12,#9a3412)', stream:'https://ice1.somafm.com/u80s-256-mp3' },
+  { id:'indiepop',    name:'Indie Pop Rocks',  genre:'Indie · Alternative',   emoji:'🎤', color:'#c084fc', gradient:'linear-gradient(135deg,#581c87,#6b21a8)', stream:'https://ice1.somafm.com/indiepop-256-mp3' },
 ];
 
 function RadioApp() {
@@ -919,8 +917,12 @@ function RadioApp() {
     setPlaying(false);
     setStationId(s.id);
     audio.src = s.stream;
-    audio.load();
-    audio.play().catch(() => { setLoading(false); setError(true); });
+    // do NOT call audio.load() — it aborts the play() promise with AbortError
+    audio.play().catch((err: Error) => {
+      if (err.name === 'AbortError') return; // interrupted by a new play call, not a real failure
+      setLoading(false);
+      setError(true);
+    });
   };
 
   const togglePlay = () => {
@@ -930,7 +932,11 @@ function RadioApp() {
       audio.pause();
     } else {
       setLoading(true);
-      audio.play().catch(() => { setLoading(false); setError(true); });
+      audio.play().catch((err: Error) => {
+        if (err.name === 'AbortError') return;
+        setLoading(false);
+        setError(true);
+      });
     }
   };
 
