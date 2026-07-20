@@ -58,7 +58,6 @@ export default function BlogPage() {
         <span style={{ fontWeight: 600, fontSize: 15, color: '#9d90ff' }}>blog</span>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 16, alignItems: 'center' }}>
           <Link href="/" style={{ fontSize: 13, color: '#a7aecb', textDecoration: 'none' }}>Home</Link>
-          <Link href="/admin" style={{ fontSize: 13, color: '#7d84a6', textDecoration: 'none' }}>Admin</Link>
         </div>
       </nav>
 
