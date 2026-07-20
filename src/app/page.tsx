@@ -873,18 +873,23 @@ function BrowserApp({ isSafari, bookmarks }: { isSafari: boolean; bookmarks: { l
 }
 
 /* ── radio app ──────────────────────────────────────────────── */
-const RADIO_STATIONS = [
-  // UK — Global Radio
+type RadioStation = {
+  id: string; name: string; genre: string; emoji: string;
+  color: string; gradient: string; stream: string; proxy?: boolean;
+};
+
+const RADIO_STATIONS: RadioStation[] = [
+  // UK — Global Radio (proxy=true: server-side fetch with globalplayer.com referer)
   { id:'capital',     name:'Capital FM',       genre:'UK Top 40 · Pop',       emoji:'🎵', color:'#e01e5a', gradient:'linear-gradient(135deg,#7c0527,#a3103e)', stream:'https://media-ice.musicradio.com/CapitalMP3' },
   { id:'classicfm',   name:'Classic FM',       genre:'Classical',             emoji:'🎻', color:'#7c6cff', gradient:'linear-gradient(135deg,#1e1b4b,#312e81)', stream:'https://media-ice.musicradio.com/ClassicFMMP3' },
-  { id:'kissfm',      name:'Kiss FM UK',       genre:'Dance · R&B',           emoji:'💋', color:'#f43f5e', gradient:'linear-gradient(135deg,#4c0519,#9f1239)', stream:'https://media-ice.musicradio.com/KISSMP3' },
-  { id:'heart',       name:'Heart FM',         genre:'Easy Listening · Pop',  emoji:'💗', color:'#f472b6', gradient:'linear-gradient(135deg,#831843,#9d174d)', stream:'https://media-ice.musicradio.com/HeartMP3' },
+  { id:'kissfm',      name:'Kiss FM UK',       genre:'Dance · R&B',           emoji:'💋', color:'#f43f5e', gradient:'linear-gradient(135deg,#4c0519,#9f1239)', stream:'https://media-ice.musicradio.com/KISSMP3',     proxy:true },
+  { id:'heart',       name:'Heart FM',         genre:'Easy Listening · Pop',  emoji:'💗', color:'#f472b6', gradient:'linear-gradient(135deg,#831843,#9d174d)', stream:'https://media-ice.musicradio.com/HeartMP3',    proxy:true },
   { id:'radiox',      name:'Radio X',          genre:'Rock · Indie',          emoji:'🎸', color:'#f97316', gradient:'linear-gradient(135deg,#7c2d12,#9a3412)', stream:'https://media-ice.musicradio.com/RadioXMP3' },
-  { id:'lbc',         name:'LBC',              genre:'News · Talk',           emoji:'📢', color:'#fbbf24', gradient:'linear-gradient(135deg,#78350f,#92400e)', stream:'https://media-ice.musicradio.com/LBCMP3' },
-  { id:'smooth',      name:'Smooth Radio',     genre:'Soul · R&B · Chill',    emoji:'🌊', color:'#60a5fa', gradient:'linear-gradient(135deg,#1e3a5f,#1e40af)', stream:'https://media-ice.musicradio.com/SmoothMP3' },
+  { id:'lbc',         name:'LBC',              genre:'News · Talk',           emoji:'📢', color:'#fbbf24', gradient:'linear-gradient(135deg,#78350f,#92400e)', stream:'https://media-ice.musicradio.com/LBCMP3',      proxy:true },
+  { id:'smooth',      name:'Smooth Radio',     genre:'Soul · R&B · Chill',    emoji:'🌊', color:'#60a5fa', gradient:'linear-gradient(135deg,#1e3a5f,#1e40af)', stream:'https://media-ice.musicradio.com/SmoothMP3',   proxy:true },
   // UK — Independent
   { id:'nts1',        name:'NTS Radio 1',      genre:'UK · Eclectic · Live',  emoji:'🇬🇧', color:'#f43f5e', gradient:'linear-gradient(135deg,#4c0519,#9f1239)', stream:'https://stream-relay-geo.ntslive.co.uk/stream' },
-  { id:'beatfm',      name:'Beat FM',          genre:'Afrobeats · Urban',     emoji:'🥁', color:'#f59e0b', gradient:'linear-gradient(135deg,#78350f,#b45309)', stream:'https://beatfm.out.airtime.pro/beatfm_b' },
+  { id:'beatfm',      name:'Beat FM',          genre:'Afrobeats · Urban',     emoji:'🥁', color:'#f59e0b', gradient:'linear-gradient(135deg,#78350f,#b45309)', stream:'https://beatfm.out.airtime.pro/beatfm_b',      proxy:true },
   // US / International
   { id:'kexp',        name:'KEXP 90.3',        genre:'Indie · Alternative',   emoji:'📻', color:'#22c55e', gradient:'linear-gradient(135deg,#064e3b,#065f46)', stream:'https://kexp-mp3-128.streamguys1.com/kexp128.mp3' },
   { id:'radioparadise', name:'Radio Paradise', genre:'Indie · Rock · World',  emoji:'🌍', color:'#34d399', gradient:'linear-gradient(135deg,#064e3b,#065f46)', stream:'https://stream.radioparadise.com/mp3-128' },
@@ -905,7 +910,7 @@ function RadioApp() {
   const [error, setError] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const station = RADIO_STATIONS.find(s => s.id === stationId) ?? null;
+  const station: RadioStation | null = RADIO_STATIONS.find(s => s.id === stationId) ?? null;
 
   useEffect(() => {
     if (audioRef.current) {
@@ -916,14 +921,17 @@ function RadioApp() {
 
   useEffect(() => () => { audioRef.current?.pause(); }, []);
 
-  const play = (s: typeof RADIO_STATIONS[0]) => {
+  const play = (s: RadioStation) => {
     const audio = audioRef.current;
     if (!audio) return;
     setError(false);
     setLoading(true);
     setPlaying(false);
     setStationId(s.id);
-    audio.src = s.stream;
+    // proxy flag: route through server-side API to attach correct Referer/Origin headers
+    audio.src = s.proxy
+      ? `/api/radio-proxy?url=${encodeURIComponent(s.stream)}`
+      : s.stream;
     // do NOT call audio.load() — it aborts the play() promise with AbortError
     audio.play().catch((err: Error) => {
       if (err.name === 'AbortError') return; // interrupted by a new play call, not a real failure
