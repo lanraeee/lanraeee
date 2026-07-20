@@ -874,14 +874,25 @@ function BrowserApp({ isSafari, bookmarks }: { isSafari: boolean; bookmarks: { l
 
 /* ── radio app ──────────────────────────────────────────────── */
 const RADIO_STATIONS = [
-  { id:'groovesalad',  name:'Groove Salad',     genre:'Ambient · Chill',     emoji:'🌿', color:'#22c55e', gradient:'linear-gradient(135deg,#064e3b,#065f46)', stream:'https://ice1.somafm.com/groovesalad-256-mp3' },
-  { id:'dronezone',   name:'Drone Zone',        genre:'Deep Ambient',        emoji:'🌌', color:'#818cf8', gradient:'linear-gradient(135deg,#1e1b4b,#312e81)', stream:'https://ice1.somafm.com/dronezone-256-mp3' },
-  { id:'deepspace',   name:'Deep Space One',    genre:'Sci-Fi · Ambient',    emoji:'🚀', color:'#38bdf8', gradient:'linear-gradient(135deg,#0c4a6e,#075985)', stream:'https://ice1.somafm.com/deepspaceone-256-mp3' },
-  { id:'illstreet',   name:'Ill Street Blues',  genre:'Hip Hop · Beats',     emoji:'🎧', color:'#f59e0b', gradient:'linear-gradient(135deg,#78350f,#92400e)', stream:'https://ice1.somafm.com/illstreet-256-mp3' },
-  { id:'seventies',   name:'70s Hits',          genre:'Classic · Funk',      emoji:'🕺', color:'#fb923c', gradient:'linear-gradient(135deg,#7c2d12,#9a3412)', stream:'https://ice1.somafm.com/seventies-256-mp3' },
-  { id:'beatblender', name:'Beat Blender',      genre:'Electronic · House',  emoji:'🎛️', color:'#a78bfa', gradient:'linear-gradient(135deg,#4c1d95,#5b21b6)', stream:'https://ice1.somafm.com/beatblender-256-mp3' },
-  { id:'lush',        name:'Lush',              genre:'Indie Pop · Female',  emoji:'🌸', color:'#f472b6', gradient:'linear-gradient(135deg,#831843,#9d174d)', stream:'https://ice1.somafm.com/lush-256-mp3' },
-  { id:'kexp',        name:'KEXP 90.3',         genre:'Indie · Alternative', emoji:'📻', color:'#34d399', gradient:'linear-gradient(135deg,#064e3b,#065f46)', stream:'https://kexp-mp3-128.streamguys1.com/kexp128.mp3' },
+  // UK
+  { id:'capital',     name:'Capital FM',       genre:'UK Top 40 · Pop',      emoji:'🎵', color:'#e01e5a', gradient:'linear-gradient(135deg,#7c0527,#a3103e)', stream:'https://media-ice.musicradio.com/CapitalMP3' },
+  { id:'classicfm',   name:'Classic FM',       genre:'Classical',            emoji:'🎻', color:'#7c6cff', gradient:'linear-gradient(135deg,#1e1b4b,#312e81)', stream:'https://media-ice.musicradio.com/ClassicFMMP3' },
+  { id:'kissfm',      name:'Kiss FM UK',       genre:'Dance · R&B',          emoji:'💋', color:'#f43f5e', gradient:'linear-gradient(135deg,#4c0519,#9f1239)', stream:'https://media-ice.musicradio.com/KISSMP3' },
+  { id:'heart',       name:'Heart FM',         genre:'Easy Listening · Pop', emoji:'💗', color:'#f472b6', gradient:'linear-gradient(135deg,#831843,#9d174d)', stream:'https://media-ice.musicradio.com/HeartMP3' },
+  { id:'radiox',      name:'Radio X',          genre:'Rock · Indie',         emoji:'🎸', color:'#f97316', gradient:'linear-gradient(135deg,#7c2d12,#9a3412)', stream:'https://media-ice.musicradio.com/RadioXMP3' },
+  { id:'lbc',         name:'LBC',              genre:'News · Talk',          emoji:'📢', color:'#fbbf24', gradient:'linear-gradient(135deg,#78350f,#92400e)', stream:'https://media-ice.musicradio.com/LBCMP3' },
+  { id:'smooth',      name:'Smooth Radio',     genre:'Soul · R&B · Chill',   emoji:'🌊', color:'#60a5fa', gradient:'linear-gradient(135deg,#1e3a5f,#1e40af)', stream:'https://media-ice.musicradio.com/SmoothMP3' },
+  // US
+  { id:'kexp',        name:'KEXP 90.3',        genre:'Indie · Alternative',  emoji:'📻', color:'#34d399', gradient:'linear-gradient(135deg,#064e3b,#065f46)', stream:'https://kexp-mp3-128.streamguys1.com/kexp128.mp3' },
+  { id:'groovesalad', name:'Groove Salad',     genre:'Ambient · Chill',      emoji:'🌿', color:'#22c55e', gradient:'linear-gradient(135deg,#064e3b,#065f46)', stream:'https://ice1.somafm.com/groovesalad-256-mp3' },
+  { id:'secretagent', name:'Secret Agent',     genre:'Lounge · Spy Jazz',    emoji:'🕵️', color:'#94a3b8', gradient:'linear-gradient(135deg,#1e293b,#334155)', stream:'https://ice1.somafm.com/secretagent-128-mp3' },
+  { id:'dronezone',   name:'Drone Zone',       genre:'Deep Ambient',         emoji:'🌌', color:'#818cf8', gradient:'linear-gradient(135deg,#1e1b4b,#312e81)', stream:'https://ice1.somafm.com/dronezone-256-mp3' },
+  { id:'deepspace',   name:'Deep Space One',   genre:'Sci-Fi · Ambient',     emoji:'🚀', color:'#38bdf8', gradient:'linear-gradient(135deg,#0c4a6e,#075985)', stream:'https://ice1.somafm.com/deepspaceone-256-mp3' },
+  { id:'beatblender', name:'Beat Blender',     genre:'Electronic · House',   emoji:'🎛️', color:'#a78bfa', gradient:'linear-gradient(135deg,#4c1d95,#5b21b6)', stream:'https://ice1.somafm.com/beatblender-256-mp3' },
+  { id:'illstreet',   name:'Ill Street Blues', genre:'Hip Hop · Beats',      emoji:'🎧', color:'#f59e0b', gradient:'linear-gradient(135deg,#78350f,#92400e)', stream:'https://ice1.somafm.com/illstreet-256-mp3' },
+  { id:'lush',        name:'Lush',             genre:'Indie Pop · Female',   emoji:'🌸', color:'#f472b6', gradient:'linear-gradient(135deg,#831843,#9d174d)', stream:'https://ice1.somafm.com/lush-256-mp3' },
+  { id:'u80s',        name:'Underground 80s',  genre:'80s · Synthpop',       emoji:'🕺', color:'#fb923c', gradient:'linear-gradient(135deg,#7c2d12,#9a3412)', stream:'https://ice1.somafm.com/u80s-256-mp3' },
+  { id:'indiepop',    name:'Indie Pop Rocks',  genre:'Indie · Alternative',  emoji:'🎤', color:'#c084fc', gradient:'linear-gradient(135deg,#581c87,#6b21a8)', stream:'https://ice1.somafm.com/indiepop-256-mp3' },
 ];
 
 function RadioApp() {
@@ -890,39 +901,48 @@ function RadioApp() {
   const [volume, setVolume] = useState(0.8);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const station = RADIO_STATIONS.find(s => s.id === stationId) ?? null;
 
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume;
+  }, [volume]);
+
+  useEffect(() => () => { audioRef.current?.pause(); }, []);
+
   const play = (s: typeof RADIO_STATIONS[0]) => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ''; }
+    const audio = audioRef.current;
+    if (!audio) return;
     setError(false);
     setLoading(true);
     setPlaying(false);
     setStationId(s.id);
-    const audio = new Audio(s.stream);
-    audio.volume = volume;
-    audio.addEventListener('playing', () => { setLoading(false); setPlaying(true); });
-    audio.addEventListener('error', () => { setLoading(false); setError(true); setPlaying(false); });
+    audio.src = s.stream;
+    audio.load();
     audio.play().catch(() => { setLoading(false); setError(true); });
-    audioRef.current = audio;
   };
 
   const togglePlay = () => {
-    if (!audioRef.current || !station) return;
-    if (playing) { audioRef.current.pause(); setPlaying(false); }
-    else { setLoading(true); audioRef.current.play().then(() => { setLoading(false); setPlaying(true); }).catch(() => { setLoading(false); setError(true); }); }
+    const audio = audioRef.current;
+    if (!audio || !station) return;
+    if (playing) {
+      audio.pause();
+    } else {
+      setLoading(true);
+      audio.play().catch(() => { setLoading(false); setError(true); });
+    }
   };
-
-  const changeVolume = (v: number) => {
-    setVolume(v);
-    if (audioRef.current) audioRef.current.volume = v;
-  };
-
-  useEffect(() => () => { audioRef.current?.pause(); }, []);
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+      <audio
+        ref={audioRef}
+        onPlaying={() => { setLoading(false); setPlaying(true); setError(false); }}
+        onWaiting={() => setLoading(true)}
+        onPause={() => { setPlaying(false); setLoading(false); }}
+        onError={() => { setLoading(false); setError(true); setPlaying(false); }}
+      />
       <div>
         <p style={{ fontSize:10.5, textTransform:'uppercase', letterSpacing:'1.8px', color:'#f472b6', fontWeight:700, marginBottom:4 }}>Online Radio</p>
         <h2 style={{ fontSize:19, fontWeight:700, marginBottom:2 }}>Radio</h2>
@@ -964,7 +984,7 @@ function RadioApp() {
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
           <span style={{ fontSize:14 }}>🔈</span>
           <input type="range" min={0} max={1} step={0.05} value={volume}
-            onChange={e => changeVolume(parseFloat(e.target.value))}
+            onChange={e => { setVolume(parseFloat(e.target.value)); }}
             style={{ flex:1, accentColor:'#f472b6', cursor:'pointer' }} />
           <span style={{ fontSize:14 }}>🔊</span>
         </div>
