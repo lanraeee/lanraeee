@@ -1073,7 +1073,10 @@ export default function Desktop() {
   }, []);
 
   const focusWin = (id: string) => { const z = zTop + 1; setZTop(z); setZMap(m => ({ ...m, [id]: z })); };
-  const openWin = (id: string) => { focusWin(id); setOpen(m => ({ ...m, [id]: true })); };
+  const openWin = (id: string) => {
+    if (id === 'blog') { window.location.href = '/blog'; return; }
+    focusWin(id); setOpen(m => ({ ...m, [id]: true }));
+  };
   const closeWin = (id: string) => setOpen(m => ({ ...m, [id]: false }));
 
   const c = (key: string) => content[key] ?? CONTENT_DEFAULTS[key] ?? '';
@@ -1155,6 +1158,7 @@ export default function Desktop() {
     { id: 'spotify', icon: c('app.spotify.icon'), label: c('app.spotify.label'), gradient: 'linear-gradient(160deg,#1db954,#0d5e2a)' },
     { id: 'snake',      icon: c('app.snake.icon'),      label: c('app.snake.label'),      gradient: 'linear-gradient(160deg,#22c55e,#14532d)' },
     { id: 'troveagent', icon: c('app.troveagent.icon'), label: c('app.troveagent.label'), gradient: 'linear-gradient(160deg,#9d90ff,#5b4fcf)' },
+    { id: 'blog',       icon: '✍️',                      label: 'Blog',                    gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
   ];
 
   const wins = [
