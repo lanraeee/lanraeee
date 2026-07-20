@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 type Post = {
   id: string;
@@ -51,8 +52,9 @@ export default function BlogPage() {
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, borderBottom: '1px solid var(--stroke-2)',
         background: 'rgba(5,6,15,.7)', backdropFilter: 'blur(20px)', padding: '0 24px',
         display: 'flex', alignItems: 'center', height: 56, gap: 20 }}>
-        <Link href="/" style={{ fontWeight: 800, fontSize: 17, textDecoration: 'none', color: '#eef1fb' }}>
-          ◐ lanrae
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Image src="/logo.png" alt="lanrae" width={28} height={28} style={{ borderRadius: 6 }} />
+          <span style={{ fontWeight: 800, fontSize: 17, color: '#eef1fb' }}>lanrae</span>
         </Link>
         <span style={{ color: 'var(--stroke)', fontSize: 18 }}>/</span>
         <span style={{ fontWeight: 600, fontSize: 15, color: '#9d90ff' }}>blog</span>

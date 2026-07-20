@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -46,7 +47,10 @@ export default function PostPage() {
       <nav style={{ position: 'sticky', top: 0, zIndex: 100, borderBottom: '1px solid rgba(255,255,255,.08)',
         background: 'rgba(5,6,15,.7)', backdropFilter: 'blur(20px)', padding: '0 24px',
         display: 'flex', alignItems: 'center', height: 56, gap: 16 }}>
-        <Link href="/" style={{ fontWeight: 800, fontSize: 17, textDecoration: 'none', color: '#eef1fb' }}>◐ lanrae</Link>
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Image src="/logo.png" alt="lanrae" width={28} height={28} style={{ borderRadius: 6 }} />
+          <span style={{ fontWeight: 800, fontSize: 17, color: '#eef1fb' }}>lanrae</span>
+        </Link>
         <span style={{ color: 'rgba(255,255,255,.2)', fontSize: 18 }}>/</span>
         <Link href="/blog" style={{ fontSize: 14, color: '#9d90ff', textDecoration: 'none', fontWeight: 600 }}>blog</Link>
         {post && <>

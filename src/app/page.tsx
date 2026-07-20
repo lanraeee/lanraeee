@@ -752,56 +752,102 @@ function SnakeGame() {
 function BrowserApp({ isSafari, bookmarks }: { isSafari: boolean; bookmarks: { label: string; icon: string; url: string }[] }) {
   const [input, setInput] = useState('');
   const [frameUrl, setFrameUrl] = useState('');
+  const [blocked, setBlocked] = useState(false);
+  const [loading, setLoading] = useState(false);
   const accent = isSafari ? '#0a84ff' : '#0078d4';
   const accentGrad = isSafari ? 'linear-gradient(180deg,#0a84ff,#0050c8)' : 'linear-gradient(180deg,#0078d4,#00457a)';
+
+  // Sites known to block iframes — open directly in new tab
+  const BLOCKED_DOMAINS = ['google.com','youtube.com','x.com','twitter.com','instagram.com','reddit.com','facebook.com','linkedin.com','tiktok.com','amazon.com'];
+  const isBlocked = (url: string) => BLOCKED_DOMAINS.some(d => url.includes(d));
 
   const navigate = (href: string) => {
     const url = href.trim();
     if (!url) return;
-    const full = url.startsWith('http') ? url : `https://${url}`;
+    const full = url.startsWith('http') ? url : url.includes('.') ? `https://${url}` : `https://www.google.com/search?q=${encodeURIComponent(url)}`;
+    if (isBlocked(full)) {
+      window.open(full, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    setBlocked(false);
+    setLoading(true);
     setFrameUrl(full);
     setInput(full);
   };
+
+  const openExternal = () => window.open(frameUrl, '_blank', 'noopener,noreferrer');
 
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
       {/* address bar */}
       <div style={{ display:'flex', gap:8, marginBottom:12 }}>
         {frameUrl && (
-          <button onClick={() => { setFrameUrl(''); setInput(''); }}
+          <button onClick={() => { setFrameUrl(''); setInput(''); setBlocked(false); setLoading(false); }}
             title="Home"
             style={{ background:'rgba(255,255,255,.08)', border:'1px solid rgba(255,255,255,.1)', borderRadius:10, padding:'0 12px', color:'#eef1fb', fontSize:16, cursor:'pointer', flexShrink:0 }}>
             🏠
           </button>
         )}
-        <div style={{ flex:1, display:'flex', alignItems:'center', background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.1)', borderRadius:11, padding:'0 12px', gap:8 }}>
-          <span style={{ fontSize:12, color:'#7d84a6', flexShrink:0 }}>🔒</span>
+        <div style={{ flex:1, display:'flex', alignItems:'center', background:'rgba(255,255,255,.06)', border:`1px solid ${frameUrl ? `${accent}55` : 'rgba(255,255,255,.1)'}`, borderRadius:11, padding:'0 12px', gap:8 }}>
+          <span style={{ fontSize:12, color: frameUrl ? accent : '#7d84a6', flexShrink:0 }}>🔒</span>
           <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key==='Enter' && navigate(input)}
             placeholder={isSafari ? 'Search or enter website name' : 'Search or enter a web address'}
             style={{ flex:1, background:'none', border:'none', color:'#eef1fb', fontSize:13, outline:'none', fontFamily:'inherit', padding:'10px 0' }} />
+          {frameUrl && (
+            <button onClick={openExternal} title="Open in new tab"
+              style={{ background:'none', border:'none', color:'#7d84a6', fontSize:14, cursor:'pointer', padding:'2px 4px', flexShrink:0 }}>
+              ↗
+            </button>
+          )}
         </div>
         <button onClick={() => navigate(input)} style={{ background:accentGrad, color:'#fff', border:'none', borderRadius:11, padding:'0 16px', fontSize:13, fontWeight:650, cursor:'pointer', fontFamily:'inherit', whiteSpace:'nowrap', flexShrink:0 }}>
-          Go →
+          Go
         </button>
       </div>
 
       {frameUrl ? (
-        <div style={{ position:'relative', borderRadius:12, overflow:'hidden', border:'1px solid rgba(255,255,255,.1)' }}>
-          <iframe
-            key={frameUrl}
-            src={frameUrl}
-            style={{ width:'100%', height:400, border:'none', display:'block', background:'#fff' }}
-            allow="fullscreen"
-            title="browser"
-          />
-          {/* always-visible external-open button for sites that block embedding */}
-          <div style={{ position:'absolute', bottom:10, right:10 }}>
-            <button onClick={() => window.open(frameUrl,'_blank','noopener,noreferrer')}
-              style={{ background:'rgba(10,12,28,.82)', backdropFilter:'blur(10px)', border:'1px solid rgba(255,255,255,.18)', borderRadius:9, color:'#eef1fb', fontSize:12, fontWeight:600, padding:'6px 12px', cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:5 }}>
-              ↗ Open in browser tab
+        blocked ? (
+          /* blocked state */
+          <div style={{ borderRadius:12, border:'1px solid rgba(255,255,255,.1)', padding:'40px 24px', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', gap:14 }}>
+            <div style={{ fontSize:40 }}>{isSafari ? '🧭' : '🔷'}</div>
+            <div style={{ fontSize:15, fontWeight:700 }}>This page can't be embedded</div>
+            <div style={{ fontSize:13, color:'#7d84a6', maxWidth:'34ch', lineHeight:1.55 }}>
+              The site refused to load inside {isSafari ? 'Safari' : 'Edge'}. Open it in a real browser tab instead.
+            </div>
+            <button onClick={openExternal}
+              style={{ background:accentGrad, color:'#fff', border:'none', borderRadius:10, padding:'10px 22px', fontSize:13, fontWeight:650, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:7 }}>
+              ↗ Open {frameUrl.replace(/^https?:\/\//, '').split('/')[0]}
             </button>
           </div>
-        </div>
+        ) : (
+          <div style={{ position:'relative', borderRadius:12, overflow:'hidden', border:'1px solid rgba(255,255,255,.1)' }}>
+            {loading && (
+              <div style={{ position:'absolute', inset:0, background:'rgba(5,6,15,.6)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12, zIndex:2 }}>
+                <div style={{ width:32, height:32, borderRadius:'50%', border:`3px solid rgba(255,255,255,.1)`, borderTopColor:accent, animation:'spin 0.7s linear infinite' }} />
+                <span style={{ fontSize:13, color:'#7d84a6' }}>Loading…</span>
+              </div>
+            )}
+            <iframe
+              key={frameUrl}
+              src={frameUrl}
+              style={{ width:'100%', height:400, border:'none', display:'block', background:'#fff' }}
+              allow="fullscreen"
+              title="browser"
+              onLoad={() => setLoading(false)}
+              onError={() => { setLoading(false); setBlocked(true); }}
+            />
+            <div style={{ position:'absolute', bottom:10, right:10, display:'flex', gap:6 }}>
+              <button onClick={() => setBlocked(true)}
+                style={{ background:'rgba(10,12,28,.82)', backdropFilter:'blur(10px)', border:'1px solid rgba(255,255,255,.12)', borderRadius:8, color:'#7d84a6', fontSize:11, fontWeight:600, padding:'5px 10px', cursor:'pointer', fontFamily:'inherit' }}>
+                Not loading?
+              </button>
+              <button onClick={openExternal}
+                style={{ background:'rgba(10,12,28,.82)', backdropFilter:'blur(10px)', border:`1px solid ${accent}55`, borderRadius:8, color:'#eef1fb', fontSize:11, fontWeight:600, padding:'5px 10px', cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:4 }}>
+                ↗ New tab
+              </button>
+            </div>
+          </div>
+        )
       ) : (
         <>
           <p style={{ fontSize:10.5, textTransform:'uppercase', letterSpacing:'1.8px', color:accent, fontWeight:700, marginBottom:12 }}>Favourites</p>
@@ -816,8 +862,140 @@ function BrowserApp({ isSafari, bookmarks }: { isSafari: boolean; bookmarks: { l
               </button>
             ))}
           </div>
+          <p style={{ fontSize:11, color:'#7d84a6', marginTop:14, lineHeight:1.55 }}>
+            💡 Most major sites (Google, YouTube, Reddit) open in a new browser tab automatically.
+          </p>
         </>
       )}
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+}
+
+/* ── radio app ──────────────────────────────────────────────── */
+const RADIO_STATIONS = [
+  { id:'groovesalad',  name:'Groove Salad',     genre:'Ambient · Chill',     emoji:'🌿', color:'#22c55e', gradient:'linear-gradient(135deg,#064e3b,#065f46)', stream:'https://ice1.somafm.com/groovesalad-256-mp3' },
+  { id:'dronezone',   name:'Drone Zone',        genre:'Deep Ambient',        emoji:'🌌', color:'#818cf8', gradient:'linear-gradient(135deg,#1e1b4b,#312e81)', stream:'https://ice1.somafm.com/dronezone-256-mp3' },
+  { id:'deepspace',   name:'Deep Space One',    genre:'Sci-Fi · Ambient',    emoji:'🚀', color:'#38bdf8', gradient:'linear-gradient(135deg,#0c4a6e,#075985)', stream:'https://ice1.somafm.com/deepspaceone-256-mp3' },
+  { id:'illstreet',   name:'Ill Street Blues',  genre:'Hip Hop · Beats',     emoji:'🎧', color:'#f59e0b', gradient:'linear-gradient(135deg,#78350f,#92400e)', stream:'https://ice1.somafm.com/illstreet-256-mp3' },
+  { id:'seventies',   name:'70s Hits',          genre:'Classic · Funk',      emoji:'🕺', color:'#fb923c', gradient:'linear-gradient(135deg,#7c2d12,#9a3412)', stream:'https://ice1.somafm.com/seventies-256-mp3' },
+  { id:'beatblender', name:'Beat Blender',      genre:'Electronic · House',  emoji:'🎛️', color:'#a78bfa', gradient:'linear-gradient(135deg,#4c1d95,#5b21b6)', stream:'https://ice1.somafm.com/beatblender-256-mp3' },
+  { id:'lush',        name:'Lush',              genre:'Indie Pop · Female',  emoji:'🌸', color:'#f472b6', gradient:'linear-gradient(135deg,#831843,#9d174d)', stream:'https://ice1.somafm.com/lush-256-mp3' },
+  { id:'kexp',        name:'KEXP 90.3',         genre:'Indie · Alternative', emoji:'📻', color:'#34d399', gradient:'linear-gradient(135deg,#064e3b,#065f46)', stream:'https://kexp-mp3-128.streamguys1.com/kexp128.mp3' },
+];
+
+function RadioApp() {
+  const [stationId, setStationId] = useState<string | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [volume, setVolume] = useState(0.8);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const station = RADIO_STATIONS.find(s => s.id === stationId) ?? null;
+
+  const play = (s: typeof RADIO_STATIONS[0]) => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ''; }
+    setError(false);
+    setLoading(true);
+    setPlaying(false);
+    setStationId(s.id);
+    const audio = new Audio(s.stream);
+    audio.volume = volume;
+    audio.addEventListener('playing', () => { setLoading(false); setPlaying(true); });
+    audio.addEventListener('error', () => { setLoading(false); setError(true); setPlaying(false); });
+    audio.play().catch(() => { setLoading(false); setError(true); });
+    audioRef.current = audio;
+  };
+
+  const togglePlay = () => {
+    if (!audioRef.current || !station) return;
+    if (playing) { audioRef.current.pause(); setPlaying(false); }
+    else { setLoading(true); audioRef.current.play().then(() => { setLoading(false); setPlaying(true); }).catch(() => { setLoading(false); setError(true); }); }
+  };
+
+  const changeVolume = (v: number) => {
+    setVolume(v);
+    if (audioRef.current) audioRef.current.volume = v;
+  };
+
+  useEffect(() => () => { audioRef.current?.pause(); }, []);
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+      <div>
+        <p style={{ fontSize:10.5, textTransform:'uppercase', letterSpacing:'1.8px', color:'#f472b6', fontWeight:700, marginBottom:4 }}>Online Radio</p>
+        <h2 style={{ fontSize:19, fontWeight:700, marginBottom:2 }}>Radio</h2>
+        <p style={{ fontSize:12.5, color:'#7d84a6' }}>Live internet radio — pick a station and press play.</p>
+      </div>
+
+      {/* now playing */}
+      {station && (
+        <div style={{ borderRadius:14, padding:'16px 18px', background:station.gradient, border:'1px solid rgba(255,255,255,.15)', display:'flex', gap:16, alignItems:'center' }}>
+          <div style={{ fontSize:36, lineHeight:1 }}>{station.emoji}</div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontWeight:700, fontSize:15 }}>{station.name}</div>
+            <div style={{ fontSize:12, color:'rgba(255,255,255,.7)', marginTop:2 }}>{station.genre}</div>
+            {error && <div style={{ fontSize:11, color:'#fca5a5', marginTop:4 }}>Stream error — try another station</div>}
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:10, alignItems:'center' }}>
+            <button onClick={togglePlay} disabled={loading}
+              style={{ width:44, height:44, borderRadius:'50%', border:'none', background:'rgba(255,255,255,.2)', backdropFilter:'blur(8px)', fontSize:18, cursor:'pointer', display:'grid', placeItems:'center', transition:'background .15s' }}
+              onMouseEnter={e => (e.currentTarget.style.background='rgba(255,255,255,.32)')}
+              onMouseLeave={e => (e.currentTarget.style.background='rgba(255,255,255,.2)')}>
+              {loading ? <div style={{ width:18, height:18, borderRadius:'50%', border:'2px solid rgba(255,255,255,.3)', borderTopColor:'#fff', animation:'spin 0.7s linear infinite' }} />
+                : playing ? '⏸' : '▶'}
+            </button>
+            {playing && (
+              <div style={{ display:'flex', gap:2, alignItems:'flex-end', height:16 }}>
+                {[1,2,3,4].map(i => (
+                  <div key={i} style={{ width:3, borderRadius:2, background:'rgba(255,255,255,.8)',
+                    animation:`bar${i} ${0.5 + i*0.15}s ease-in-out infinite alternate`,
+                    height: `${40 + i*15}%` }} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* volume */}
+      {station && (
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <span style={{ fontSize:14 }}>🔈</span>
+          <input type="range" min={0} max={1} step={0.05} value={volume}
+            onChange={e => changeVolume(parseFloat(e.target.value))}
+            style={{ flex:1, accentColor:'#f472b6', cursor:'pointer' }} />
+          <span style={{ fontSize:14 }}>🔊</span>
+        </div>
+      )}
+
+      {/* station list */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:9 }}>
+        {RADIO_STATIONS.map(s => (
+          <button key={s.id} onClick={() => play(s)}
+            style={{ background: stationId === s.id ? s.gradient : 'var(--glass-2)',
+              border: `1px solid ${stationId === s.id ? 'rgba(255,255,255,.2)' : 'var(--stroke-2)'}`,
+              borderRadius:12, padding:'12px 13px', display:'flex', gap:10, alignItems:'center',
+              cursor:'pointer', fontFamily:'inherit', textAlign:'left', transition:'all .15s' }}
+            onMouseEnter={e => { if (stationId !== s.id) (e.currentTarget as HTMLElement).style.borderColor='rgba(255,255,255,.15)'; }}
+            onMouseLeave={e => { if (stationId !== s.id) (e.currentTarget as HTMLElement).style.borderColor='var(--stroke-2)'; }}>
+            <span style={{ fontSize:22, lineHeight:1 }}>{s.emoji}</span>
+            <div style={{ minWidth:0 }}>
+              <div style={{ fontWeight:650, fontSize:13, color:'#eef1fb', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{s.name}</div>
+              <div style={{ fontSize:11, color: stationId === s.id ? 'rgba(255,255,255,.7)' : '#7d84a6', marginTop:1 }}>{s.genre}</div>
+            </div>
+            {stationId === s.id && playing && <span style={{ marginLeft:'auto', fontSize:10, color:'rgba(255,255,255,.8)', fontWeight:700 }}>LIVE</span>}
+          </button>
+        ))}
+      </div>
+      <style>{`
+        @keyframes spin{to{transform:rotate(360deg)}}
+        @keyframes bar1{from{height:20%}to{height:70%}}
+        @keyframes bar2{from{height:40%}to{height:90%}}
+        @keyframes bar3{from{height:30%}to{height:80%}}
+        @keyframes bar4{from{height:50%}to{height:100%}}
+      `}</style>
     </div>
   );
 }
@@ -1159,6 +1337,7 @@ export default function Desktop() {
     { id: 'snake',      icon: c('app.snake.icon'),      label: c('app.snake.label'),      gradient: 'linear-gradient(160deg,#22c55e,#14532d)' },
     { id: 'troveagent', icon: c('app.troveagent.icon'), label: c('app.troveagent.label'), gradient: 'linear-gradient(160deg,#9d90ff,#5b4fcf)' },
     { id: 'blog',       icon: '✍️',                      label: 'Blog',                    gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
+    { id: 'radio',      icon: '📻',                      label: 'Radio',                   gradient: 'linear-gradient(160deg,#831843,#9d174d)' },
   ];
 
   const wins = [
@@ -1174,6 +1353,7 @@ export default function Desktop() {
     { id: 'spotify', title: c('win.spotify.title'), subtitle: c('win.spotify.subtitle') || undefined },
     { id: 'snake',      title: c('win.snake.title'),      subtitle: c('win.snake.subtitle') || undefined },
     { id: 'troveagent', title: c('win.troveagent.title'), subtitle: c('win.troveagent.subtitle') || undefined },
+    { id: 'radio',      title: 'Radio',                  subtitle: '— live internet radio' },
   ];
 
   const winStyles: Record<string, React.CSSProperties> = {
@@ -1189,6 +1369,7 @@ export default function Desktop() {
     spotify: { width: 'min(360px,92vw)', top: 100, left: 'calc(50% - 180px)' },
     snake:      { width: 'min(360px,92vw)', top: 100, left: 'calc(50% - 180px)' },
     troveagent: { width: 'min(540px,92vw)', top: 80,  left: 'calc(50% - 270px)' },
+    radio:      { width: 'min(480px,92vw)', top: 90,  left: 'calc(50% - 240px)' },
   };
 
   /* ── shared content ───────────────────────────────────── */
@@ -1918,6 +2099,8 @@ export default function Desktop() {
         <TroveAgent />
       </div>
     );
+
+    if (id === 'radio') return <RadioApp />;
 
     return null;
   };
