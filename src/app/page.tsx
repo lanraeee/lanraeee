@@ -1379,7 +1379,7 @@ export default function Desktop() {
     { id: 'troveagent', icon: c('app.troveagent.icon'), label: c('app.troveagent.label'), gradient: 'linear-gradient(160deg,#9d90ff,#5b4fcf)' },
     { id: 'blog',       icon: '✍️',                      label: 'Blog',                    gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
     { id: 'radio',      icon: '📻',                      label: 'Radio',                   gradient: 'linear-gradient(160deg,#831843,#9d174d)' },
-    { id: 'blackhat',   icon: '🎩',                      label: 'BlackHat Tools',           gradient: 'linear-gradient(160deg,#1a0000,#0d0505)' },
+    { id: 'whitehat',   icon: '👷',                      label: 'WhiteHat Tools',           gradient: 'linear-gradient(160deg,#0a1a30,#0d1520)' },
   ];
 
   const appOrderStr = c('app.order');
@@ -1407,7 +1407,7 @@ export default function Desktop() {
     { id: 'snake',      title: c('win.snake.title'),      subtitle: c('win.snake.subtitle') || undefined },
     { id: 'troveagent', title: c('win.troveagent.title'), subtitle: c('win.troveagent.subtitle') || undefined },
     { id: 'radio',      title: 'Radio',                  subtitle: '— live internet radio' },
-    { id: 'blackhat',   title: '🎩 BlackHat Tools',      subtitle: '— OSINT4ALL' },
+    { id: 'whitehat',   title: '👷 WhiteHat Tools',      subtitle: '— OSINT4ALL' },
   ];
 
   const winStyles: Record<string, React.CSSProperties> = {
@@ -1424,7 +1424,7 @@ export default function Desktop() {
     snake:      { width: 'min(360px,92vw)', top: 100, left: 'calc(50% - 180px)' },
     troveagent: { width: 'min(540px,92vw)', top: 80,  left: 'calc(50% - 270px)' },
     radio:      { width: 'min(480px,92vw)', top: 90,  left: 'calc(50% - 240px)' },
-    blackhat:   { width: 'min(720px,92vw)', top: 76,  left: 'calc(50% - 360px)' },
+    whitehat:   { width: 'min(720px,92vw)', top: 76,  left: 'calc(50% - 360px)' },
   };
 
   /* ── shared content ───────────────────────────────────── */
@@ -2155,7 +2155,7 @@ export default function Desktop() {
       </div>
     );
 
-    if (id === 'blackhat') {
+    if (id === 'whitehat') {
       const bhTools = [
         { name: '10MinuteMail',    cat: 'Anonymity', icon: '📧', desc: 'Disposable temp email address that auto-expires in 10 minutes.', url: 'https://10minutemail.com/' },
         { name: 'AnonAddy',        cat: 'Anonymity', icon: '✉️', desc: 'Open-source anonymous email forwarding with unlimited aliases.', url: 'https://anonaddy.com/' },
@@ -2217,15 +2217,15 @@ export default function Desktop() {
       const categories = ['Anonymity', 'Identity', 'Intel', 'People', 'Search', 'CSE', 'Geo'];
       return (
         <>
-          <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#ff6b6b', fontWeight: 700, marginBottom: 8 }}>OSINT4ALL · Recon Tools</p>
-          <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>BlackHat Tools</h2>
+          <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#60a5fa', fontWeight: 700, marginBottom: 8 }}>OSINT4ALL · Recon Tools</p>
+          <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>WhiteHat Tools</h2>
           <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 10 }}>Open-source intelligence & anonymity toolkit. For research and educational purposes only.</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#ff6b6b', fontWeight: 600 }}>
-              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff3b30', display: 'inline-block', boxShadow: '0 0 6px #ff3b30' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#60a5fa', fontWeight: 600 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#3b82f6', display: 'inline-block', boxShadow: '0 0 6px #3b82f6' }} />
               {bhTools.length} tools indexed
             </div>
-            <div style={{ fontSize: 12, color: '#4ade80', fontWeight: 600 }}>🎩 Educational & research use only</div>
+            <div style={{ fontSize: 12, color: '#4ade80', fontWeight: 600 }}>👷 Educational & research use only</div>
           </div>
           {categories.map(cat => {
             const tools = bhTools.filter(t => t.cat === cat);

@@ -272,7 +272,7 @@ const DEFAULT_APP_ORDER = [
   { id: 'troveagent',  icon: '🤖', label: 'Trove AI',        gradient: 'linear-gradient(160deg,#9d90ff,#5b4fcf)' },
   { id: 'blog',        icon: '✍️', label: 'Blog',            gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
   { id: 'radio',       icon: '📻', label: 'Radio',           gradient: 'linear-gradient(160deg,#831843,#9d174d)' },
-  { id: 'blackhat',    icon: '🎩', label: 'BlackHat Tools',  gradient: 'linear-gradient(160deg,#1a0000,#0d0505)' },
+  { id: 'whitehat',    icon: '👷', label: 'WhiteHat Tools',  gradient: 'linear-gradient(160deg,#0a1a30,#0d1520)' },
 ];
 
 export default function AdminPage() {
@@ -684,7 +684,7 @@ export default function AdminPage() {
           {navItem('email', '📧 Email')}
           {navItem('security', '🛡️ Security Tools')}
           {navItem('blog', '✍️ Blog')}
-          {navItem('apps', '🎩 App Order')}
+          {navItem('apps', '👷 App Order')}
         </nav>
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ padding: '12px', background: 'rgba(53,214,199,.08)', border: '1px solid rgba(53,214,199,.2)',
