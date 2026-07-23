@@ -1379,8 +1379,13 @@ export default function Desktop() {
     { id: 'troveagent', icon: c('app.troveagent.icon'), label: c('app.troveagent.label'), gradient: 'linear-gradient(160deg,#9d90ff,#5b4fcf)' },
     { id: 'blog',       icon: '✍️',                      label: 'Blog',                    gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
     { id: 'radio',      icon: '📻',                      label: 'Radio',                   gradient: 'linear-gradient(160deg,#831843,#9d174d)' },
-    { id: 'whitehat',   icon: '👷',                      label: 'WhiteHat Tools',           gradient: 'linear-gradient(160deg,#0a1a30,#0d1520)' },
+    { id: 'whitehat',   icon: '/whitehat-icon.jpg',      label: 'WhiteHat Tools',           gradient: 'linear-gradient(160deg,#0a1a30,#0d1520)' },
   ];
+
+  const renderIcon = (icon: string) =>
+    icon.startsWith('/')
+      ? <img src={icon} style={{ width: '92%', height: '92%', objectFit: 'cover', borderRadius: 'inherit', display: 'block' }} alt="" />
+      : <>{icon}</>;
 
   const appOrderStr = c('app.order');
   const sortedAppsMeta = appOrderStr
@@ -1407,7 +1412,7 @@ export default function Desktop() {
     { id: 'snake',      title: c('win.snake.title'),      subtitle: c('win.snake.subtitle') || undefined },
     { id: 'troveagent', title: c('win.troveagent.title'), subtitle: c('win.troveagent.subtitle') || undefined },
     { id: 'radio',      title: 'Radio',                  subtitle: '— live internet radio' },
-    { id: 'whitehat',   title: '👷 WhiteHat Tools',      subtitle: '— OSINT4ALL' },
+    { id: 'whitehat',   title: 'WhiteHat Tools',          subtitle: '— OSINT4ALL' },
   ];
 
   const winStyles: Record<string, React.CSSProperties> = {
@@ -2523,7 +2528,7 @@ export default function Desktop() {
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, cursor: 'pointer' }}>
                   <div style={{ width: 62, height: 62, borderRadius: 15, background: app.gradient,
                     display: 'grid', placeItems: 'center', fontSize: 28,
-                    boxShadow: '0 6px 18px rgba(0,0,0,.45)', border: '1px solid rgba(255,255,255,.12)' }}>{app.icon}</div>
+                    boxShadow: '0 6px 18px rgba(0,0,0,.45)', border: '1px solid rgba(255,255,255,.12)' }}>{renderIcon(app.icon)}</div>
                   <span style={{ fontSize: 11, color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,.7)', textAlign: 'center', fontWeight: 500 }}>{app.label}</span>
                 </div>
               ))}
@@ -2545,7 +2550,7 @@ export default function Desktop() {
                   <div style={{ width: 56, height: 56, borderRadius: 14, background: app.gradient,
                     display: 'grid', placeItems: 'center', fontSize: 26,
                     boxShadow: '0 4px 14px rgba(0,0,0,.4)',
-                    border: open[app.id] ? '2px solid rgba(157,144,255,.7)' : '1px solid rgba(255,255,255,.1)' }}>{app.icon}</div>
+                    border: open[app.id] ? '2px solid rgba(157,144,255,.7)' : '1px solid rgba(255,255,255,.1)' }}>{renderIcon(app.icon)}</div>
                   {open[app.id] && <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#fff' }} />}
                 </div>
               ))}
@@ -2702,7 +2707,7 @@ export default function Desktop() {
                 onPointerUp={e => (e.currentTarget.style.background = 'rgba(255,255,255,.06)')}>
                 <div style={{ width: 56, height: 56, borderRadius: 16, background: app.gradient,
                   display: 'grid', placeItems: 'center', fontSize: 26, flexShrink: 0,
-                  boxShadow: '0 4px 14px rgba(0,0,0,.4)' }}>{app.icon}</div>
+                  boxShadow: '0 4px 14px rgba(0,0,0,.4)' }}>{renderIcon(app.icon)}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 16, fontWeight: 500, color: '#fff' }}>{app.label}</div>
                   <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.5)', marginTop: 2 }}>
@@ -2732,7 +2737,7 @@ export default function Desktop() {
                     cursor: 'pointer', flex: 1 }}>
                   <div style={{ width: 64, height: 32, borderRadius: 16, display: 'grid', placeItems: 'center',
                     background: isActive ? 'rgba(157,144,255,.25)' : 'transparent',
-                    transition: 'background .2s', fontSize: 20 }}>{app.icon}</div>
+                    transition: 'background .2s', fontSize: 20 }}>{renderIcon(app.icon)}</div>
                   <span style={{ fontSize: 11, color: isActive ? '#b8b0ff' : 'rgba(255,255,255,.4)',
                     fontWeight: isActive ? 600 : 400, transition: 'color .2s' }}>{app.label}</span>
                 </div>
@@ -2902,7 +2907,7 @@ export default function Desktop() {
                   fontSize: 24, background: deskApp.gradient,
                   border: '1px solid rgba(255,255,255,.18)',
                   boxShadow: '0 8px 22px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.18)',
-                  transition: 'transform .2s cubic-bezier(.2,.9,.3,1.3), filter .2s' }}>{deskApp.icon}</div>
+                  transition: 'transform .2s cubic-bezier(.2,.9,.3,1.3), filter .2s' }}>{renderIcon(deskApp.icon)}</div>
                 <span style={{ fontSize: 11.5, color: '#e8ecf7', textShadow: '0 1px 4px rgba(0,0,0,.8)',
                   padding: '2px 6px', borderRadius: 4, background: 'rgba(0,0,0,.28)', backdropFilter: 'blur(6px)' }}>{deskApp.label}</span>
               </div>
@@ -2938,7 +2943,7 @@ export default function Desktop() {
                   transition: 'background .15s, border-color .15s, box-shadow .15s' }}
                 onMouseEnter={e => { if (!open[app.id]) { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,.1)'; el.style.borderColor = 'rgba(255,255,255,.08)'; } }}
                 onMouseLeave={e => { if (!open[app.id]) { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.borderColor = 'transparent'; } }}>
-                {app.icon}
+                {renderIcon(app.icon)}
                 {open[app.id] && <div style={{ position: 'absolute', bottom: 2, left: '50%',
                   transform: 'translateX(-50%)', width: 16, height: 2, borderRadius: 1,
                   background: 'rgba(255,255,255,.7)' }} />}
@@ -3083,7 +3088,7 @@ export default function Desktop() {
                 fontSize: 28, background: deskApp.gradient,
                 border: '1px solid rgba(255,255,255,.18)',
                 boxShadow: '0 10px 28px rgba(0,0,0,.52), inset 0 1px 0 rgba(255,255,255,.18)',
-                transition: 'transform .2s cubic-bezier(.2,.9,.3,1.3), filter .2s' }}>{deskApp.icon}</div>
+                transition: 'transform .2s cubic-bezier(.2,.9,.3,1.3), filter .2s' }}>{renderIcon(deskApp.icon)}</div>
               <span style={{ fontSize: 11.5, color: '#eaeefb', textShadow: '0 1px 4px rgba(0,0,0,.8)',
                 padding: '2px 7px', borderRadius: 5, background: 'rgba(0,0,0,.28)', backdropFilter: 'blur(6px)' }}>{deskApp.label}</span>
             </div>
@@ -3129,7 +3134,7 @@ export default function Desktop() {
                 transition: 'transform .2s cubic-bezier(.2,.9,.3,1.3), box-shadow .2s',
                 transformOrigin: 'bottom center',
                 filter: open[app.id] ? 'brightness(1.05)' : 'brightness(0.88)',
-              }}>{app.icon}</div>
+              }}>{renderIcon(app.icon)}</div>
               <div style={{ height: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {open[app.id] && <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(255,255,255,.8)' }} />}
               </div>
