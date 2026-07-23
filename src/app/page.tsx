@@ -1379,7 +1379,19 @@ export default function Desktop() {
     { id: 'troveagent', icon: c('app.troveagent.icon'), label: c('app.troveagent.label'), gradient: 'linear-gradient(160deg,#9d90ff,#5b4fcf)' },
     { id: 'blog',       icon: '✍️',                      label: 'Blog',                    gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
     { id: 'radio',      icon: '📻',                      label: 'Radio',                   gradient: 'linear-gradient(160deg,#831843,#9d174d)' },
+    { id: 'blackhat',   icon: '🎩',                      label: 'BlackHat Tools',           gradient: 'linear-gradient(160deg,#1a0000,#0d0505)' },
   ];
+
+  const appOrderStr = c('app.order');
+  const sortedAppsMeta = appOrderStr
+    ? (() => {
+        const ids = appOrderStr.split(',').map((s: string) => s.trim()).filter(Boolean);
+        const byId: Record<string, typeof appsMeta[0]> = Object.fromEntries(appsMeta.map(a => [a.id, a]));
+        const ordered = ids.map((id: string) => byId[id]).filter((a): a is typeof appsMeta[0] => !!a);
+        const rest = appsMeta.filter(a => !ids.includes(a.id));
+        return [...ordered, ...rest];
+      })()
+    : appsMeta;
 
   const wins = [
     { id: 'store',   title: c('win.store.title'),   subtitle: c('win.store.subtitle') || undefined },
@@ -1395,6 +1407,7 @@ export default function Desktop() {
     { id: 'snake',      title: c('win.snake.title'),      subtitle: c('win.snake.subtitle') || undefined },
     { id: 'troveagent', title: c('win.troveagent.title'), subtitle: c('win.troveagent.subtitle') || undefined },
     { id: 'radio',      title: 'Radio',                  subtitle: '— live internet radio' },
+    { id: 'blackhat',   title: '🎩 BlackHat Tools',      subtitle: '— OSINT4ALL' },
   ];
 
   const winStyles: Record<string, React.CSSProperties> = {
@@ -1411,6 +1424,7 @@ export default function Desktop() {
     snake:      { width: 'min(360px,92vw)', top: 100, left: 'calc(50% - 180px)' },
     troveagent: { width: 'min(540px,92vw)', top: 80,  left: 'calc(50% - 270px)' },
     radio:      { width: 'min(480px,92vw)', top: 90,  left: 'calc(50% - 240px)' },
+    blackhat:   { width: 'min(720px,92vw)', top: 76,  left: 'calc(50% - 360px)' },
   };
 
   /* ── shared content ───────────────────────────────────── */
@@ -2141,6 +2155,132 @@ export default function Desktop() {
       </div>
     );
 
+    if (id === 'blackhat') {
+      const bhTools = [
+        { name: '10MinuteMail',    cat: 'Anonymity', icon: '📧', desc: 'Disposable temp email address that auto-expires in 10 minutes.', url: 'https://10minutemail.com/' },
+        { name: 'AnonAddy',        cat: 'Anonymity', icon: '✉️', desc: 'Open-source anonymous email forwarding with unlimited aliases.', url: 'https://anonaddy.com/' },
+        { name: 'SimpleLogin',     cat: 'Anonymity', icon: '🛡️', desc: 'Email alias service — forward to your real inbox, stay anonymous.', url: 'https://simplelogin.io/' },
+        { name: 'MailDrop',        cat: 'Anonymity', icon: '📬', desc: 'Simple free temporary email inbox with no sign-up required.', url: 'https://maildrop.cc/' },
+        { name: 'OnlineSIM',       cat: 'Anonymity', icon: '📱', desc: 'Online virtual phone numbers for SMS verification worldwide.', url: 'https://onlinesim.net/' },
+        { name: 'Receive SMS',     cat: 'Anonymity', icon: '💬', desc: 'Free public SMS inbox — receive verification codes anonymously.', url: 'https://hs3x.com/' },
+        { name: 'SMStome',         cat: 'Anonymity', icon: '📲', desc: 'Receive SMS online free using shared virtual numbers globally.', url: 'https://smstome.com' },
+        { name: 'Twilio',          cat: 'Anonymity', icon: '☎️', desc: 'Programmable virtual numbers — send/receive SMS at scale.', url: 'https://www.twilio.com/' },
+        { name: 'FaxZero',         cat: 'Anonymity', icon: '📠', desc: 'Send faxes for free without revealing your identity.', url: 'https://faxzero.com/' },
+        { name: 'Globfone',        cat: 'Anonymity', icon: '🌐', desc: 'Send free anonymous text messages to mobiles worldwide.', url: 'https://globfone.com/send-text/' },
+        { name: 'Fake Name Gen',   cat: 'Identity',  icon: '🪪', desc: 'Generate complete fake identities: name, address, CC, and more.', url: 'https://www.fakenamegenerator.com/' },
+        { name: 'Username Gen',    cat: 'Identity',  icon: '🏷️', desc: 'Create secure, unique usernames for anonymous accounts.', url: 'https://www.lastpass.com/features/username-generator' },
+        { name: 'IntelTechniques', cat: 'Intel',     icon: '🕵️', desc: "Michael Bazzell's comprehensive OSINT suite — the gold standard.", url: 'https://inteltechniques.com/tools/' },
+        { name: 'SynapsInt',       cat: 'Intel',     icon: '🔗', desc: 'Unified OSINT search aggregating results from dozens of sources.', url: 'https://synapsint.com/' },
+        { name: 'IDCrawl',         cat: 'Intel',     icon: '🆔', desc: 'Free people search engine that finds profiles across the web.', url: 'https://www.idcrawl.com/' },
+        { name: 'WebMii',          cat: 'Intel',     icon: '🕸️', desc: 'Search for people online — aggregates social profiles and mentions.', url: 'https://webmii.com/' },
+        { name: 'Criminal IP',     cat: 'Intel',     icon: '🔴', desc: 'AI-powered cyber threat intel — scan IPs, domains, and URLs.', url: 'https://www.criminalip.io/' },
+        { name: 'IntelX Person',   cat: 'Intel',     icon: '🔎', desc: 'Intelligence X — search leaked data, dark web, and public records.', url: 'https://intelx.io/tools?tab=person' },
+        { name: 'LinkScope',       cat: 'Intel',     icon: '🔭', desc: 'Open-source OSINT client for visualising data relationships.', url: 'https://github.com/AccentuSoft/LinkScope_Client' },
+        { name: 'osrframework',    cat: 'Intel',     icon: '🐍', desc: 'Python OSINT framework — username, email & domain investigation.', url: 'https://pypi.org/project/osrframework/' },
+        { name: 'TruePeopleSearch',cat: 'People',    icon: '👤', desc: 'Free US people search — addresses, phone numbers, relatives.', url: 'https://www.truepeoplesearch.com/' },
+        { name: 'FastPeopleSearch',cat: 'People',    icon: '⚡', desc: 'Instant people search with addresses, phones & background info.', url: 'https://fastpeoplesearch.com/' },
+        { name: 'PeopleFinder',    cat: 'People',    icon: '🔍', desc: 'Search public records to find people and background information.', url: 'https://www.peoplefinder.com/' },
+        { name: 'Yandex People',   cat: 'People',    icon: '👥', desc: 'Yandex social profile search — find people across Russian networks.', url: 'https://yandex.ru/people' },
+        { name: 'SpyTox',          cat: 'People',    icon: '📞', desc: 'Reverse phone lookup — find the owner of any number.', url: 'https://www.spytox.com/' },
+        { name: 'UsernameSearch',  cat: 'People',    icon: '🔐', desc: 'Search a username across hundreds of social networks at once.', url: 'https://usersearch.org/' },
+        { name: 'Google Advanced', cat: 'Search',    icon: '🔍', desc: 'Google advanced search with fine-grained filters and operators.', url: 'https://www.google.com/advanced_search' },
+        { name: 'Yandex Search',   cat: 'Search',    icon: '🌐', desc: 'Russian search engine with superior reverse image search.', url: 'https://yandex.com/' },
+        { name: 'Searx',           cat: 'Search',    icon: '🔒', desc: 'Privacy-respecting metasearch engine — no tracking, open source.', url: 'https://searx.info/' },
+        { name: 'DuckDuckGo',      cat: 'Search',    icon: '🦆', desc: 'Privacy-focused search — no tracking, no filter bubbles.', url: 'https://duckduckgo.com/' },
+        { name: 'Startpage',       cat: 'Search',    icon: '🛡️', desc: 'Google results without tracking — the private Google alternative.', url: 'https://startpage.com/' },
+        { name: 'Brave Search',    cat: 'Search',    icon: '🦁', desc: 'Independent search index — no Google, no tracking, no censorship.', url: 'https://search.brave.com/' },
+        { name: 'Baidu',           cat: 'Search',    icon: '🇨🇳', desc: "China's dominant search engine — unique indexing of Chinese web.", url: 'https://www.baidu.com/' },
+        { name: 'Carrot2',         cat: 'Search',    icon: '🥕', desc: 'Clustering search engine — organises results into topic groups.', url: 'https://search.carrot2.org/#/search/web' },
+        { name: 'Crossref',        cat: 'Search',    icon: '📚', desc: 'Search academic papers, DOIs, and scholarly publications.', url: 'https://search.crossref.org/' },
+        { name: 'OSINT CSE',       cat: 'CSE',       icon: '🔎', desc: 'Google Custom Search Engine optimised for OSINT investigations.', url: 'https://cse.google.com/cse/publicurl?cx=006290531980334157382:qcaf4enph7i' },
+        { name: 'Mailing List CSE',cat: 'CSE',       icon: '📋', desc: 'Google CSE for searching mailing lists and email archives.', url: 'https://cse.google.com/cse/publicurl?cx=013991603413798772546:sipriovnbxq' },
+        { name: 'Satellites.pro',  cat: 'Geo',       icon: '🛰️', desc: 'High-res satellite imagery — compare Google, Bing, Yandex & more.', url: 'https://satellites.pro/' },
+        { name: 'Mapillary',       cat: 'Geo',       icon: '📸', desc: 'Crowd-sourced street-level imagery — open alternative to Street View.', url: 'https://www.mapillary.com/app/' },
+        { name: 'Wikimapia',       cat: 'Geo',       icon: '🗺️', desc: 'Wikipedia-style map with community annotations on every place.', url: 'http://wikimapia.org/' },
+        { name: 'OpenStreetMap',   cat: 'Geo',       icon: '🗾', desc: 'Free editable world map built by volunteers — the open geo standard.', url: 'https://www.openstreetmap.org/' },
+        { name: 'Live UA Map',     cat: 'Geo',       icon: '🇺🇦', desc: 'Real-time interactive map of Ukraine conflict zone events.', url: 'https://liveuamap.com/' },
+        { name: 'FIRMS NASA',      cat: 'Geo',       icon: '🔥', desc: 'NASA Fire Information — global near-real-time fire detection map.', url: 'https://firms.modaps.eosdis.nasa.gov/map/' },
+        { name: 'Military Bases',  cat: 'Geo',       icon: '⚔️', desc: 'OpenStreetMap overlay showing military installations worldwide.', url: 'https://umap.openstreetmap.fr/en/map/military-bases-around-the-world_510207' },
+        { name: 'ArcGIS Atlas',    cat: 'Geo',       icon: '🌍', desc: 'Curated global geographic information layers and analytics.', url: 'https://livingatlas.arcgis.com/en/browse/' },
+        { name: 'Windy Webcams',   cat: 'Geo',       icon: '📷', desc: 'Live webcams worldwide overlaid on weather maps.', url: 'https://www.windy.com/-Webcams/webcams' },
+        { name: 'Radio Garden',    cat: 'Geo',       icon: '📻', desc: 'Explore live radio stations from around the world on a 3D globe.', url: 'http://radio.garden/search' },
+      ];
+      const catMeta: Record<string, { color: string; bg: string; gradient: string }> = {
+        Anonymity: { color: '#ff6b6b', bg: 'rgba(239,68,68,.12)',    gradient: 'linear-gradient(160deg,#3d0a0a,#1a0000)' },
+        Identity:  { color: '#fb923c', bg: 'rgba(251,146,60,.12)',   gradient: 'linear-gradient(160deg,#3d1500,#1a0800)' },
+        Intel:     { color: '#c084fc', bg: 'rgba(192,132,252,.12)',  gradient: 'linear-gradient(160deg,#200040,#0d0018)' },
+        People:    { color: '#60a5fa', bg: 'rgba(96,165,250,.12)',   gradient: 'linear-gradient(160deg,#001540,#000a20)' },
+        Search:    { color: '#22d3ee', bg: 'rgba(34,211,238,.12)',   gradient: 'linear-gradient(160deg,#003040,#001520)' },
+        CSE:       { color: '#facc15', bg: 'rgba(250,204,21,.12)',   gradient: 'linear-gradient(160deg,#302800,#151200)' },
+        Geo:       { color: '#4ade80', bg: 'rgba(74,222,128,.12)',   gradient: 'linear-gradient(160deg,#003015,#001508)' },
+      };
+      const categories = ['Anonymity', 'Identity', 'Intel', 'People', 'Search', 'CSE', 'Geo'];
+      return (
+        <>
+          <p style={{ fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '1.8px', color: '#ff6b6b', fontWeight: 700, marginBottom: 8 }}>OSINT4ALL · Recon Tools</p>
+          <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 3 }}>BlackHat Tools</h2>
+          <p style={{ fontSize: 13, color: '#a7aecb', marginBottom: 10 }}>Open-source intelligence & anonymity toolkit. For research and educational purposes only.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: '#ff6b6b', fontWeight: 600 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff3b30', display: 'inline-block', boxShadow: '0 0 6px #ff3b30' }} />
+              {bhTools.length} tools indexed
+            </div>
+            <div style={{ fontSize: 12, color: '#4ade80', fontWeight: 600 }}>🎩 Educational & research use only</div>
+          </div>
+          {categories.map(cat => {
+            const tools = bhTools.filter(t => t.cat === cat);
+            if (!tools.length) return null;
+            const meta = catMeta[cat];
+            return (
+              <div key={cat} style={{ marginBottom: 28 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                  <div style={{ flex: 1, height: 1, background: 'var(--stroke-2)' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7,
+                    background: meta.bg, border: `1px solid ${meta.color}50`,
+                    borderRadius: 20, padding: '5px 14px', fontSize: 10.5, fontWeight: 800,
+                    color: meta.color, letterSpacing: '.1em', textTransform: 'uppercase' }}>
+                    {cat}
+                  </div>
+                  <div style={{ flex: 1, height: 1, background: 'var(--stroke-2)' }} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(160px,1fr))', gap: 12 }}>
+                  {tools.map(tool => (
+                    <div key={tool.name} style={{ background: 'var(--glass-2)', border: '1px solid var(--stroke-2)',
+                      borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ height: 86, display: 'grid', placeItems: 'center', fontSize: 30,
+                        background: meta.gradient, position: 'relative' }}>
+                        <span style={{ position: 'absolute', top: 8, left: 8, fontSize: 9,
+                          fontWeight: 700, letterSpacing: '.6px', textTransform: 'uppercase',
+                          padding: '3px 7px', borderRadius: 20, background: meta.bg,
+                          border: `1px solid ${meta.color}50`, color: meta.color }}>{cat}</span>
+                        {tool.icon}
+                      </div>
+                      <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+                        <h3 style={{ fontSize: 14, fontWeight: 650 }}>{tool.name}</h3>
+                        <p style={{ fontSize: 11.5, color: '#a7aecb', lineHeight: 1.45, margin: 0,
+                          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {tool.desc}
+                        </p>
+                        <div style={{ marginTop: 'auto', paddingTop: 8 }}>
+                          <a href={tool.url} target="_blank" rel="noopener noreferrer"
+                            style={{ display: 'block', textAlign: 'center',
+                              background: `linear-gradient(180deg,${meta.color},${meta.color}bb)`,
+                              color: '#fff', borderRadius: 9, padding: '7px 12px',
+                              fontSize: 12, fontWeight: 650, textDecoration: 'none' }}>
+                            Launch →
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </>
+      );
+    }
+
     if (id === 'radio') return <RadioApp />;
 
     return null;
@@ -2378,7 +2518,7 @@ export default function Desktop() {
           <div style={{ position: 'absolute', top: 212, left: 0, right: 0, bottom: 110,
             padding: '0 20px', overflowY: 'auto' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '22px 8px' }}>
-              {appsMeta.map(app => (
+              {sortedAppsMeta.map(app => (
                 <div key={app.id} onClick={() => openWin(app.id)}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, cursor: 'pointer' }}>
                   <div style={{ width: 62, height: 62, borderRadius: 15, background: app.gradient,
@@ -2552,7 +2692,7 @@ export default function Desktop() {
           <div style={{ position: 'absolute', top: 108, left: 0, right: 0, bottom: 72,
             padding: '0 16px 16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-            {appsMeta.map(app => (
+            {sortedAppsMeta.map(app => (
               <div key={app.id} onClick={() => { setActiveTab(app.id); openWin(app.id); }}
                 style={{ background: 'rgba(255,255,255,.06)', backdropFilter: 'blur(20px)',
                   border: '1px solid rgba(255,255,255,.1)', borderRadius: 20,
@@ -2706,6 +2846,7 @@ export default function Desktop() {
       spotify: { width: 'min(360px,92vw)', top: 80, left: 'calc(50% - 180px)' },
       snake:      { width: 'min(360px,92vw)', top: 80, left: 'calc(50% - 180px)' },
       troveagent: { width: 'min(540px,92vw)', top: 60, left: 'calc(50% - 270px)' },
+      blackhat:   { width: 'min(720px,92vw)', top: 56, left: 'calc(50% - 360px)' },
     };
 
     return (
@@ -2787,7 +2928,7 @@ export default function Desktop() {
             <div style={{ width: 42, height: 40, display: 'grid', placeItems: 'center', fontSize: 20,
               borderRadius: 8, cursor: 'pointer', transition: 'background .1s',
               marginRight: 6, borderRight: '1px solid rgba(255,255,255,.08)', paddingRight: 10 }}>⊞</div>
-            {appsMeta.map(app => (
+            {sortedAppsMeta.map(app => (
               <div key={app.id} title={app.label} onClick={() => openWin(app.id)}
                 style={{ width: 46, height: 42, borderRadius: 10, display: 'grid', placeItems: 'center',
                   fontSize: 22, cursor: 'pointer', position: 'relative',

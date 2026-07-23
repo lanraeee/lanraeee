@@ -257,8 +257,26 @@ const CONTENT_DEFAULTS: Record<string, string> = {
   'win.about.title': 'About',            'win.about.subtitle': '',
 };
 
+const DEFAULT_APP_ORDER = [
+  { id: 'store',       icon: '🛍️', label: 'Store',          gradient: 'linear-gradient(160deg,#7c6cff,#3a1d6e)' },
+  { id: 'members',     icon: '🪪',  label: 'Members',        gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
+  { id: 'fans',        icon: '🏆', label: 'Top Fans',        gradient: 'linear-gradient(160deg,#f5c451,#9a6a00)' },
+  { id: 'request',     icon: '💡', label: 'Request',         gradient: 'linear-gradient(160deg,#ff9d4d,#7a3a00)' },
+  { id: 'donate',      icon: '💛', label: 'Support',         gradient: 'linear-gradient(160deg,#ff6ba8,#7a1d47)' },
+  { id: 'about',       icon: 'ℹ️',  label: 'About',          gradient: 'linear-gradient(160deg,#35d6c7,#0e5a52)' },
+  { id: 'profile',     icon: '👤', label: 'Profile',         gradient: 'linear-gradient(160deg,#1a8a6a,#0a3d2a)' },
+  { id: 'safari',      icon: '🧭', label: 'Safari',          gradient: 'linear-gradient(160deg,#0a84ff,#0050c8)' },
+  { id: 'edge',        icon: '🔷', label: 'Edge',            gradient: 'linear-gradient(160deg,#0078d4,#00457a)' },
+  { id: 'spotify',     icon: '🎵', label: 'Music',           gradient: 'linear-gradient(160deg,#1db954,#0d5e2a)' },
+  { id: 'snake',       icon: '🐍', label: 'Snake',           gradient: 'linear-gradient(160deg,#22c55e,#14532d)' },
+  { id: 'troveagent',  icon: '🤖', label: 'Trove AI',        gradient: 'linear-gradient(160deg,#9d90ff,#5b4fcf)' },
+  { id: 'blog',        icon: '✍️', label: 'Blog',            gradient: 'linear-gradient(160deg,#1f6feb,#0d3a7a)' },
+  { id: 'radio',       icon: '📻', label: 'Radio',           gradient: 'linear-gradient(160deg,#831843,#9d174d)' },
+  { id: 'blackhat',    icon: '🎩', label: 'BlackHat Tools',  gradient: 'linear-gradient(160deg,#1a0000,#0d0505)' },
+];
+
 export default function AdminPage() {
-  const [tab, setTab] = useState<'products' | 'memberships' | 'fans' | 'requests' | 'content' | 'analytics' | 'messages' | 'email' | 'security' | 'blog'>('products');
+  const [tab, setTab] = useState<'products' | 'memberships' | 'fans' | 'requests' | 'content' | 'analytics' | 'messages' | 'email' | 'security' | 'blog' | 'apps'>('products');
   const [products, setProducts] = useState<Product[]>([]);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [fans, setFans] = useState<any[]>([]);
@@ -293,6 +311,10 @@ export default function AdminPage() {
   const [adminEmailSetting, setAdminEmailSetting] = useState('');
   const [adminEmailSaving, setAdminEmailSaving] = useState(false);
   const [adminEmailSaved, setAdminEmailSaved] = useState(false);
+  const [appOrder, setAppOrder] = useState<string[]>([]);
+  const [appOrderDragSrc, setAppOrderDragSrc] = useState<number | null>(null);
+  const [appOrderSaving, setAppOrderSaving] = useState(false);
+  const [appOrderSaved, setAppOrderSaved] = useState(false);
 
   type SecurityTool = {
     id: string; name: string; icon: string; category: string; language: string;
@@ -542,6 +564,16 @@ export default function AdminPage() {
     if (tab === 'email') fetchEmailTemplates();
     if (tab === 'security') fetchSecurityTools();
     if (tab === 'blog') fetchPostsAdmin();
+    if (tab === 'apps') {
+      fetch('/api/content').then(r => r.json()).then((c: Record<string, string>) => {
+        const stored = c['app.order'];
+        if (stored) {
+          setAppOrder(stored.split(',').map((s: string) => s.trim()).filter(Boolean));
+        } else {
+          setAppOrder(DEFAULT_APP_ORDER.map(a => a.id));
+        }
+      });
+    }
     if (tab === 'messages') {
       fetchMessages();
       const interval = setInterval(fetchMessages, 3000);
@@ -652,6 +684,7 @@ export default function AdminPage() {
           {navItem('email', '📧 Email')}
           {navItem('security', '🛡️ Security Tools')}
           {navItem('blog', '✍️ Blog')}
+          {navItem('apps', '🎩 App Order')}
         </nav>
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ padding: '12px', background: 'rgba(53,214,199,.08)', border: '1px solid rgba(53,214,199,.2)',
@@ -1856,6 +1889,123 @@ export default function AdminPage() {
                   ))}
                 </div>
               )}
+            </>
+          );
+        })()}
+
+        {tab === 'apps' && (() => {
+          const appMeta = (id: string) => DEFAULT_APP_ORDER.find(a => a.id === id) ?? { id, icon: '📦', label: id, gradient: 'linear-gradient(160deg,#333,#111)' };
+          const orderedApps = appOrder.length > 0
+            ? appOrder.map(id => appMeta(id))
+            : DEFAULT_APP_ORDER;
+
+          const saveAppOrder = async () => {
+            setAppOrderSaving(true);
+            await fetch('/api/content', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ 'app.order': appOrder.join(',') }),
+            });
+            setAppOrderSaving(false);
+            setAppOrderSaved(true);
+            setTimeout(() => setAppOrderSaved(false), 2000);
+          };
+
+          const moveApp = (from: number, to: number) => {
+            setAppOrder(prev => {
+              const arr = [...prev];
+              const [item] = arr.splice(from, 1);
+              arr.splice(to, 0, item);
+              return arr;
+            });
+          };
+
+          return (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
+                <div>
+                  <h2 style={{ fontSize: 26, fontWeight: 700, marginBottom: 4 }}>App Order</h2>
+                  <p style={{ fontSize: 13, color: '#7d84a6' }}>Drag rows to reorder — changes the dock & taskbar on the live site.</p>
+                </div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <button onClick={() => setAppOrder(DEFAULT_APP_ORDER.map(a => a.id))}
+                    style={{ background: 'rgba(255,255,255,.06)', color: '#a7aecb', border: '1px solid var(--stroke)',
+                      borderRadius: 9, padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                    Reset
+                  </button>
+                  <button onClick={saveAppOrder} disabled={appOrderSaving}
+                    style={{ background: appOrderSaved ? 'linear-gradient(180deg,#3ddc97,#16a06a)' : 'linear-gradient(180deg,#9d90ff,#7c6cff)',
+                      color: '#fff', border: 'none', padding: '10px 20px', borderRadius: 9,
+                      fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
+                    {appOrderSaved ? '✓ Saved' : appOrderSaving ? 'Saving…' : 'Save Order'}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {orderedApps.map((app, idx) => (
+                  <div key={app.id}
+                    draggable
+                    onDragStart={() => setAppOrderDragSrc(idx)}
+                    onDragOver={e => { e.preventDefault(); }}
+                    onDrop={e => {
+                      e.preventDefault();
+                      if (appOrderDragSrc !== null && appOrderDragSrc !== idx) {
+                        moveApp(appOrderDragSrc, idx);
+                        setAppOrderDragSrc(idx);
+                      }
+                    }}
+                    onDragEnd={() => setAppOrderDragSrc(null)}
+                    style={{
+                      background: appOrderDragSrc === idx ? 'rgba(157,144,255,.1)' : 'var(--glass)',
+                      border: `1px solid ${appOrderDragSrc === idx ? 'rgba(157,144,255,.4)' : 'var(--stroke)'}`,
+                      borderRadius: 12, padding: '12px 16px',
+                      display: 'grid', gridTemplateColumns: '28px 52px 1fr auto',
+                      alignItems: 'center', gap: 14, cursor: 'grab',
+                      transition: 'background .15s, border-color .15s',
+                      userSelect: 'none',
+                    }}>
+                    {/* drag handle */}
+                    <div style={{ color: '#4a5278', fontSize: 16, textAlign: 'center', lineHeight: 1 }}>⠿⠿</div>
+                    {/* icon */}
+                    <div style={{ width: 52, height: 52, borderRadius: 12, display: 'grid', placeItems: 'center',
+                      fontSize: 24, background: app.gradient, border: '1px solid rgba(255,255,255,.12)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,.4)', flexShrink: 0 }}>
+                      {app.icon}
+                    </div>
+                    {/* info */}
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 2 }}>{app.label}</div>
+                      <div style={{ fontSize: 12, color: '#4a5278', fontFamily: 'monospace' }}>{app.id}</div>
+                    </div>
+                    {/* position badge + arrow btns */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 11, color: '#4a5278', background: 'rgba(255,255,255,.04)',
+                        border: '1px solid var(--stroke-2)', borderRadius: 6, padding: '3px 8px',
+                        fontFamily: 'monospace' }}>#{idx + 1}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                        <button onClick={() => idx > 0 && moveApp(idx, idx - 1)}
+                          disabled={idx === 0}
+                          style={{ background: 'rgba(255,255,255,.06)', border: '1px solid var(--stroke)',
+                            borderRadius: 5, width: 26, height: 22, fontSize: 11, cursor: idx === 0 ? 'default' : 'pointer',
+                            color: idx === 0 ? '#2a2d44' : '#a7aecb', display: 'grid', placeItems: 'center' }}>▲</button>
+                        <button onClick={() => idx < orderedApps.length - 1 && moveApp(idx, idx + 1)}
+                          disabled={idx === orderedApps.length - 1}
+                          style={{ background: 'rgba(255,255,255,.06)', border: '1px solid var(--stroke)',
+                            borderRadius: 5, width: 26, height: 22, fontSize: 11,
+                            cursor: idx === orderedApps.length - 1 ? 'default' : 'pointer',
+                            color: idx === orderedApps.length - 1 ? '#2a2d44' : '#a7aecb',
+                            display: 'grid', placeItems: 'center' }}>▼</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ marginTop: 20, padding: '14px 16px', background: 'rgba(53,214,199,.06)',
+                border: '1px solid rgba(53,214,199,.2)', borderRadius: 10, fontSize: 12, color: '#35d6c7' }}>
+                💡 <b>Tip:</b> Drag rows or use the ▲▼ buttons. Click <b>Save Order</b> to publish — changes appear instantly on the live site.
+              </div>
             </>
           );
         })()}
