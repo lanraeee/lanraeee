@@ -333,6 +333,8 @@ export default function AdminPage() {
   const [toolForm, setToolForm] = useState<Omit<SecurityTool, 'id'>>(blankTool());
 
   const [seedingFans, setSeedingFans] = useState(false);
+  const [rotatingFans, setRotatingFans] = useState(false);
+  const [rotateFansDone, setRotateFansDone] = useState(false);
   const [showAddFan, setShowAddFan] = useState(false);
   const [fanForm, setFanForm] = useState({ email: '', displayName: '', initials: '', avatarColor: '#9d90ff', membershipTier: 'insider', totalSpent: '' });
   const [fanFormSaving, setFanFormSaving] = useState(false);
@@ -589,6 +591,15 @@ export default function AdminPage() {
     setSeedingFans(false);
   };
 
+  const rotateFans = async () => {
+    setRotatingFans(true);
+    await fetch('/api/cron/rotate-fans', { method: 'POST' });
+    await fetchAll();
+    setRotatingFans(false);
+    setRotateFansDone(true);
+    setTimeout(() => setRotateFansDone(false), 3000);
+  };
+
   const deleteFan = async (id: string) => {
     if (!confirm('Remove this fan from the leaderboard?')) return;
     await fetch('/api/fans', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
@@ -841,7 +852,11 @@ export default function AdminPage() {
             <>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
                 <h2 style={{ fontSize: 26, fontWeight: 700 }}>Top Supporters</h2>
-                <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  <button onClick={rotateFans} disabled={rotatingFans}
+                    style={{ background: rotateFansDone ? 'rgba(61,220,151,.15)' : 'rgba(245,196,81,.12)', color: rotateFansDone ? '#3ddc97' : '#f5c451', border: `1px solid ${rotateFansDone ? 'rgba(61,220,151,.3)' : 'rgba(245,196,81,.3)'}`, padding: '10px 16px', borderRadius: 9, fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
+                    {rotateFansDone ? '✓ Rotated!' : rotatingFans ? 'Rotating…' : '🔄 Rotate Now'}
+                  </button>
                   <button onClick={seedFans} disabled={seedingFans}
                     style={{ background: 'rgba(53,214,199,.15)', color: '#35d6c7', border: '1px solid rgba(53,214,199,.3)', padding: '10px 16px', borderRadius: 9, fontSize: 13, fontWeight: 650, cursor: 'pointer' }}>
                     {seedingFans ? 'Seeding…' : '🌱 Seed'}
